@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EcoPulse – Độ ẩm đất từ vệ tinh cho nông dân Tây Nguyên</title>
+<link rel="icon" type="image/png" href="/static/img/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+:root{--g:#2f9e5a;--gd:#1f7a43;--b:#2a9fe0;--ink:#17323a;--mute:#5d7279;--line:#d8e4e8;--bg:#fbfdfc;--sand:#f1f6f3;--bad:#c0392b}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font:16px/1.65 "Be Vietnam Pro",system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+a{color:inherit}
+
+/* ---------- thanh trên cùng ---------- */
+.top{position:fixed;inset:0 0 auto 0;z-index:50;display:flex;align-items:center;gap:18px;padding:12px 24px;background:#0b171bf2;color:#fff;border-bottom:3px solid;border-image:linear-gradient(90deg,var(--g),var(--b)) 1}
+.logo{display:flex;align-items:center;gap:8px;font-weight:800;font-size:20px;text-decoration:none;color:#fff}
+.logo b{color:#7cc8f5}
+.top nav{display:flex;gap:6px;margin-left:12px}
+.top nav a{text-decoration:none;font-size:14px;font-weight:500;padding:6px 12px;border-radius:999px;color:#d6e6ea}
+.top nav a:hover{background:#ffffff1f;color:#fff}
+.enter{margin-left:auto;display:inline-flex;align-items:center;gap:8px;text-decoration:none;font-weight:700;font-size:15px;padding:10px 20px;border-radius:999px;background:linear-gradient(90deg,var(--g),var(--b));color:#fff;box-shadow:0 4px 18px #2a9fe055;transition:transform .15s,box-shadow .15s}
+.enter:hover{transform:translateY(-1px);box-shadow:0 6px 22px #2a9fe088}
+.enter small{font-weight:500;opacity:.9;font-size:12px}
+@media(max-width:820px){.top nav{display:none}.enter small{display:none}.top{padding:10px 14px}}
+
+#pbar{position:fixed;left:0;top:0;height:3px;width:100%;z-index:60;transform-origin:0 50%;transform:scaleX(0);background:linear-gradient(90deg,var(--g),var(--b));pointer-events:none}
+.top nav a{transition:background .25s,color .25s}
+.top nav a.on{background:#ffffff26;color:#fff}
+.top{transition:transform .45s cubic-bezier(.2,.7,.2,1)}
+.top.hide{transform:translateY(-100%)}
+
+/* ---------- 1. thời tiết ---------- */
+.weather{position:relative;height:100vh;min-height:560px;overflow:hidden;background:radial-gradient(120% 90% at 30% 20%,#14503a 0,#0b171b 60%),#0b171b}
+.weather .bgb{position:absolute;left:-5%;top:-5%;width:110%;height:110%;object-fit:cover;filter:blur(32px) brightness(.5) saturate(1.1);opacity:0;transition:opacity 1.6s ease}
+.weather .bg{position:absolute;left:0;right:0;top:var(--hh,70px);bottom:0;width:100%;height:calc(100% - var(--hh,70px));object-fit:contain;object-position:center;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);opacity:0;transition:opacity 1.6s ease}
+.weather .bgb.ok{opacity:1}
+.weather .bg.ok{opacity:1}
+@keyframes rise{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
+.weather .cap>*{opacity:0;animation:rise 1.1s cubic-bezier(.2,.7,.2,1) forwards}
+.weather .cap h1{animation-delay:.35s}.weather .cap p{animation-delay:.65s}.weather .cap .scroll{animation:rise 1s 1s cubic-bezier(.2,.7,.2,1) forwards,bob 1.6s 2s infinite}
+.weather .shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#0b171bcc 0,#0b171b00 28%,#0b171b00 62%,#0b171bee 100%)}
+.weather .cap{position:absolute;left:0;right:0;bottom:0;padding:0 24px 34px;color:#fff;text-align:center;pointer-events:none}
+.weather h1{margin:0 0 6px;font-size:clamp(28px,5vw,54px);line-height:1.15;font-weight:800;text-shadow:0 2px 20px #000a}
+.weather p{margin:0 auto;max-width:640px;color:#cfe3e8;text-shadow:0 1px 10px #000}
+.scroll{display:inline-block;margin-top:16px;font-size:13px;color:#fff;opacity:.85;animation:bob 1.6s infinite}
+@keyframes bob{50%{transform:translateY(6px)}}
+
+/* ---------- 2. quả địa cầu cuộn ---------- */
+.globe-sec{position:relative;height:420vh;background:#02070b}
+.globe-stick{position:sticky;top:0;height:100vh;overflow:hidden}
+#globe{position:absolute;inset:0}
+.globe-cap{position:absolute;left:0;right:0;top:84px;text-align:center;color:#fff;pointer-events:none;padding:0 20px;z-index:3}
+.globe-cap h2{margin:0;font-size:clamp(24px,4vw,40px);font-weight:800;text-shadow:0 2px 16px #000}
+.globe-cap p{margin:6px auto 0;max-width:560px;color:#cfe3e8;text-shadow:0 1px 8px #000;min-height:3.2em}
+.prog{position:absolute;right:20px;top:50%;transform:translateY(-50%);width:4px;height:140px;border-radius:2px;background:#ffffff33;z-index:3}
+.prog i{display:block;width:100%;height:0;border-radius:2px;background:linear-gradient(var(--g),var(--b))}
+.pin{display:flex;align-items:center;gap:6px;font:700 13px "Be Vietnam Pro",sans-serif;color:#fff;background:#0b171bdd;border:1px solid #ffffff44;padding:4px 10px 4px 6px;border-radius:999px;white-space:nowrap}
+.pin i{width:12px;height:12px;border-radius:50%;border:2px solid #fff}
+.nogl{display:none;position:absolute;inset:0;place-items:center;color:#cfe3e8;text-align:center;padding:30px;z-index:2}
+
+/* ---------- 3. giới thiệu ---------- */
+.intro{padding:96px 24px 40px;text-align:center;max-width:860px;margin:0 auto}
+.eyebrow{display:inline-block;font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gd);background:#e3f4ea;padding:4px 12px;border-radius:999px}
+.intro h2{font-size:clamp(26px,4vw,40px);line-height:1.2;margin:14px 0 14px;font-weight:800}
+.intro p{color:var(--mute);font-size:18px;margin:0 0 12px}
+.feats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin:34px 0 0;text-align:left}
+.feat{background:#fff;border:1px solid var(--line);border-radius:16px;padding:16px 18px}
+.feat b{display:block;margin-bottom:2px;color:var(--gd)}
+.feat span{font-size:14px;color:var(--mute)}
+
+/* ---------- 4. các cây trồng ---------- */
+.crop{padding:70px 24px;overflow:hidden;scroll-margin-top:50px}
+.crop:nth-of-type(even){background:var(--sand)}
+.wrap{max-width:1120px;margin:0 auto}
+.crop h2{font-size:clamp(28px,4.2vw,44px);margin:6px 0 4px;font-weight:800;line-height:1.15}
+.crop .tag{color:var(--mute);margin:0 0 22px}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:center}
+.three{display:grid;grid-template-columns:1fr minmax(260px,.9fr) 1fr;gap:34px;align-items:center}
+.ph{position:relative;aspect-ratio:4/5;border-radius:26px;overflow:hidden;box-shadow:0 24px 60px -20px #0a2a2f66;background:#cfe6d8}
+.ph>img,.ph>svg{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.ph .lab{position:absolute;left:14px;bottom:14px;z-index:2;font-size:12px;color:#fff;background:#0b171b99;padding:3px 10px;border-radius:999px}
+.blk{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin:0 0 14px}
+.blk h3{margin:0 0 6px;font-size:16px;display:flex;align-items:center;gap:8px}
+.blk h3 i{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:8px;font-style:normal;font-size:14px;color:#fff;background:var(--g)}
+.blk.hard h3 i{background:var(--bad)}
+.blk.val h3 i{background:var(--b)}
+.blk p{margin:0;color:#34505a;font-size:15px}
+.blk ul{margin:6px 0 0;padding-left:20px;color:#34505a;font-size:15px}
+.blk li{margin:2px 0}
+.stat{display:inline-block;margin:10px 8px 0 0;padding:4px 12px;border-radius:999px;background:#e3f4ea;color:var(--gd);font-weight:700;font-size:13px}
+
+/* hiệu ứng trượt vào */
+.rv{opacity:0;transition:opacity .9s ease,transform 1.05s cubic-bezier(.16,.84,.24,1),box-shadow .35s ease,border-color .35s ease;will-change:opacity,transform}
+.rv.l{transform:translateX(-70px) scale(.98)}.rv.r{transform:translateX(70px) scale(.98)}.rv.u{transform:translateY(50px) scale(.98)}
+.rv.in{opacity:1;transform:none}
+.rv.d1{transition-delay:.12s}.rv.d2{transition-delay:.26s}.rv.d3{transition-delay:.4s}
+/* sau khi hiện xong: bỏ độ trễ để hover mượt */
+.rv.done{transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease,opacity .3s;transition-delay:0s;will-change:auto}
+.blk:hover,.feat:hover{transform:translateY(-4px);box-shadow:0 16px 34px -18px #0a2a2f66;border-color:#b9d6c6}
+.feat{transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease}
+/* từng dòng trong khối hiện lần lượt */
+.blk.rv li{opacity:0;transform:translateX(16px);transition:opacity .6s ease,transform .7s cubic-bezier(.16,.84,.24,1)}
+.blk.rv.in li{opacity:1;transform:none}
+.blk.rv.in li:nth-child(1){transition-delay:.45s}.blk.rv.in li:nth-child(2){transition-delay:.58s}.blk.rv.in li:nth-child(3){transition-delay:.71s}.blk.rv.in li:nth-child(4){transition-delay:.84s}
+/* ảnh: phóng nhẹ khi hiện + trôi chậm khi cuộn (parallax) */
+.ph>img{z-index:1;transform:scale(1.28);translate:0 var(--py,0px);opacity:0;transition:transform 1.8s cubic-bezier(.16,.84,.24,1),opacity 1s ease;will-change:transform,translate}
+.ph>img.ld{opacity:1}
+.ph.in>img{transform:scale(1.12)}
+.ph .lab{opacity:0;transform:translateY(12px);transition:opacity .6s ease .8s,transform .7s cubic-bezier(.16,.84,.24,1) .8s}
+.ph.in .lab{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.rv,.blk.rv li,.ph>img,.ph .lab{opacity:1!important;transform:none!important;transition:none!important}html{scroll-behavior:auto}.weather .bg,.weather .cap>*{animation:none;opacity:1}}
+
+@media(max-width:860px){
+  .two,.three{grid-template-columns:1fr;gap:22px}
+  .ph{aspect-ratio:16/11}
+  .two.flip .ph{order:-1}
+  .three .ph{order:-1}
+}
+
+/* ---------- 5. kêu gọi ---------- */
+.cta{padding:90px 24px;text-align:center;background:linear-gradient(135deg,#123d2a,#0e3550);color:#fff}
+.cta h2{margin:0 0 8px;font-size:clamp(26px,4vw,40px);font-weight:800}
+.cta p{margin:0 auto 24px;max-width:560px;color:#cfe3e8}
+.cta .enter{margin:0;font-size:17px;padding:14px 30px}
+footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
+</style>
+</head>
+<body>
+
+<div id="pbar"></div>
+<header class="top">
+  <a class="logo" href="#top"><img src="/static/img/logo.png" alt="EcoPulse" width="38" height="38" style="flex:none;width:38px;height:38px;object-fit:cover;clip-path:circle(46.5%)"><span>Eco<b>Pulse</b></span></a>
+</header>
+
+<!-- 1. ẢNH ĐẦU TRANG (static/img/begin.png) -->
+<section class="weather" id="top">
+  <img class="bgb" src="/static/img/begin.png" alt="" aria-hidden="true" decoding="async" onload="this.classList.add('ok')" onerror="this.remove()">
+  <img class="bg" src="/static/img/begin.png" alt="Toàn cảnh Tây Nguyên" fetchpriority="high" decoding="async" onload="this.classList.add('ok')" onerror="this.remove()">
+  <div class="shade"></div>
+  <div class="cap">
+    <h1>Thời tiết Tây Nguyên, đang chuyển động</h1>
+    <p>Mưa, mây và gió trên vùng cà phê, sầu riêng và cao su, cập nhật trực tiếp.</p>
+    <span class="scroll">Cuộn xuống ↓</span>
+  </div>
+</section>
+
+<!-- 2. QUẢ ĐỊA CẦU THẬT (ảnh vệ tinh, cuộn để phóng to) -->
+<section class="globe-sec" id="globe-sec">
+  <div class="globe-stick">
+    <div id="globe"></div>
+    <div class="nogl" id="nogl"><div>Trình duyệt này chưa hiển thị được quả địa cầu 3D (cần WebGL).<br>Hãy thử Chrome hoặc Edge bản mới.</div></div>
+    <div class="globe-cap"><h2 id="gh">Hành tinh của chúng ta</h2><p id="gp">Nơi sự sống được khơi nguồn một cách kỳ diệu từ những hạt mầm bé nhỏ</p></div>
+    <div class="prog"><i id="gprog"></i></div>
+  </div>
+</section>
+
+<!-- 3. GIỚI THIỆU NGẮN -->
+<section class="intro" id="gioi-thieu">
+  <span class="eyebrow rv u">EcoPulse là gì</span>
+  <h2 class="rv u d1">Nhìn thấy độ ẩm đất từ vệ tinh, để tưới và chăm đúng lúc</h2>
+  <p class="rv u d2">EcoPulse dùng dữ liệu radar NISAR của NASA và ISRO để cho nông dân và hợp tác xã ở Tây Nguyên, Bình Phước biết đất khô hay quá ẩm, ngay trên bản đồ, không cần đo tại ruộng.</p>
+  <div class="feats">
+    <div class="feat rv u d1"><b>Bản đồ độ ẩm đất</b><span>Radar xuyên mây, có cả mùa mưa.</span></div>
+    <div class="feat rv u d2"><b>Thửa của tôi</b><span>Khai báo vườn, nhận khuyến nghị tưới.</span></div>
+    <div class="feat rv u d3"><b>Thông báo &amp; hợp tác xã</b><span>Cảnh báo khô hạn, trao đổi với hợp tác xã.</span></div>
+  </div>
+</section>
+
+<!-- 4a. CÀ PHÊ: ảnh trái, nội dung phải -->
+<section class="crop" id="ca-phe">
+  <div class="wrap two">
+    <figure class="ph rv l" style="margin:0" data-art="coffee">
+      <img src="/static/img/ca-phe.jpg" alt="Vườn cà phê chín đỏ ở Tây Nguyên" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
+      <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe9d6"/><stop offset="1" stop-color="#4f9a67"/></linearGradient></defs>
+        <rect width="400" height="500" fill="url(#cg)"/>
+        <path d="M-10 420 Q120 360 230 400 T420 380 V500 H-10Z" fill="#2f7a4a"/>
+        <path d="M40 520 C90 380 150 260 330 110" stroke="#5a3b24" stroke-width="9" fill="none" stroke-linecap="round"/>
+        <g fill="#2b8a4e"><ellipse cx="150" cy="300" rx="48" ry="20" transform="rotate(-35 150 300)"/><ellipse cx="230" cy="215" rx="50" ry="20" transform="rotate(-40 230 215)"/><ellipse cx="300" cy="150" rx="44" ry="18" transform="rotate(-45 300 150)"/><ellipse cx="105" cy="365" rx="46" ry="19" transform="rotate(-15 105 365)"/><ellipse cx="220" cy="300" rx="46" ry="18" transform="rotate(25 220 300)"/></g>
+        <g fill="#d6342c"><circle cx="190" cy="268" r="13"/><circle cx="208" cy="282" r="13"/><circle cx="170" cy="285" r="12"/><circle cx="262" cy="190" r="12"/><circle cx="278" cy="205" r="12"/><circle cx="130" cy="338" r="12"/></g>
+        <g fill="#ffffff55"><circle cx="186" cy="263" r="4"/><circle cx="204" cy="277" r="4"/><circle cx="258" cy="186" r="4"/></g>
+      </svg>
+      <span class="lab">Cà phê · Tây Nguyên</span>
+    </figure>
+    <div>
+      <span class="eyebrow rv u">Cà phê</span>
+      <h2 class="rv u d1">Hạt cà phê của Tây Nguyên</h2>
+      <p class="tag rv u d2">Việt Nam là một trong những nước xuất khẩu cà phê lớn nhất thế giới, nhiều nhất là cà phê vối (robusta).</p>
+      <div class="blk rv r d1"><h3><i>📍</i>Phân bố</h3><p>Tập trung ở Tây Nguyên: Đắk Lắk (Buôn Ma Thuột), Lâm Đồng, Gia Lai, Đắk Nông, Kon Tum. Vùng này chiếm phần lớn diện tích cà phê cả nước. Cà phê chè (arabica) trồng ở nơi cao, mát như Lâm Đồng.</p></div>
+      <div class="blk val rv r d2"><h3><i>★</i>Giá trị với Việt Nam</h3><p>Là mặt hàng nông sản xuất khẩu chủ lực, mang về hàng tỷ USD mỗi năm và nuôi sống hàng trăm nghìn hộ nông dân, đặc biệt là đồng bào các dân tộc Tây Nguyên.</p></div>
+      <div class="blk hard rv r d2"><h3><i>!</i>Khó khăn về độ ẩm và mưa</h3><ul>
+        <li>Mùa khô (khoảng tháng 12 đến tháng 4) thiếu nước, nếu không tưới đúng lúc cây rụng hoa, giảm năng suất.</li>
+        <li>Mưa trái mùa khi cây ra hoa làm rụng hoa, kém đậu quả.</li>
+        <li>Mưa kéo dài lúc thu hoạch làm quả dễ rụng, khó phơi sấy, hạt dễ mốc.</li>
+        <li>Đất quá ẩm kéo dài gây thối rễ, nấm bệnh.</li></ul></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4b. SẦU RIÊNG: ảnh phải, nội dung trái -->
+<section class="crop" id="sau-rieng">
+  <div class="wrap two flip">
+    <div>
+      <span class="eyebrow rv u">Sầu riêng</span>
+      <h2 class="rv u d1">Vua của các loại trái cây</h2>
+      <p class="tag rv u d2">Trong vài năm gần đây sầu riêng trở thành mặt hàng xuất khẩu tăng nhanh, nhất là sang Trung Quốc.</p>
+      <div class="blk rv l d1"><h3><i>📍</i>Phân bố</h3><p>Phát triển mạnh ở Đắk Lắk, Đắk Nông, Lâm Đồng, Gia Lai (đất đỏ bazan Tây Nguyên) và vùng Đông Nam Bộ, cùng các tỉnh miền Tây Nam Bộ như Tiền Giang, Bến Tre.</p></div>
+      <div class="blk val rv l d2"><h3><i>★</i>Giá trị với Việt Nam</h3><p>Giá bán cao, mang lại thu nhập lớn trên mỗi héc-ta và đưa sầu riêng vào nhóm rau quả xuất khẩu hàng tỷ USD. Nhiều hộ chuyển từ cây khác sang sầu riêng vì lợi nhuận.</p></div>
+      <div class="blk hard rv l d2"><h3><i>!</i>Khó khăn về độ ẩm và mưa</h3><ul>
+        <li>Rất sợ úng: đất ngập nước hoặc quá ẩm gây thối rễ, nấm Phytophthora, chết cây.</li>
+        <li>Cần một thời gian khô ráo để phân hóa mầm hoa; mưa trái mùa làm cây không ra hoa đồng loạt.</li>
+        <li>Mưa lúc nở hoa làm rụng hoa, kém đậu trái.</li>
+        <li>Khô hạn kéo dài làm rụng trái non, trái nhỏ, chất lượng giảm.</li></ul></div>
+    </div>
+    <figure class="ph rv r" style="margin:0" data-art="durian">
+      <img src="/static/img/sau-rieng.jpg" alt="Trái sầu riêng trên cây" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
+      <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+        <defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5f3d2"/><stop offset="1" stop-color="#6fae55"/></linearGradient>
+        <radialGradient id="dd" cx=".4" cy=".35"><stop offset="0" stop-color="#d8e07a"/><stop offset="1" stop-color="#8aa43a"/></radialGradient></defs>
+        <rect width="400" height="500" fill="url(#dg)"/>
+        <path d="M200 -10 V150" stroke="#5a3b24" stroke-width="8"/>
+        <g fill="#2b8a4e"><ellipse cx="120" cy="60" rx="70" ry="20" transform="rotate(20 120 60)"/><ellipse cx="290" cy="70" rx="70" ry="20" transform="rotate(-20 290 70)"/></g>
+        <ellipse cx="200" cy="300" rx="120" ry="150" fill="url(#dd)"/>
+        <g fill="#6d8a2a"><path d="M130 200l10 -26 14 24z"/><path d="M180 160l8 -28 14 28z"/><path d="M235 170l12 -26 10 28z"/><path d="M95 270l-22 -12 24 -8z"/><path d="M305 260l24 -10 -8 22z"/><path d="M110 340l-24 0 22 -14z"/><path d="M295 345l26 -4 -16 18z"/><path d="M150 250l10 -24 14 22z"/><path d="M210 240l10 -24 12 24z"/><path d="M255 285l22 -14 4 24z"/><path d="M165 330l-8 24 24 -6z"/><path d="M225 350l10 24 14 -18z"/><path d="M135 415l14 22 14 -22z"/><path d="M200 435l12 22 12 -22z"/><path d="M255 410l16 18 6 -22z"/></g>
+      </svg>
+      <span class="lab">Sầu riêng</span>
+    </figure>
+  </div>
+</section>
+
+<!-- 4c. CAO SU: ảnh giữa, trái = phân bố + giá trị, phải = khó khăn -->
+<section class="crop" id="cao-su">
+  <div class="wrap">
+    <div style="text-align:center;margin-bottom:26px">
+      <span class="eyebrow rv u">Cao su</span>
+      <h2 class="rv u d1">Vàng trắng của đất đỏ bazan</h2>
+    </div>
+    <div class="three">
+      <div>
+        <div class="blk rv l d1"><h3><i>📍</i>Phân bố</h3><p>Chủ yếu ở Đông Nam Bộ (Bình Phước, Tây Ninh, Bình Dương, Đồng Nai) và Tây Nguyên (Gia Lai, Kon Tum, Đắk Lắk). Bình Phước là một trong những tỉnh có diện tích cao su lớn nhất cả nước.</p></div>
+        <div class="blk val rv l d2"><h3><i>★</i>Giá trị với Việt Nam</h3><p>Việt Nam thuộc nhóm các nước sản xuất và xuất khẩu cao su thiên nhiên hàng đầu thế giới. Cao su cho thu nhập quanh năm, tạo việc làm ở nông trường và hộ gia đình, đồng thời cung cấp nguyên liệu cho ngành lốp xe, găng tay, gỗ cao su.</p></div>
+      </div>
+      <figure class="ph rv u" style="margin:0" data-art="rubber">
+        <img src="/static/img/cao-su.jpg" alt="Rừng cao su và công nhân cạo mủ" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
+        <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+          <defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9f3dc"/><stop offset="1" stop-color="#7aa65a"/></linearGradient></defs>
+          <rect width="400" height="500" fill="url(#rg)"/>
+          <rect y="380" width="400" height="120" fill="#a8704a"/>
+          <g stroke="#4b3a2b" stroke-width="16" stroke-linecap="round"><path d="M70 400V110"/><path d="M160 410V80"/><path d="M250 400V100"/><path d="M335 410V90"/></g>
+          <g fill="#2b8a4e"><ellipse cx="70" cy="90" rx="62" ry="40"/><ellipse cx="160" cy="62" rx="68" ry="42"/><ellipse cx="250" cy="82" rx="64" ry="40"/><ellipse cx="335" cy="72" rx="62" ry="40"/></g>
+          <path d="M160 250 q-10 40 6 70" stroke="#fff" stroke-width="5" fill="none"/>
+          <path d="M150 322h28l-4 22h-20z" fill="#f2f2f2"/>
+        </svg>
+        <span class="lab">Cao su · Đông Nam Bộ &amp; Tây Nguyên</span>
+      </figure>
+      <div>
+        <div class="blk hard rv r d1"><h3><i>!</i>Khó khăn về độ ẩm và mưa</h3><ul>
+          <li>Mưa nhiều làm cây ướt, không cạo mủ được; mủ bị rửa trôi, mất nhiều ngày thu hoạch.</li>
+          <li>Ẩm độ cao và mưa kéo dài tạo điều kiện cho bệnh nấm: phấn trắng, rụng lá, nấm hồng, làm giảm sản lượng.</li>
+          <li>Mùa khô thiếu nước, cây giảm mủ, dễ bị cháy cây và cháy vườn.</li>
+          <li>Bão, gió lớn trong mùa mưa làm cây gãy đổ.</li></ul></div>
+        <p class="mute rv r d2" style="font-size:14px;color:var(--mute);margin:0 4px">EcoPulse giúp nhìn trước đất đang khô hay ẩm để cân nhắc lịch cạo mủ, phòng bệnh, chống hạn.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 5. KÊU GỌI -->
+<section class="cta">
+  <h2 class="rv u">Sẵn sàng xem vườn của bạn từ vệ tinh?</h2>
+  <p class="rv u d1">Nông dân đăng ký là dùng ngay. Hợp tác xã cần quản trị viên duyệt hồ sơ.</p>
+  <a class="enter rv u d2" href="/app">Vào trang web · Đăng nhập / Đăng ký ›</a>
+</section>
+<footer>EcoPulse · Dữ liệu NISAR đang hiệu chuẩn, thông tin chỉ mang tính tham khảo.</footer>
+
+<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
+<script>
+/* ===== hiệu ứng trượt vào khi cuộn ===== */
+(function () {
+  const els = document.querySelectorAll(".rv");
+  const fin = e => setTimeout(() => e.classList.add("done"), 1700);
+  if (!("IntersectionObserver" in window)) { els.forEach(e => { e.classList.add("in", "done"); }); return; }
+  const io = new IntersectionObserver(es => es.forEach(e => {
+    if (e.isIntersecting) { e.target.classList.add("in"); fin(e.target); io.unobserve(e.target); }
+  }), {threshold: .12, rootMargin: "0px 0px -6% 0px"});
+  els.forEach(e => io.observe(e));
+})();
+
+/* ===== thanh tiến độ, parallax ảnh, ẩn/hiện thanh trên, menu đang chọn ===== */
+(function () {
+  const bar = document.getElementById("pbar"), top = document.querySelector(".top");
+  const hero = document.querySelector(".weather"), bg = document.querySelector(".weather .bg");
+  const imgs = [...document.querySelectorAll(".ph>img")];
+  const links = [...document.querySelectorAll(".top nav a")];
+  const secs = links.map(a => document.querySelector(a.getAttribute("href")));
+  const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  let lastY = scrollY, tick = false;
+  function frame() {
+    tick = false;
+    const y = scrollY, H = document.documentElement.scrollHeight - innerHeight;
+    bar.style.transform = "scaleX(" + (H > 0 ? y / H : 0) + ")";
+    if (!reduce) {
+      imgs.forEach(im => {
+        const r = im.parentElement.getBoundingClientRect();
+        if (r.bottom < -100 || r.top > innerHeight + 100) return;
+        const off = (r.top + r.height / 2 - innerHeight / 2) / innerHeight;
+        im.style.setProperty("--py", Math.max(-1, Math.min(1, off)) * -26 + "px");
+      });
+    }
+    // thanh trên: cuộn xuống thì ẩn, cuộn lên thì hiện
+    hero.classList.toggle("off", y > innerHeight);
+    top.classList.toggle("hide", y > lastY && y > 240);
+    lastY = y;
+    // menu đang chọn
+    let cur = -1; secs.forEach((el, i) => { if (el && el.getBoundingClientRect().top < innerHeight * .45) cur = i; });
+    links.forEach((a, i) => a.classList.toggle("on", i === cur));
+  }
+  addEventListener("scroll", () => { if (!tick) { tick = true; requestAnimationFrame(frame); } }, {passive: true});
+  function hh() { document.documentElement.style.setProperty("--hh", top.offsetHeight + "px"); }
+  addEventListener("resize", () => { hh(); frame(); }); hh(); frame();
+})();
+
+/* ===== quả địa cầu thật: ảnh vệ tinh Esri, không tự quay; cuộn trang để bay về Tây Nguyên ===== */
+(function () {
+  const sec = document.getElementById("globe-sec"), nogl = document.getElementById("nogl");
+  if (typeof maplibregl === "undefined") { nogl.style.display = "grid"; return; }
+  let map;
+  try {
+    map = new maplibregl.Map({
+      container: "globe",
+      style: {
+        version: 8,
+        projection: {type: "globe"},
+        sources: {
+          sat: {type: "raster", tileSize: 256, maxzoom: 17,
+            tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"],
+            attribution: "Imagery © Esri, Maxar, Earthstar Geographics"},
+          lab: {type: "raster", tileSize: 256, maxzoom: 17,
+            tiles: ["https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}"]}
+        },
+        layers: [
+          {id: "bg", type: "background", paint: {"background-color": "#02070b"}},
+          {id: "sat", type: "raster", source: "sat", paint: {"raster-fade-duration": 0}},
+          {id: "lab", type: "raster", source: "lab", minzoom: 4.5, paint: {"raster-opacity": 0.85, "raster-fade-duration": 0}}
+        ],
+        sky: {"atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 1, 7, 0]}
+      },
+      center: [45, 15], zoom: 0.7, pitch: 0, bearing: 0,
+      interactive: false, attributionControl: {compact: true},
+      pixelRatio: Math.min(window.devicePixelRatio || 1, 1.25), fadeDuration: 0, maxTileCacheSize: 80
+    });
+  } catch (e) { nogl.style.display = "grid"; return; }
+
+  // vị trí các vùng trồng (điểm đại diện)
+  const pins = [
+    {t: "Cà phê · Buôn Ma Thuột", c: "#d6342c", ll: [108.04, 12.67]},
+    {t: "Sầu riêng · Lâm Đồng, Đắk Nông", c: "#c9d34a", ll: [107.75, 11.75]},
+    {t: "Cao su · Bình Phước", c: "#ffffff", ll: [106.9, 11.55]}
+  ];
+  const pinEls = pins.map(p => {
+    const el = document.createElement("div"); el.className = "pin"; el.style.opacity = 0; el.style.transition = "opacity .5s";
+    el.innerHTML = `<i style="background:${p.c}"></i>${p.t}`;
+    new maplibregl.Marker({element: el, anchor: "left", offset: [8, 0]}).setLngLat(p.ll).addTo(map);
+    return el;
+  });
+
+  const A = {lng: 45, lat: 15, z: 0.7}, B = {lng: 107.9, lat: 12.2, z: 6.6};
+  const ease = t => t * t * (3 - 2 * t), lerp = (a, b, t) => a + (b - a) * t;
+  const gh = document.getElementById("gh"), gp = document.getElementById("gp"), bar = document.getElementById("gprog");
+  const STAGE = [
+    [0.00, "Hành tinh của chúng ta", "Nơi sự sống được khơi nguồn một cách kỳ diệu từ những hạt mầm bé nhỏ"],
+    [0.30, "Châu Á – Thái Bình Dương", "Việt Nam nằm ở rìa Biển Đông, khí hậu nhiệt đới gió mùa."],
+    [0.62, "Tây Nguyên và Đông Nam Bộ", "Đất đỏ bazan, mùa mưa và mùa khô rõ rệt."],
+    [0.88, "Vùng cà phê, sầu riêng, cao su", "Nơi độ ẩm đất quyết định mùa vụ."]
+  ];
+  const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  let target = 0, cur = 0, raf = 0;
+  function render(p) {
+    const e = ease(p);
+    const z = lerp(A.z, B.z, Math.pow(e, 1.1));
+    map.jumpTo({center: [lerp(A.lng, B.lng, e), lerp(A.lat, B.lat, e)], zoom: z});
+    bar.style.height = (p * 100) + "%";
+    let s = STAGE[0]; for (const x of STAGE) if (p >= x[0]) s = x;
+    if (gh.textContent !== s[1]) {
+      gh.style.opacity = gp.style.opacity = 0;
+      setTimeout(() => { gh.textContent = s[1]; gp.textContent = s[2]; gh.style.opacity = gp.style.opacity = 1; }, 220);
+    }
+    pinEls.forEach(el => el.style.opacity = p > 0.9 ? 1 : 0);
+  }
+  gh.style.transition = gp.style.transition = "opacity .35s ease";
+  // đọc vị trí cuộn, rồi tiến dần tới đó (quán tính) để bay mượt, không giật
+  function frame() {
+    raf = 0;
+    cur += (target - cur) * (reduce ? 1 : 0.085);
+    if (Math.abs(target - cur) < 0.0004) cur = target;
+    render(cur);
+    if (cur !== target) raf = requestAnimationFrame(frame);
+  }
+  function update() {
+    const r = sec.getBoundingClientRect(), max = sec.offsetHeight - innerHeight;
+    target = Math.min(1, Math.max(0, -r.top / max));
+    if (!raf) raf = requestAnimationFrame(frame);
+  }
+  addEventListener("scroll", update, {passive: true});
+  addEventListener("resize", () => { map.resize(); update(); });
+  map.on("load", () => { cur = target = 0; update(); });
+  map.on("error", () => {});
+})();
+</script>
+</body>
+</html>

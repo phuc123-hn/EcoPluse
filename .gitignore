@@ -1,0 +1,25 @@
+# Bí mật: KHÔNG bao giờ đưa lên git
+.env
+.env.*
+!.env.example
+
+# Dữ liệu chạy thật (nằm trên ổ đĩa của Railway, không phải trong git)
+data/
+cache/
+*.db
+*.db-journal
+*.h5
+*.part
+
+# Python / công cụ
+__pycache__/
+*.pyc
+.venv/
+venv/
+.vscode/
+.idea/
+.DS_Store
+*.db-wal
+*.db-shm
+.pytest_cache/
+.qodo/

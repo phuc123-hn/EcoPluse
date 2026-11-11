@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+httpx
+python-dotenv
+pydantic
+h5py
+numpy
+requests
+Pillow
+pyproj
+shapely
+edge-tts

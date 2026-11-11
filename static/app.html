@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>EcoPulse</title>
+<link rel="icon" type="image/png" href="/static/img/logo.png">
+<style>
+:root{--g:#2f9e5a;--gd:#1f7a43;--b:#2a9fe0;--bl:#e7f4fc;--gl:#e9f6ee;--ink:#17323a;--mute:#5d7279;--line:#d8e4e8;--bad:#c0392b;--bg:#fff}
+[data-theme=dark]{--bg:#0e1a1f;--ink:#e4eff2;--mute:#9bb1b8;--line:#27414a;--gl:#12291d;--bl:#0f2a3b;--gd:#6fdc9d;--bad:#ff8374;color-scheme:dark}
+*{box-sizing:border-box}html,body{height:100%;margin:0;font:15px/1.5 "Be Vietnam Pro",system-ui,sans-serif;color:var(--ink);background:var(--bg)}
+header{display:flex;align-items:center;gap:12px;padding:10px 18px;border-bottom:3px solid;border-image:linear-gradient(90deg,var(--g),var(--b)) 1}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:20px;color:var(--gd)}.logo b{color:var(--b)}
+#who{margin-left:auto;font-size:13px;color:var(--mute)}
+.shell{display:flex;height:calc(100% - 59px);min-height:0}.pane{flex:1;overflow:auto;min-width:0;min-height:0}
+nav{display:flex;flex-direction:column;gap:4px;padding:12px;width:230px;flex:none;overflow:auto;background:var(--gl);border-right:1px solid var(--line)}
+nav.hide{display:none}nav button{background:transparent;color:var(--ink);text-align:left;font-weight:500}nav button:hover{background:var(--bg)}nav button.on{background:var(--g);color:#fff;font-weight:600}
+@media(max-width:760px){.shell{flex-direction:column}nav{flex-direction:row;width:auto;border-right:0;border-bottom:1px solid var(--line)}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:14px}.stat{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column}.stat b{font-size:26px;color:var(--gd)}
+.bar{display:flex;justify-content:space-between;padding:4px 0}h3{margin:14px 0 8px;font-size:15px}
+.thread{display:flex;flex-direction:column;gap:6px;max-height:50vh;overflow:auto;margin-bottom:10px}.bub{max-width:80%;padding:8px 12px;border-radius:12px;background:var(--bl);align-self:flex-start}
+.bub.me{background:var(--gl);align-self:flex-end}.bub small{display:block;color:var(--mute);font-size:11px}.rs{display:flex;gap:8px;align-items:center;padding:4px 0}
+button{font:inherit;font-weight:600;padding:8px 14px;border-radius:8px;border:0;background:var(--b);color:#fff;cursor:pointer;white-space:nowrap}
+button.g{background:var(--g)}button.r{background:var(--bg);color:var(--bad);border:1px solid var(--bad)}button.s{padding:4px 10px;font-size:13px}
+button:focus-visible,input:focus-visible{outline:3px solid var(--b);outline-offset:2px}
+input,select{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;width:100%;background:var(--bg);color:var(--ink)}
+main{padding:18px;max-width:980px;margin:0 auto}.full{padding:0;max-width:none;height:100%}iframe{width:100%;height:100%;border:0}
+.card{border:1px solid var(--line);border-radius:12px;padding:14px;margin:0 0 12px;background:var(--bg)}
+.auth{max-width:380px;margin:40px auto}.row{display:grid;gap:8px;margin:10px 0}.two{grid-template-columns:1fr 1fr}
+.tabs{display:flex;gap:6px;margin-bottom:6px}.tabs button{flex:1;background:var(--bl);color:var(--ink)}.tabs button.on{background:var(--b);color:#fff}
+.chip{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.mute{color:var(--mute);font-size:13px}.err{color:var(--bad);font-size:13px;min-height:18px}.ok{color:var(--gd)}
+.hd{display:flex;justify-content:space-between;gap:8px;align-items:start}h2{margin:4px 0 12px;font-size:18px;color:var(--gd)}
+table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-size:14px}
+.dot{background:var(--bad);color:#fff;border-radius:9px;padding:0 6px;font-size:12px;margin-left:4px}.unread{border-left:4px solid var(--b)}
+ul{margin:4px 0;padding-left:18px}.hide{display:none}code{background:var(--bl);padding:2px 8px;border-radius:6px;font-size:16px}
+.pw{position:relative}.pw input{padding-right:46px}.eye{position:absolute;right:4px;top:50%;transform:translateY(-50%);background:transparent;color:var(--ink);padding:4px 8px;font-size:16px}
+.lk{color:var(--b);font-weight:600;text-decoration:none}.auth .tabs.sub{margin:0 0 10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;margin:12px 0}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;background:var(--gl);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;font-weight:600;white-space:normal}
+.tile:hover{border-color:var(--g)}.tile .mute{font-weight:400}
+details.card summary{cursor:pointer;font-weight:600;color:var(--gd)}details.card[open] summary{margin-bottom:8px}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:5px 0;border-bottom:1px dashed var(--line)}.kv:last-child{border:0}
+.adv{border-left:5px solid var(--g);padding:6px 12px;margin-top:8px;background:var(--gl);border-radius:0 8px 8px 0}
+.adv.warn{border-color:#e0a100;background:rgba(224,161,0,.12)}.adv.bad{border-color:var(--bad);background:rgba(192,57,43,.10)}
+.contact{display:flex;align-items:center;gap:12px;width:100%;text-align:left;background:var(--bg);color:var(--ink);border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 8px;font-weight:400;white-space:normal}
+.contact:hover{border-color:var(--g)}.ct{display:flex;flex-direction:column;flex:1;min-width:0}.ct b{font-weight:700}
+.last{opacity:.8;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.on-dot,.off-dot{flex:none;width:11px;height:11px;border-radius:50%;display:inline-block}.on-dot{background:#2ecc71;box-shadow:0 0 0 3px rgba(46,204,113,.25)}.off-dot{background:#9aa7ad}
+.bub{white-space:pre-wrap;word-break:break-word}.sp{background:transparent;color:var(--ink);padding:0 4px;font-size:14px;margin-left:6px;vertical-align:middle}
+.emo{display:flex;flex-wrap:wrap;gap:4px;margin:6px 0}.emo button{background:var(--bl);color:inherit;padding:2px 8px;font-size:18px}
+.dot.hide{display:none}textarea{font:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:8px;width:100%;background:var(--bg);color:var(--ink);min-height:90px;resize:vertical}
+/* Chat workspace: farm context | conversation | environmental analytics */
+#view.chat-layout{max-width:none;width:100%;height:100%;margin:0;padding:14px;overflow:hidden}
+.pane.chat-pane{overflow:hidden;min-height:0}
+.chat-workspace{display:grid;grid-template-columns:minmax(210px,250px) minmax(380px,1fr) minmax(230px,280px);gap:14px;width:100%;height:100%;min-height:0}
+.farm-panel,.analytics-panel{min-width:0;min-height:0;overflow-y:auto;overflow-x:hidden;display:flex;flex-direction:column;gap:10px;padding:2px 3px 12px;scrollbar-width:thin}
+.panel-heading{margin:0 0 2px;color:var(--gd);font-size:14px;font-weight:700;letter-spacing:.04em}
+.panel-subheading{margin:2px 0 0;font-size:14px}
+.panel-card{min-width:0;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--gl)}
+.panel-card p{margin:3px 0;color:var(--mute);font-size:13px}
+.panel-card strong{font-size:22px;color:var(--gd)}
+.panel-card .small-value{font-size:18px}
+.panel-card select{margin-top:7px;font-size:13px}
+.panel-kv{display:flex;justify-content:space-between;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line);font-size:12px}
+.panel-kv:last-child{border-bottom:0}
+.panel-muted{color:var(--mute);font-size:12px}
+.panel-status{display:inline-flex;align-items:center;width:max-content;max-width:100%;padding:4px 9px;border-radius:999px;background:rgba(224,161,0,.13);color:#bd7611;font-size:12px;font-weight:600}
+.panel-status.good{background:rgba(47,158,90,.13);color:var(--gd)}
+.panel-empty{padding:12px;border:1px dashed var(--line);border-radius:10px;color:var(--mute);font-size:12px}
+.chat-panel{display:flex;flex-direction:column;gap:9px;min-width:0;min-height:0;height:100%;overflow:hidden}
+.chat-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none}
+.chat-panel-heading h2{margin:0}
+.cbox{position:relative;display:flex;flex-direction:column;flex:1 1 auto;width:100%;height:100%;min-height:0;max-height:none;margin:0;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:var(--bg)}
+.chd{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--line);flex:none}.chd .who{flex:1;min-width:0}.chd .who b{display:block}
+.cmid{position:relative;flex:1;min-height:0;display:flex}
+.bgrow{position:absolute;z-index:3;top:8px;left:8px;right:8px;display:flex;gap:8px;padding:8px;border-radius:12px;background:color-mix(in srgb,var(--bg) 90%,transparent);box-shadow:0 4px 14px rgba(0,0,0,.35);overflow-x:auto}.bgrow.hide,.tobottom.hide{display:none}
+.tobottom{position:absolute;z-index:2;right:14px;bottom:12px;border-radius:999px;padding:6px 14px;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+.chd .who b,.chd .who .mute{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bgopt{flex:none;width:54px;height:54px;border-radius:10px;border:2px solid var(--line);background-size:cover;background-position:center;background-color:var(--gl);color:var(--ink);font-size:11px;padding:2px;white-space:normal}
+.bgopt.on{border-color:var(--g);box-shadow:0 0 0 2px var(--g)}
+.cbox .thread{flex:1;min-width:0;min-height:0;max-height:none;margin:0;padding:14px;overflow-y:auto;background-color:var(--gl)}
+.cbox .bub{box-shadow:0 1px 2px rgba(0,0,0,.18)}.cbox .bub:not(.me){background:color-mix(in srgb,var(--bg) 92%,transparent)}
+.cbox .bub.me{background:var(--g);color:#fff}.cbox .bub.me small,.cbox .bub.me .sp{color:rgba(255,255,255,.9)}
+.cbox .empty{align-self:center;margin:auto;padding:8px 14px;border-radius:999px;background:color-mix(in srgb,var(--bg) 88%,transparent);color:var(--mute);font-size:14px}
+.cft{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--line);flex:none;background:var(--bg)}.cft input{flex:1}
+@media(max-width:1180px){.chat-workspace{grid-template-columns:minmax(190px,220px) minmax(340px,1fr)}.analytics-panel{display:none}}
+@media(max-width:900px){.chat-workspace{grid-template-columns:minmax(0,1fr)}.farm-panel,.analytics-panel{display:none}}
+@media(max-width:700px){#view.chat-layout{padding:8px}.chat-workspace{gap:8px}.cbox{border-radius:12px}.chd{gap:6px;padding:8px}.bgopt{width:46px;height:46px}.cft{padding:8px}}
+@media(max-height:620px){#view.chat-layout{padding:8px}.chat-workspace{gap:8px}.chat-panel{gap:6px}}
+
+
+main.wide{max-width:1100px}
+.nw{display:grid;grid-template-columns:150px minmax(0,1fr) 175px;gap:18px;align-items:start;font-size:13.5px}
+.nw aside{position:sticky;top:0;font-size:12.5px}.nw aside h4{margin:14px 0 6px;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--gd)}.nw aside h4:first-child{margin-top:0}
+.nw aside a{display:block;padding:3px 0;color:var(--ink);text-decoration:none;cursor:pointer}.nw aside a:hover,.nw aside a.on{color:var(--g)}
+.nw h1{font-size:20px;line-height:1.3;margin:8px 0 4px}.nw h3{font-size:15px;margin:18px 0 6px;scroll-margin-top:8px}.nw p{margin:6px 0}.nw .card{scroll-margin-top:8px}
+.nw .lead{font-size:14px;border-left:3px solid var(--g);padding-left:10px;margin:10px 0}
+.nwf{margin:10px 0;text-align:center}.nwf img{display:block;margin:0 auto;max-width:100%;height:auto;max-height:360px;border-radius:10px}.nwf.dg img{background:#fff}
+.nwt{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 12px}.nwt button:not(.g){background:var(--bl);color:var(--ink)}
+.nwg{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}.nwc{cursor:pointer;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--bg)}.nwc:hover{border-color:var(--g)}
+.nwc .nwf{margin:0;aspect-ratio:16/9;background:var(--gl)}.nwc .nwf img{width:100%;height:100%;max-height:none;border-radius:0;object-fit:cover}.nwc .nwf.dg img{object-fit:contain}.nwc .b{padding:10px 12px}.nwc h3{font-size:14.5px;margin:6px 0 2px}.nwc p{font-size:12.5px;color:var(--mute);margin:4px 0 0}
+.nwc.big{grid-column:1/-1;display:grid;grid-template-columns:1.2fr 1fr}.nwc.big .nwf{height:100%;aspect-ratio:auto;min-height:170px}.nwtag{display:inline-block;font-size:11px;font-weight:700;padding:2px 8px;border-radius:99px;background:var(--gl);color:var(--gd)}
+@media(max-width:900px){.nw{grid-template-columns:1fr}.nw aside{position:static}.nwc.big{grid-template-columns:1fr}}
+
+.pl{padding:16px}.plh{margin:16px 0 8px;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--gd)}
+.plb{display:inline-block;font-size:12px;font-weight:700;padding:2px 10px;border-radius:99px;background:var(--gl);color:var(--gd)}.plb.wait{background:#5a3b22;color:#ffb27a}.plb.ok{background:var(--bl);color:var(--b)}
+.plc{cursor:pointer;margin-top:12px}.plc:hover{border-color:var(--g)}.plc>div{margin-top:6px}.plf{border-top:1px solid var(--line);padding-top:8px;align-items:center}
+.plph{height:200px;border-radius:12px;overflow:hidden;background:var(--gl)}.plph.empty{display:flex;align-items:center;justify-content:center;height:110px;border:1px dashed var(--line);color:var(--mute);font-size:13px}.plimg{width:100%;height:100%;object-fit:cover;display:block}
+.pl2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.pl2 .plph{height:auto;background:none;text-align:center}.pl2 .plph.empty{height:110px}.pl2 .plimg{width:auto;max-width:100%;height:auto;max-height:320px;margin:0 auto;border-radius:12px}
+@media(max-width:760px){.pl2{grid-template-columns:1fr}}
+
+main.wide2{max-width:none}
+.plph.empty{flex-direction:column;gap:2px;height:200px;cursor:pointer}.plph.empty:hover{border-color:var(--g)}.plus{font-size:56px;line-height:1;font-weight:300;color:var(--g)}
+.plg{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:14px}.plg .plc{margin:0}
+.pl3{display:grid;grid-template-columns:minmax(0,7fr) minmax(0,3fr);gap:18px;align-items:start}
+.pls .plph{height:auto;background:none;text-align:center}.pls .plimg{width:auto;max-width:100%;height:auto;max-height:340px;margin:0 auto;border-radius:12px}.pls .plph.empty{height:170px;background:var(--gl)}
+.hc svg{width:100%;height:auto;display:block}.hc text{fill:var(--mute);font-size:11px}.hc .ln{stroke:var(--line)}
+@media(max-width:900px){.pl3{grid-template-columns:1fr}}
+
+.nwm{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}.nwm button{padding:14px;border-radius:12px;background:var(--bl);color:var(--ink);font-weight:600}.nwm button.g{background:var(--g);color:#fff}
+.stat.sw{background:rgba(230,170,50,.18)}.stat.sd{background:rgba(90,120,160,.22)}
+.nwrow{display:flex;justify-content:space-between;gap:12px;margin-top:10px}.nwrow .rcol{text-align:right;flex:none;max-width:50%}.nwrow a{color:var(--g)}
+.pl label{display:block;margin:12px 0 4px;font-weight:600;font-size:13px}.pl input,.pl select{width:100%}
+.ed{border:1px solid var(--line);border-radius:12px;overflow:hidden}.edt{display:flex;gap:4px;padding:6px 8px;border-bottom:1px solid var(--line);flex-wrap:wrap}.edt button{background:none;color:var(--ink);padding:4px 10px}
+.edb{min-height:240px;padding:12px;outline:none}.edb:empty:before{content:attr(data-ph);color:var(--mute)}.edb img,.nwb img{max-width:100%;height:auto;border-radius:10px;margin:8px 0}.edb h3,.nwb h3{font-size:15px;margin:14px 0 6px}
+.card.imp{border-left:4px solid #e0443a}.plb.red{background:rgba(224,68,58,.2);color:#ff8374}.nwt .dot{display:inline-block;position:static;vertical-align:middle}
+.nwb .nwh{font-weight:700;margin:16px 0 4px;scroll-margin-top:8px}.nwb .nwh.l1{font-size:15px}.nwb .nwh.l2{font-size:14px;padding-left:10px}.nwb .nwh.l3{font-size:13.5px;font-weight:600;padding-left:20px}.nwb .nwh.l4,.nwb .nwh.l5{font-size:13.5px;font-weight:600;padding-left:30px}
+.nw>aside:last-child{max-height:calc(100vh - 24px);overflow:auto}.nw aside a{overflow-wrap:anywhere}
+.pl textarea{width:100%;resize:vertical}.nwsrc{margin-top:18px;padding-top:10px;border-top:1px solid var(--line);font-size:12.5px;color:var(--mute)}.nwsrc b{color:var(--ink)}.nwsrc div{margin-top:4px;overflow-wrap:anywhere}.nwsrc a{color:var(--g)}
+#botb{position:fixed;right:18px;bottom:18px;z-index:50;border-radius:99px;padding:12px 16px;background:var(--g);color:#fff;box-shadow:0 4px 14px rgba(0,0,0,.35);font-weight:700}
+#botp{position:fixed;right:18px;bottom:70px;z-index:50;width:min(400px,calc(100vw - 24px));height:min(560px,calc(100vh - 100px));resize:both;min-width:300px;min-height:340px;max-width:95vw;max-height:95vh;display:none;flex-direction:column;background:var(--bg);border:1px solid var(--line);border-radius:14px;box-shadow:0 8px 28px rgba(0,0,0,.4);overflow:hidden}
+#botp.on{display:flex}#botp header{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;font-weight:700}
+#botm{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:8px}#botm .bub{max-width:92%;font-size:13px;white-space:normal}#botf{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line)}#botf input{flex:1}
+.bub.bot{border:1px dashed var(--line)}
+#bach{touch-action:none;cursor:grab}#bach:active{cursor:grabbing}#bacx{position:fixed;left:0;bottom:10px;z-index:50;padding:1px 9px;border-radius:99px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;line-height:1.7;text-align:center;cursor:pointer;opacity:.5;transform:translateX(-220px)}#bacx:hover{opacity:1}
+body.has-bac #botb{display:none}
+#botp header{gap:8px}#botp header>span:first-child{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}#botp header>span:last-child{display:flex;flex-direction:row;gap:6px;flex:none}#botp header button{width:auto;margin:0;padding:4px 10px;line-height:1.2}
+#botp header{cursor:move;user-select:none;touch-action:none}
+#bac{position:fixed;bottom:10px;left:0;width:170px;height:220px;z-index:49;pointer-events:none;transform:translateX(-220px)}#bach{position:fixed;bottom:12px;left:0;width:90px;height:150px;z-index:49;cursor:pointer;transform:translateX(-220px)}
+#bacb{position:fixed;bottom:205px;width:200px;display:none;z-index:49;background:#fff;color:#222;border-radius:14px;padding:8px 12px;font-size:13px;font-weight:600;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer}
+#bacb.on{display:block}#bacb small{font-weight:400;color:#666}#bacb:after{content:"";position:absolute;bottom:-8px;left:50%;margin-left:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
+</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+</head><body>
+<header><div class="logo" style="cursor:pointer" title="Trang giới thiệu" onclick="location.href='/'"><img src="/static/img/logo.png" alt="EcoPulse" width="38" height="38" style="flex:none;width:38px;height:38px;object-fit:cover;clip-path:circle(46.5%)"><span>Eco<b>Pulse</b></span></div><span id="who"></span><button class="s g" id="lng" title="Đổi ngôn ngữ"></button><button class="s" id="thm" title="Đổi giao diện sáng/tối"></button><button class="s r hide" id="out">Thoát</button></header>
+<div class="shell"><nav id="nav" class="hide"></nav><div class="pane">
+<main id="auth" class="auth"><div class="tabs"><button id="t1" class="on">Đăng nhập</button><button id="t2">Đăng ký</button></div><div class="card" id="box"></div><datalist id="provs"></datalist></main>
+<div id="lim" class="card hide" style="margin:10px 0"></div>
+<main id="view" class="hide"></main></div></div>
+<script>
+const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+let me,tab,plotSel=null,chatPeer=null,chatFarmPlot=null,prefill="",annTab="in",usrQ="",poll=null,curMsgs=[],am="login",pend=null;
+const LIM=()=>!!(me&&me.limited);   // phiên "Quên mật khẩu": chỉ xem Thửa của tôi
+const api=async(p,m="GET",b)=>{const r=await fetch(p,{method:m,headers:b?{"Content-Type":"application/json"}:{},body:b?JSON.stringify(b):undefined});
+  const j=await r.json().catch(()=>({}));if(r.status===401&&me&&!p.startsWith("/auth/")){location.reload();return new Promise(()=>{})}
+  if(!r.ok)throw new Error(typeof j.detail==="string"?j.detail:j.detail?"Thông tin nhập chưa hợp lệ":"Lỗi "+r.status);return j};
+const when=t=>{if(!t)return"";const d=new Date(/Z$|[+-]\d\d:?\d\d$/.test(t)?t:t.replace(" ","T")+"Z");return isNaN(d)?t:d.toLocaleString("vi-VN",{hour:"2-digit",minute:"2-digit",day:"2-digit",month:"2-digit",year:"numeric"})};
+const ago=m=>m==null?"":m<1?"vừa xong":m<60?m+" phút":m<1440?Math.floor(m/60)+" giờ":Math.floor(m/1440)+" ngày";
+const age=t=>{const d=Math.max(0,Math.floor((Date.now()-new Date(t))/864e5));return d+" ngày trước"};
+
+/* ---------- đăng nhập / đăng ký ---------- */
+const eye=id=>`<div class="pw"><input id="${id}" type="password" autocomplete="${id==="pw"&&am==="login"?"current-password":"new-password"}" placeholder="Mật khẩu (từ 8 ký tự)"><button type="button" class="eye" data-eye="${id}" title="Hiện mật khẩu">👁</button></div>`;
+const where=p=>`<div class="row"><input id="${p}p" list="provs" placeholder="Tỉnh / thành phố" autocomplete="off"><input id="${p}w" placeholder="Xã / phường" autocomplete="off"></div><button type="button" class="s g" data-gps="${p}">📍 Dùng vị trí hiện tại</button> <span class="mute" id="${p}m">Chỉ lấy tỉnh và xã/phường, không lưu tọa độ.</span>`;
+function geoFill(p){const m=$(p+"m");if(!navigator.geolocation){m.textContent="Thiết bị không hỗ trợ lấy vị trí. Hãy nhập tay.";return}
+  m.textContent="Đang lấy vị trí…";
+  navigator.geolocation.getCurrentPosition(async pos=>{try{const r=await api(`/geo/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+    $(p+"p").value=r.province;$(p+"w").value=r.ward;m.textContent=r.ward?"Đã điền theo vị trí hiện tại. Bạn kiểm tra lại nếu cần.":"Chưa xác định được xã/phường, hãy nhập tay."}catch(e){m.textContent=e.message}},
+    ()=>{m.textContent="Không lấy được vị trí. Hãy nhập tay."},{timeout:10000})}
+function drawAuth(){const L=am==="login"||am==="forgot";$("t1").classList.toggle("on",L);$("t2").classList.toggle("on",!L);let h="";
+  const who=`<div class="tabs sub"><button type="button" class="${am==="reg"?"on":""}" data-am="reg">Nông dân</button><button type="button" class="${am==="regA"?"on":""}" data-am="regA">Quản lý xã/phường</button></div>`;
+  if(am==="login")h=`<div class="row"><input id="id" placeholder="Tên (nông dân) hoặc email (quản lý)" autocomplete="username">${eye("pw")}</div><div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Đăng nhập</button><p><a href="#" class="lk" data-am="forgot">Quên mật khẩu?</a></p>`;
+  else if(am==="forgot")h=`<b>Quên mật khẩu</b><p class="mute">Chỉ dành cho nông dân: nhập tên đã đăng ký để <b>xem thửa của bạn</b> (chế độ chỉ xem). Muốn thêm/sửa thửa, nhắn tin, đọc kiến thức hoặc hỏi Bác Nông thì cần nhập mật khẩu.</p><div class="row"><input id="fn" placeholder="Họ và tên đã đăng ký"></div><div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Xem thửa của tôi</button><p><a href="#" class="lk" data-am="login">← Quay lại đăng nhập</a></p>`;
+  else if(am==="reg")h=who+`<div class="row"><input id="rn" placeholder="Họ và tên" autocomplete="name"><div class="err" id="nh"></div>${eye("pw")}</div>${where("r")}<div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Tạo tài khoản</button><p class="mute">Tên đăng nhập là họ tên của bạn nên không được trùng với người khác.</p>`;
+  else if(am==="regA")h=who+`<div class="row"><input id="an" placeholder="Họ và tên" autocomplete="name"><input id="aph" placeholder="Số điện thoại" inputmode="tel" autocomplete="tel"><input id="aem" placeholder="Email" type="email" autocomplete="email">${eye("pw")}</div>${where("a")}<div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Gửi mã OTP về email</button><p class="mute">Mã xác nhận sẽ được gửi về email bạn nhập.</p>`;
+  else if(am==="otp")h=`<b>Nhập mã xác nhận</b><p class="mute">Mã gồm 6 số đã được gửi tới <b>${esc(pend.email)}</b>.${pend.emailed?"":" Máy chủ chưa cấu hình gửi email, mã đang được in ở cửa sổ chạy server (chế độ thử nghiệm)."}</p><div class="row"><input id="oc" placeholder="Mã OTP" inputmode="numeric" maxlength="8" autocomplete="one-time-code"></div><div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Xác nhận</button><p><a href="#" class="lk" id="resend">Gửi lại mã</a> · <a href="#" class="lk" data-am="regA">Sửa thông tin</a></p>`;
+  $("box").innerHTML=h;bindAuth()}
+function bindAuth(){const b=$("box");
+  b.querySelectorAll("[data-am]").forEach(x=>x.onclick=e=>{e.preventDefault();am=x.dataset.am;drawAuth()});
+  b.querySelectorAll("[data-eye]").forEach(x=>x.onclick=()=>{const i=$(x.dataset.eye),s=i.type==="password";i.type=s?"text":"password";x.textContent=s?"🙈":"👁";x.title=s?"Ẩn mật khẩu":"Hiện mật khẩu"});
+  b.querySelectorAll("[data-gps]").forEach(x=>x.onclick=()=>geoFill(x.dataset.gps));
+  b.querySelectorAll("input").forEach(i=>i.onkeydown=e=>{if(e.key==="Enter"&&$("go"))$("go").click()});
+  if($("rn"))$("rn").onblur=async()=>{const v=$("rn").value.trim();$("nh").textContent="";if(v.length<2)return;try{const r=await api("/auth/name-free?name="+encodeURIComponent(v));if(!r.free)$("nh").textContent="Tên này đã có người dùng. Hãy thêm số hoặc tên thôn/ấp để phân biệt."}catch{}};
+  if($("resend"))$("resend").onclick=async e=>{e.preventDefault();try{const r=await api("/auth/admin/start","POST",pend.body);pend.emailed=r.emailed;$("aerr").textContent="Đã gửi lại mã."}catch(x){$("aerr").textContent=x.message}};
+  if($("go"))$("go").onclick=submitAuth}
+async function submitAuth(){const bt=$("go"),er=$("aerr");er.textContent="";bt.disabled=true;
+  try{if(am==="login")await api("/auth/login","POST",{ident:$("id").value,password:$("pw").value});
+    else if(am==="forgot")await api("/auth/forgot","POST",{name:$("fn").value});
+    else if(am==="reg")await api("/auth/register","POST",{full_name:$("rn").value,password:$("pw").value,province:$("rp").value,ward:$("rw").value});
+    else if(am==="regA"){const body={full_name:$("an").value,phone:$("aph").value.trim(),email:$("aem").value.trim(),province:$("ap").value,ward:$("aw").value,password:$("pw").value};
+      const r=await api("/auth/admin/start","POST",body);pend={email:body.email,body,emailed:r.emailed};am="otp";drawAuth();return}
+    else if(am==="otp"){const r=await api("/auth/admin/verify","POST",{email:pend.email,code:$("oc").value});
+      if(r.pending){$("box").innerHTML='<b>Đã gửi đăng ký</b><p class="mute">Email của bạn đã được xác nhận. Tài khoản đang chờ quản lý tỉnh duyệt. Sau khi được duyệt, bạn đăng nhập bằng email và mật khẩu đã đăng ký.</p><button class="g" type="button" data-am="login" style="width:100%">Về trang đăng nhập</button>';bindAuth();return}}
+    await boot()}catch(e){er.textContent=e.message;bt.disabled=false}}
+$("t1").onclick=()=>{am="login";drawAuth()};$("t2").onclick=()=>{am="reg";drawAuth()};
+api("/geo/provinces").then(L=>$("provs").innerHTML=L.map(x=>`<option value="${esc(x)}">`).join("")).catch(()=>{});
+$("out").onclick=async()=>{await api("/auth/logout","POST");location.reload()};
+
+/* ---------- khung chính ---------- */
+const NAV={farmer:[["home","Tổng quan"],["map","Bản đồ"],["plots","Thửa của tôi"],["inbox","Thông báo"],["chat","Hộp thoại"],["know","Kiến thức"]],
+  admin_ward:[["home","Tổng quan"],["map","Bản đồ"],["users","Nông dân"],["inbox","Thông báo"],["chat","Hộp thoại"],["audit","Nhật ký"],["know","Kiến thức"]],
+  admin_province:[["home","Tổng quan"],["map","Bản đồ"],["users","Người dùng"],["inbox","Thông báo"],["chat","Hộp thoại"],["know","Xét duyệt bài"],["audit","Nhật ký"]]};
+const LIMNAV=[["plots","Thửa của tôi"]];
+function limBar(){const b=$("lim");if(!me.limited){b.classList.add("hide");return}
+  b.classList.remove("hide");
+  b.innerHTML='<b>Bạn đang ở chế độ chỉ xem</b><p class="mute">Bạn vào bằng "Quên mật khẩu" nên chỉ xem được thửa của mình. Nhập mật khẩu để dùng đầy đủ: thêm/sửa thửa, nhắn tin, kiến thức, Bác Nông.</p><div class="rs"><input id="limpw" type="password" placeholder="Mật khẩu" autocomplete="current-password"><button class="g s" id="limgo">Mở đầy đủ</button></div><div class="err" id="limerr"></div>';
+  const go=async()=>{$("limerr").textContent="";try{await api("/auth/upgrade","POST",{password:$("limpw").value});location.reload()}catch(e){$("limerr").textContent=e.message}};
+  $("limgo").onclick=go;$("limpw").onkeydown=e=>{if(e.key==="Enter")go()}}
+function badges(){document.querySelectorAll("#nav [data-b]").forEach(s=>{const n=s.dataset.b==="inbox"?me.unread:s.dataset.b==="know"?me.news_pending:s.dataset.b==="users"?me.pending_admins:me.unread_chat;s.textContent=n||"";s.classList.toggle("hide",!n)})}
+async function boot(){try{me=await api("/me")}catch{return}
+  $("auth").classList.add("hide");$("view").classList.remove("hide");$("nav").classList.remove("hide");$("out").classList.remove("hide");
+  $("who").textContent=`${me.name} · ${me.role_vi}`;
+  $("nav").innerHTML=(me.limited?LIMNAV:NAV[me.role]).map(([k,l])=>`<button data-k="${k}">${l}${k==="inbox"||k==="chat"||(k==="know"&&me.role==="admin_province")||(k==="users"&&me.role==="admin_province")?`<span class="dot hide" data-b="${k}"></span>`:""}</button>`).join("");badges();
+  $("nav").onclick=e=>{const k=e.target.closest("button")?.dataset.k;if(!k)return;if(k==="plots")plotSel=null;if(k==="chat")chatPeer=null;if(k==="know"){kArt=null;kTopic=null;kPv=null;kF=null;kAi=null;kMode=me.role==="farmer"?"lib":"mng"}show(k)};limBar();show(me.limited?"plots":"home")}
+setInterval(async()=>{if(me&&!document.hidden){try{me=await api("/me");badges()}catch{}}},45000);
+const stopPoll=()=>{clearInterval(poll);poll=null};
+async function show(k){tab=k;stopPoll();[...$("nav").children].forEach(b=>b.classList.toggle("on",b.dataset.k===k));const v=$("view"),pane=v.parentElement;
+  v.classList.toggle("full",k==="map");v.classList.remove("chat-layout","wide","wide2");pane.classList.remove("chat-pane");
+  if(k==="map"){v.innerHTML='<iframe src="/map" title="Bản đồ độ ẩm đất"></iframe>';return}
+  v.innerHTML='<p class="mute">Đang tải…</p>';try{v.innerHTML=await V[k]();if(k==="chat"&&chatPeer){v.classList.add("chat-layout");pane.classList.add("chat-pane")}bind(k)}catch(e){v.innerHTML=`<p class="err">${esc(e.message)}</p>`}}
+const re=async()=>{me=await api("/me");badges();return show(tab)};
+
+/* ---------- giao diện từng trang ---------- */
+const card=(t,v,s)=>`<div class="stat"><span class="mute">${t}</span><b>${v}</b><span class="mute">${s||"&nbsp;"}</span></div>`;
+const locCard=()=>`<div class="card"><b>Bạn ở xã/phường nào?</b><p class="mute">Để nhận thông báo và nhắn tin với cán bộ quản lý nơi bạn ở.</p>${where("l")}<div class="err" id="lerr"></div><button class="g" id="locsave">Lưu nơi ở</button></div>`;
+const near=s=>s.near?`<p class="err">Giá trị gần ngưỡng giữa ${esc(s.near[0])} và ${esc(s.near[1])} (sai số vệ tinh khoảng ±${Math.round(s.unc*100)}%). Hãy kiểm tra lại tại ruộng.</p>`:"";
+const adv=a=>`<div class="adv ${a.level}"><b>${esc(a.title)}</b><ul>${a.tips.map(t=>`<li>${esc(t)}</li>`).join("")}</ul></div>`;
+const dayName=(i,d)=>i===0?"Hôm nay":i===1?"Ngày mai":d.slice(8,10)+"/"+d.slice(5,7);
+const statusTxt=p=>p.online?"Đang hoạt động":"Không hoạt động"+(p.minutes==null?"":" · Hoạt động trước đó "+ago(p.minutes));
+const bubbles=L=>L.map((m,i)=>`<div class="bub ${m.mine?"me":""}${m.bot?" bot":""}">${esc(m.body)}<small>${m.bot?"Bác Nông (tự động) · ":""}${when(m.created_at)}<button class="s sp" data-say="${i}" title="Nghe tin nhắn">🔊</button></small></div>`).join("")||'<div class="empty">Chưa có tin nhắn. Hãy gửi lời chào!</div>';
+const contactCard=p=>`<button class="contact" data-peer="${p.id}"><span class="${p.online?"on-dot":"off-dot"}"></span><span class="ct"><b>${esc(p.name)}${p.phone?" - "+esc(p.phone):""}</b><span class="mute">${esc(p.role_vi)}${p.place?" · "+esc(p.place):""}</span><span class="mute">${statusTxt(p)}</span>${p.last?`<span class="last">${esc(p.last)}</span>`:""}</span>${p.unread?`<span class="dot">${p.unread}</span>`:""}</button>`;
+const bgPng=new Set(["1","4","5"]);
+const bgUrl=n=>`/static/img/vu-tru/vu-tru${n}.${bgPng.has(String(n))?"png":"jpg"}`;
+const bgCss=n=>n&&n!=="0"?`background-image:linear-gradient(rgba(0,0,0,.12),rgba(0,0,0,.12)),url(${bgUrl(n)});background-size:100% 100%,contain;background-repeat:no-repeat;background-position:center`:"";
+async function threadView(r){
+  curMsgs=r.messages;
+  const p=r.peer,cur=st.get("hn_chatbg")||"0";
+  let plots=[],selected=null;
+  try{
+    plots=await api("/plots");
+    if(plots.length){
+      const chosen=plots.find(x=>String(x.id)===String(chatFarmPlot))||plots[0];
+      chatFarmPlot=chosen.id;
+      try{selected=await api("/plots/"+chosen.id)}catch{}
+    }
+  }catch{}
+  const status=selected?.status,weather=selected?.weather;
+  const moisture=status&&Number.isFinite(Number(status.value))?Math.round(Number(status.value)*100):null;
+  const plotOptions=plots.map(x=>`<option value="${esc(x.id)}" ${selected&&String(x.id)===String(selected.id)?"selected":""}>${esc(x.name)}</option>`).join("");
+  const farmPanel=`<aside class="farm-panel">
+    <h3 class="panel-heading">NÔNG HỘ</h3>
+    <section class="panel-card"><b>${esc(me.place||"Chưa cập nhật địa phương")}</b><p>${esc(me.role_vi||"Tài khoản EcoPulse")}</p><div class="panel-kv"><span>Người dùng</span><b>${esc(me.name||"-")}</b></div></section>
+    <h3 class="panel-heading">KHU VỰC CANH TÁC</h3>
+    <section class="panel-card"><div class="panel-kv"><span>Số thửa đã khai báo</span><b>${plots.length}</b></div>${plots.length?`<label class="panel-muted" for="farmPlotSelect">Thửa đang theo dõi</label><select id="farmPlotSelect">${plotOptions}</select><p>${esc(selected?.crop||plots.find(x=>String(x.id)===String(chatFarmPlot))?.crop||"Chưa ghi loại cây")}</p>`:`<div class="panel-empty">Bạn chưa khai báo thửa đất. Thêm thửa để xem dữ liệu môi trường.</div><button type="button" class="s g" data-goto="plots">Thêm thửa</button>`}</section>
+    <h3 class="panel-heading">THỜI TIẾT</h3>
+    <section class="panel-card"><div class="panel-kv"><span>Nhiệt độ hiện tại</span><b>${weather?Math.round(weather.now)+"°C":"--°C"}</b></div><div class="panel-kv"><span>Độ ẩm không khí</span><b>${weather?weather.rh+"%":"--%"}</b></div><div class="panel-kv"><span>Tổng mưa dự báo 3 ngày</span><b>${weather?weather.rain.total+" mm":"-- mm"}</b></div><p>${weather?"Dữ liệu theo thửa đang chọn.":"Chưa lấy được dữ liệu thời tiết."}</p></section>
+    <div class="panel-muted">Thông tin được lấy từ hồ sơ thửa đất và dịch vụ hiện có của EcoPulse.</div>
+  </aside>`;
+  const analyticsPanel=`<aside class="analytics-panel">
+    <h3 class="panel-heading">PHÂN TÍCH</h3><h4 class="panel-subheading">Môi trường</h4>
+    <section class="panel-card"><p>Độ ẩm đất mặt</p><strong>${moisture===null?"--%":moisture+"%"}</strong><p>${status?esc(status.name):"Chưa có dữ liệu vệ tinh cho thửa này."}</p>${status?`<div class="panel-status ${status.level==="good"?"good":""}">${esc(status.act||"Đã có kết quả")}</div>`:""}</section>
+    <section class="panel-card"><p>Lượng mưa dự báo · 3 ngày</p><strong class="small-value">${weather?esc(weather.rain.total)+" mm":"-- mm"}</strong><p>${weather?"Tổng lượng mưa dự báo cho thửa đang chọn.":"Chưa cập nhật dự báo mưa."}</p></section>
+    <h4 class="panel-subheading">Xu hướng</h4>
+    <section class="panel-card"><b>Độ ẩm đất theo thời gian</b><div class="panel-empty" style="margin-top:9px">Chưa có chuỗi dữ liệu lịch sử để dựng biểu đồ. Không hiển thị đường xu hướng giả lập.</div></section>
+    <section class="panel-card"><b>Đánh giá dữ liệu</b><div class="panel-kv"><span>Thửa được chọn</span><b>${selected?esc(selected.name):"-"}</b></div><div class="panel-kv"><span>Ảnh vệ tinh</span><b>${status?.scene_time?esc(age(status.scene_time)):"Chưa có"}</b></div><p>Độ ẩm vệ tinh là ước tính lớp đất mặt; cần đối chiếu điều kiện thực tế tại ruộng.</p></section>
+  </aside>`;
+  return `<div class="chat-workspace">${farmPanel}
+    <section class="chat-panel"><div class="chat-panel-heading"><h2>Hộp thoại</h2><span class="panel-status good">Đang mở hội thoại</span></div>
+      <div class="cbox"><div class="chd"><button class="s" id="cback">← Danh sách</button><span class="${p.online?"on-dot":"off-dot"}"></span><div class="who"><b>${esc(p.name)}${p.phone?" - "+esc(p.phone):""}</b><div class="mute">${esc(p.role_vi)} · ${esc(p.place)} · ${statusTxt(p)}</div></div><button class="s" id="bgbtn" title="Đổi hình nền">🖼 Hình nền</button></div>
+      <div class="cmid"><div class="bgrow hide" id="bgrow">${["0",1,2,3,4,5].map(n=>`<button type="button" class="bgopt ${String(n)===cur?"on":""}" data-bg="${n}" title="${n==="0"?"Mặc định":"Hình "+n}" style="${n==="0"?"":`background-image:url(${bgUrl(n)})`}">${n==="0"?"Mặc định":""}</button>`).join("")}</div>
+      <div class="thread" id="thr" style="${bgCss(cur)}">${bubbles(curMsgs)}</div><button class="s tobottom hide" id="tobottom" title="Xuống tin mới nhất">↓ Tin mới nhất</button></div>
+      <div class="cft"><input id="mtext" placeholder="Nhập tin nhắn…" maxlength="1000" autocomplete="off"><button class="g" id="send">Gửi</button></div></div>
+      <p class="mute">Bấm 🔊 cạnh tin nhắn để nghe đọc thành giọng nói.</p>
+    </section>${analyticsPanel}</div>`
+}
+let audio=null;
+const viVoice=()=>new Promise(res=>{if(!("speechSynthesis" in window))return res(null);
+  const f=()=>speechSynthesis.getVoices().find(x=>x.lang&&x.lang.toLowerCase().replace("_","-").startsWith("vi"))||null;
+  if(f()||speechSynthesis.getVoices().length)return res(f());
+  const t=setTimeout(()=>res(f()),1200);speechSynthesis.onvoiceschanged=()=>{clearTimeout(t);res(f())}});
+async function speak(t,btn){if(audio){audio.pause();audio=null}if("speechSynthesis" in window)speechSynthesis.cancel();
+  const old=btn&&btn.textContent;if(btn)btn.textContent="⏳";
+  try{const v=await viVoice();   /* ưu tiên giọng tiếng Việt có sẵn trên máy; không có thì dùng giọng từ máy chủ */
+    if(v){const u=new SpeechSynthesisUtterance(t);u.lang="vi-VN";u.voice=v;speechSynthesis.speak(u);return}
+    const r=await fetch("/tts",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text:t})});
+    if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(typeof j.detail==="string"?j.detail:"Lỗi "+r.status)}
+    audio=new Audio(URL.createObjectURL(await r.blob()));await audio.play()}
+  catch(e){alert("Chưa đọc được tin nhắn: "+e.message)}
+  finally{if(btn)btn.textContent=old}}
+let upId=null,HIS=null;
+const phImg=(u,c)=>`<img class="${c}" src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()">`,place=p=>esc(p.place||[p.ward,p.province].filter(Boolean).join(" · ")),mst=s=>s&&Number.isFinite(Number(s.value))?Math.round(Number(s.value)*100)+"%":"--%",
+ plus=id=>LIM()?`<div class="plph empty"><span class="mute">Chưa có ảnh</span></div>`:`<div class="plph empty" data-up="${id}" role="button" tabindex="0" title="Bấm để tải ảnh lên"><span class="plus">+</span><span class="mute">Thêm ảnh thửa đất</span></div>`;
+const shrink=async f=>{try{const i=await createImageBitmap(f),r=Math.min(1,1600/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=Math.round(i.width*r);c.height=Math.round(i.height*r);c.getContext("2d").drawImage(i,0,0,c.width,c.height);return await new Promise(o=>c.toBlob(o,"image/jpeg",.85))}catch{return f}};
+const WD=["CN","T2","T3","T4","T5","T6","T7"];
+function hChart(H,k){const P=!H?[]:k==="s"?H.soil.map(x=>({l:new Date(x.t).toLocaleDateString("vi-VN",{day:"2-digit",month:"2-digit"}),v:Math.round(x.v*1000)/10})):H.days.map(d=>({l:WD[new Date(d.date+"T00:00:00").getDay()],v:k==="t"?d.tmean:d.rain})),u={t:"°C",r:" mm",s:"%"}[k];
+  if(P.length<(k==="s"?2:1)||P.some(x=>x.v==null))return `<p class="mute">${k==="s"?"Chưa đủ ảnh vệ tinh đã xử lý để vẽ lịch sử độ ẩm đất.":"Chưa lấy được dữ liệu lịch sử lúc này."}</p>`;
+  const vs=P.map(x=>x.v),mx=Math.max(...vs),mn=Math.min(...vs),lo=k==="t"?Math.floor(mn)-1:0,hi=Math.max(k==="t"?Math.ceil(mx)+1:Math.ceil(mx),lo+1),W=600,Hh=200,L=44,B=24,T=12,bw=(W-L-10)/P.length,X=i=>L+(i+.5)*bw,Y=v=>T+(hi-v)*(Hh-T-B)/(hi-lo);
+  let g="";for(let n=0;n<=4;n++){const v=lo+(hi-lo)*n/4;g+=`<line class="ln" x1="${L}" x2="${W-6}" y1="${Y(v)}" y2="${Y(v)}"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${Math.round(v*10)/10}${u}</text>`}
+  const m=k==="r"?P.map((x,i)=>`<rect x="${X(i)-bw*.3}" y="${Y(x.v)}" width="${bw*.6}" height="${Math.max(1,Y(lo)-Y(x.v))}" rx="3" fill="var(--b)"/>`).join(""):`<polyline fill="none" stroke="var(--b)" stroke-width="2.5" points="${P.map((x,i)=>X(i)+","+Y(x.v)).join(" ")}"/>`+P.map((x,i)=>`<circle cx="${X(i)}" cy="${Y(x.v)}" r="4" fill="var(--b)"/>`).join("");
+  return `<div class="hc"><svg viewBox="0 0 ${W} ${Hh}" role="img">${g}${m}${P.map((x,i)=>`<text x="${X(i)}" y="${Y(x.v)-8}" text-anchor="middle" style="fill:var(--ink)">${Math.round(x.v*10)/10}</text><text x="${X(i)}" y="${Hh-6}" text-anchor="middle">${x.l}</text>`).join("")}</svg></div>`}
+async function plotDetail(id){const[p,H]=await Promise.all([api("/plots/"+id),api("/plots/"+id+"/history").catch(()=>null)]);HIS=H;const s=p.status,w=p.weather,
+  ph=p.photo?`<div class="plph">${phImg(p.photo,"plimg")}</div>${LIM()?"":`<div class="rs"><button class="s" data-up="${p.id}">Đổi ảnh</button><button class="s r" data-ph="del">Xóa ảnh</button></div>`}`:plus(p.id),
+  st=(a,b,c)=>`<div class="stat"><span class="mute">${a}</span><b>${b}</b><span class="mute">${c}</span></div>`;
+  let m=`<h4 class="plh" style="margin-top:0">Điều kiện môi trường</h4><div class="stats">${st("Độ ẩm đất",mst(s),s?esc(s.name):"Chưa có dữ liệu")}${st("Nhiệt độ",w?Math.round(w.now)+"°C":"--","Hiện tại")}${st("Mưa 3 ngày",w?w.rain.total+" mm":"--","Dự báo")}</div>`;
+  m+=`<h3>Dự báo thời tiết</h3>`+(w?`<div class="stats">${w.days.map((d,i)=>st(dayName(i,d.date),d.rain+" mm","Khả năng mưa "+(d.prob==null?"-":d.prob+"%"))).join("")}</div>`:`<p class="mute">Chưa lấy được dự báo thời tiết lúc này.</p>`);
+  m+=`<h3>Lịch sử môi trường</h3><div class="card"><div class="hd"><b>Biểu đồ theo thời gian</b><span class="plb">7 ngày</span></div><div class="nwt">${[["t","Nhiệt độ"],["r","Lượng mưa"],["s","Độ ẩm đất"]].map(([k,n],i)=>`<button class="s ${i?"":"g"}" data-hist="${k}">${n}</button>`).join("")}</div><div id="hchart">${hChart(H,"t")}</div><p class="mute">Nhiệt độ và mưa lấy từ dữ liệu mô hình Open-Meteo tại vị trí thửa. Độ ẩm đất lấy từ các ảnh vệ tinh NISAR đã xử lý trong hệ thống.</p></div>`;
+  m+=`<h3>Khuyến nghị canh tác</h3>`+(s?`<div class="card"><p><span class="chip" style="background:${s.color}"></span><b>${esc(s.name)}</b> · ${Math.round(s.value*100)}% · ${esc(s.act)}</p><p>${esc(s.state)}</p><b>Giải pháp</b><ul>${s.do.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>${near(s)}<p class="mute">Ảnh vệ tinh ${age(s.scene_time)}. Mưa hoặc tưới sau đó chưa được tính; vệ tinh chỉ đo lớp đất mặt, ô ảnh khoảng 200 m. Dữ liệu NISAR còn đang hiệu chuẩn.</p></div>`:`<div class="card"><p class="mute">Chưa có ảnh vệ tinh phủ vị trí này.</p></div>`);
+  m+=w?`<div class="card"><b>Nhiệt độ</b><p>Hiện tại <b>${Math.round(w.now)}°C</b> · độ ẩm không khí ${w.rh}% · 3 ngày tới từ <b>${Math.round(w.temp.range[0])}°C</b> đến <b>${Math.round(w.temp.range[1])}°C</b></p><b>Giải pháp</b>${adv(w.temp)}</div><div class="card"><b>Lượng mưa sắp tới</b><p>Tổng 3 ngày: <b>${w.rain.total} mm</b></p><b>Giải pháp</b>${adv(w.rain)}<p class="mute">Gợi ý chung theo dự báo, hãy đối chiếu với tình hình thực tế tại ruộng.</p></div>`:"";
+  const side=`<h3 style="margin-top:0">Thông tin thửa đất</h3><div class="card"><div class="kv"><span class="mute">Loại cây</span><b>${esc(p.crop||"Chưa ghi")}</b></div><div class="kv"><span class="mute">Kinh độ</span><b>${p.lon.toFixed(5)}</b></div><div class="kv"><span class="mute">Vĩ độ</span><b>${p.lat.toFixed(5)}</b></div></div><h3>Ảnh thửa đất</h3><div class="card">${ph}${LIM()?"":'<p><a class="lk" href="#" data-go="map">Xem trên bản đồ →</a></p>'}</div><input type="file" id="pfile" accept="image/*" hidden>`;
+  return `<div class="card pl"><div class="hd"><button class="s" id="back">← Các thửa</button>${LIM()?"":'<button class="s r" id="pdel">Xóa thửa</button>'}</div><h2>${esc(p.name)}</h2><p><span class="plb">${esc(p.crop||"Chưa ghi")}</span> <span class="mute">${place(p)}</span></p><div class="pl3"><div>${m}</div><div class="pls">${side}</div></div></div>${LIM()?"":'<div class="rs"><button class="g" id="ask">Hỏi hợp tác xã</button></div>'}`}
+/* ---------- Kiến thức (trang báo) ---------- */
+let kArt=null,kTopic=null,kLv=null,KL=null;
+const TOPICS=["Hạn hán","Biến đổi khí hậu","Viễn thám"],CROPS=[["sr","Sầu riêng"],["cf","Cà phê"],["cs","Cao su"]];
+const FB=[["Rất khô","Cần tưới ngay lập tức","Đất mặt rất khô, cây dễ thiếu nước, héo lá.","Tưới ngay, ưu tiên vườn đang ra hoa, đậu quả. Tưới sáng sớm hoặc chiều mát, tưới đủ thấm sâu vùng rễ thay vì tưới ít nhiều lần.","Phủ gốc bằng rơm, cỏ khô để giữ ẩm lâu hơn.","#d9534f"],["Khô vừa","Bắt đầu bật hệ thống tưới","Đất bắt đầu thiếu nước, chưa nguy cấp.","Chuẩn bị và bật hệ thống tưới, tưới nhẹ theo chu kỳ. Kiểm tra lại sau 1-2 ngày, xem thêm dự báo mưa.","Nếu sắp có mưa to trong 1-2 ngày tới thì có thể hoãn tưới.","#e6c84a"],["Lý tưởng","Tắt tưới / Duy trì","Độ ẩm phù hợp với đa số cây trồng.","Không cần tưới thêm. Giữ nguyên chế độ chăm sóc, kiểm tra lại sau 2-3 ngày hoặc sau đợt nắng nóng.","Đây là mức nên giữ ổn định, tránh tưới thừa gây lãng phí nước và điện.","#7fd1d9"],["Ẩm ướt","Tắt tưới","Đất khá ẩm, đủ nước.","Tắt tưới. Theo dõi dự báo mưa và kiểm tra rãnh thoát nước nếu sắp có mưa lớn.","Chưa nguy hiểm nhưng không nên tưới thêm.","#4e6bb5"],["Quá ẩm / Thừa nước","Cảnh báo ngập úng","Đất rất ẩm hoặc bão hòa nước, có nguy cơ úng rễ.","Ngừng tưới hoàn toàn, khơi thông rãnh thoát nước, hạn chế bón phân và phun thuốc lúc này. Kiểm tra gốc những cây dễ úng như tiêu, sầu riêng, cà phê.","Ruộng lúa hoặc vùng trũng có thể ẩm cao là bình thường, hãy đối chiếu với loại cây trồng.","#2b2f8f"]].map(([name,action,state,todo,tip,color])=>({name,action,state,todo,tip,color}));
+const NEWS=[
+{id:"tn",topic:"Hạn hán",tag:"Nông nghiệp",min:8,img:1,title:"Độ ẩm đất và bài toán quản lý nguồn nước tại Tây Nguyên",lead:"Tìm hiểu vai trò của độ ẩm đất đối với sinh trưởng cây trồng, khả năng giữ nước và quản lý tưới tiêu.",s:[
+["Vì sao độ ẩm đất quan trọng",["Rễ cây chỉ hút được lượng nước có trong đất. Đất quá khô khiến cây héo, đất quá ẩm lại thiếu oxy ở vùng rễ và dễ úng.","Ở Tây Nguyên, mùa khô kéo dài nhiều tháng nên người trồng cà phê, sầu riêng, hồ tiêu phải chủ động tưới."],[9]],
+["Tưới đúng lúc, đúng lượng",["Thay vì tưới theo lịch cố định, hãy tưới khi độ ẩm xuống thấp và dừng khi đất đã đủ ẩm. Cách này tiết kiệm nước, điện và hạn chế rửa trôi phân bón.","Tưới thấm sâu vùng rễ, vào sáng sớm hoặc chiều mát, hiệu quả hơn tưới ít nước nhiều lần."]],
+["Dùng bản đồ vệ tinh để theo dõi",["Ứng dụng này hiển thị độ ẩm đất mặt do vệ tinh ước tính. Đây là số liệu tham khảo, hãy đối chiếu với tình trạng thực tế ngoài ruộng trước khi quyết định."]]]},
+{id:"am",topic:"Hạn hán",tag:"Kiến thức",min:6,img:8,dg:1,title:"Đọc độ ẩm đất: 5 mức và việc cần làm",lead:"Độ ẩm đất mặt do vệ tinh ước tính, tính theo m³/m³. Sai số còn lớn nên hãy kiểm tra thêm tại ruộng.",s:[
+["Độ ẩm đất là gì",["Độ ẩm đất cho biết trong mỗi mét khối đất có bao nhiêu mét khối nước. Cây sinh trưởng tốt khi độ ẩm nằm giữa mức héo và mức đất đủ nước tối đa."],[8,1]],
+["Năm mức độ ẩm","LV"],
+["Ba mốc cần nhớ",["Bão hòa là khi mọi khe đất đều đầy nước. Sức chứa đồng ruộng là lượng nước đất giữ lại sau khi nước thừa đã thoát đi. Điểm héo là mức đất còn nước nhưng cây không hút nổi nữa."],[10,1]]]},
+{id:"ni",topic:"Viễn thám",tag:"Khoa học · Viễn thám",min:5,img:2,title:"NISAR: Công nghệ radar mới trong giám sát Trái Đất",lead:"NISAR là vệ tinh radar do NASA và ISRO (Ấn Độ) hợp tác, quan sát mặt đất cả ngày lẫn đêm, trời nắng hay nhiều mây.",s:[
+["NISAR là gì",["NISAR (NASA-ISRO Synthetic Aperture Radar) mang hai radar khẩu độ tổng hợp băng L và băng S, cùng ăng-ten phản xạ đường kính khoảng 12 m. Vệ tinh được phóng năm 2025.","Radar chủ động phát sóng rồi thu tín hiệu phản hồi nên vẫn quan sát được khi có mây hoặc ban đêm, rất hợp với vùng nhiệt đới nhiều mây như Việt Nam."]],
+["Quan sát để làm gì",["Dữ liệu NISAR phục vụ nhiều việc: độ ẩm đất, sinh khối rừng, biến dạng mặt đất, băng, đất ngập nước và theo dõi mùa vụ.","Vệ tinh lặp lại quan sát trên cùng một khu vực khoảng 12 ngày một lần, và dữ liệu được công bố mở."]],
+["Từ radar đến bản đồ độ ẩm",["Độ ẩm đất làm thay đổi cách đất phản xạ sóng radar. Từ tín hiệu đó, thuật toán ước tính độ ẩm lớp đất mặt cho từng ô lưới trên bản đồ.","Cây cối, địa hình và độ nhám bề mặt cũng ảnh hưởng đến tín hiệu nên kết quả vẫn có sai số, nhất là ở vườn cây rậm."],[11,1]]]},
+{id:"sr",topic:"Biến đổi khí hậu",tag:"Cây trồng",min:5,img:4,title:"Thời tiết và độ ẩm đất ảnh hưởng thế nào đến sầu riêng?",lead:"Sầu riêng cần nước nhưng rất sợ úng, nên theo dõi độ ẩm đất là việc phải làm quanh năm.",s:[
+["Sợ úng hơn sợ khô",["Rễ sầu riêng ăn nông và nhạy cảm với thiếu oxy. Đất đọng nước lâu, nhất là sau mưa lớn, dễ gây thối rễ, vàng lá và chết cây.","Nên lên liếp, làm rãnh thoát nước và tránh để nước đọng quanh gốc."]],
+["Khô ẩm thất thường làm rụng và nứt trái",["Khi nuôi trái, độ ẩm đất dao động mạnh có thể làm rụng trái non. Đất khô lâu rồi gặp mưa to hoặc tưới ồ ạt dễ làm nứt trái.","Hãy giữ ẩm đều và tăng lượng tưới từ từ."]],
+["Mùa khô và ra hoa",["Nhiều vườn cho cây hơi thiếu nước một thời gian ngắn trước khi xử lý ra hoa. Thời gian cụ thể tùy vùng, giống và tuổi cây, bạn nên theo hướng dẫn kỹ thuật của địa phương.","Khi bản đồ báo mức Rất khô, hãy ưu tiên tưới cho vườn đang ra hoa, đậu trái."]]]},
+{id:"cf",topic:"Hạn hán",tag:"Cây trồng",min:6,img:3,title:"Thời tiết cực đoan ảnh hưởng thế nào đến cây cà phê?",lead:"Hạn kéo dài, nắng nóng và mưa trái mùa đều làm giảm năng suất và chất lượng cà phê.",s:[
+["Hạn hán và mùa khô",["Cà phê vối ở Tây Nguyên phụ thuộc nhiều vào nước tưới trong mùa khô. Thiếu nước làm cây rụng lá, nuôi trái kém, hạt nhỏ và năng suất giảm.","Mỗi đợt tưới nên đủ thấm sâu vùng rễ. Phủ gốc bằng rơm, cỏ khô giúp giữ ẩm lâu hơn."]],
+["Nắng nóng",["Nhiệt độ quá cao làm cây bị stress, hoa dễ rụng và trái phát triển kém. Cây che bóng và trồng xen giúp hạ nhiệt cho vườn."]],
+["Mưa trái mùa và úng",["Mưa lớn lúc cây đang ra hoa làm trôi hoa, giảm đậu trái. Mưa kéo dài cũng làm đất úng và tạo điều kiện cho nấm bệnh phát triển.","Khi bản đồ báo Ẩm ướt hoặc Quá ẩm, hãy tắt tưới và kiểm tra rãnh thoát nước."]]]},
+{id:"cs",topic:"Biến đổi khí hậu",tag:"Cây trồng",min:5,img:5,title:"Cây cao su: mưa, nắng và độ ẩm đất",lead:"Cao su là cây dài ngày, nhưng thời tiết vẫn tác động rõ đến mủ, lá và bệnh hại.",s:[
+["Mưa và cạo mủ",["Mưa làm gián đoạn việc cạo mủ nên sản lượng giảm vào những tháng mưa nhiều.","Mùa mưa cũng là lúc bệnh nấm trên lá và thân phát triển mạnh, cần theo dõi vườn thường xuyên."]],
+["Khô hạn và rụng lá",["Cao su rụng lá qua đông vào mùa khô rồi ra lá mới. Hạn nặng làm cây ra lá chậm và ảnh hưởng đến mủ của vụ sau.","Vườn cây còn nhỏ cần được ưu tiên giữ ẩm gốc."]],
+["Theo dõi độ ẩm thế nào",["Vườn cao su thường rộng, độ ẩm khác nhau giữa các lô. Hãy đăng ký từng thửa trong ứng dụng để xem mức ẩm riêng cho từng khu."]]]},
+{id:"tt",topic:"Biến đổi khí hậu",tag:"Thời tiết",min:6,img:6,title:"Thời tiết cực đoan và biến đổi khí hậu: nông dân cần biết gì?",lead:"Hạn hán, nắng nóng và mưa lớn bất thường ngày càng khó đoán, buộc người trồng cây phải theo dõi thời tiết sát hơn.",s:[
+["Hạn hán và El Niño",["Những năm El Niño thường khô nóng và ít mưa hơn ở Tây Nguyên và Nam Bộ, làm mùa khô kéo dài và nguồn nước tưới cạn sớm."]],
+["Mưa lớn và úng ngập",["Mưa tập trung trong thời gian ngắn làm đất bão hòa nước, gây úng rễ ở cây không chịu ngập. Hãy theo dõi dự báo mưa để chủ động khơi rãnh thoát nước."],[7]],
+["Nên làm gì",["Kết hợp dự báo thời tiết với độ ẩm đất trong ứng dụng, trữ nước trước mùa khô, phủ gốc giữ ẩm và điều chỉnh lịch tưới, bón phân theo thời tiết thực tế."]]]},
+{id:"nc",topic:"Viễn thám",tag:"Nghiên cứu",min:6,img:12,dg:1,title:"Độ ẩm đất từ vệ tinh: nghiên cứu nói gì về độ chính xác?",lead:"Vệ tinh nhìn được vùng rộng nhưng chỉ ước tính lớp đất mặt, nên cần hiểu giới hạn của dữ liệu.",s:[
+["Chỉ đo lớp đất mặt",["Radar và vi sóng chủ yếu cảm nhận vài cm đất trên cùng. Độ ẩm ở vùng rễ sâu hơn phải suy ra từ lớp mặt, thời tiết và loại đất."]],
+["Độ phân giải và biến thiên không gian",["Độ ẩm đất thay đổi mạnh giữa hai thửa gần nhau do loại đất, địa hình và cách chăm sóc. Dữ liệu càng thô thì càng khó phản ánh từng vườn.","Các nghiên cứu thường so sánh dữ liệu vệ tinh với cảm biến mặt đất để hiệu chỉnh sai số."],[12,1]],
+["Dùng dữ liệu thận trọng",["Hãy coi bản đồ là gợi ý và đối chiếu với quan sát tại ruộng, như đào thử đất hoặc xem lá cây, trước khi quyết định tưới hay ngừng tưới."]]]}];
+const nwImg=(n,dg)=>`<div class="nwf${dg?" dg":""}"><img src="/static/img/news/news${n}.jpg" alt="" loading="lazy" onerror="this.remove()"></div>`;
+let kAi=null,inKind="all",kRv="pending",kMode="lib",kPv=null,kF=null,upT="body",savedR=null;
+const CATS=["Độ ẩm đất","Cây trồng","Thời tiết","Hạn hán","Biến đổi khí hậu","Viễn thám","Nông nghiệp"],CROPN=["","Cà phê","Sầu riêng","Cao su","Hồ tiêu"],STV={draft:["Bản nháp",""],pending:["Chờ kiểm duyệt","wait"],published:["Đã xuất bản","ok"]};
+const nwU=u=>`<div class="nwf"><img src="${esc(u)}" alt="" loading="lazy" onerror="this.remove()"></div>`,cov=a=>a.cover?nwU(a.cover):a.img?nwImg(a.img,a.dg):`<div class="nwf"></div>`,
+ kTabs=()=>me.role==="farmer"?"":`<div class="nwm"><button class="${kMode==="lib"?"g":""}" data-km="lib">Thư viện kiến thức</button><button class="${kMode!=="lib"?"g":""}" data-km="mng">${me.role==="admin_province"?"Xét duyệt bài viết":"Quản lý bài viết"}</button></div>`,
+ dbArt=n=>({title:n.title,lead:n.summary,tag:n.category,min:n.min||Math.max(1,Math.round((n.body||"").replace(/<[^>]*>/g," ").split(/\s+/).length/200)),cover:n.cover,html:n.body||"<p></p>",src:n.source,topic:n.category}),
+ opts=(arr,v,e)=>arr.map(x=>`<option value="${esc(x)}"${x===v?" selected":""}>${esc(x||e)}</option>`).join(""),
+ rdF=()=>{const g=i=>$(i)?$(i).value:"";Object.assign(kF,{title:g("et").trim(),summary:g("es").trim(),category:g("ec"),crop:g("ep"),scope:g("eo")||"local",source:g("er").trim(),body:$("eb").innerHTML})};
+const HR=[[/^(\d+(?:\.\d+)+)\.?\s+\p{Lu}/u,m=>m[1].split(".").length],[/^\d{1,2}[.)]\s+\p{L}/u,()=>1],[/^[IVX]{1,5}\.\s+\p{L}/u,()=>1],[/^[a-zA-Z][.)]\s+\p{Lu}/u,()=>0]];   /* 1. | 1.1 | 1.1.1 | I. | a) -> cấp mục lục */
+function artView(a,back){const lv=KL.map((c,i)=>`<a href="#" data-lv="${i}"><span class="chip" style="background:${c.color}"></span>${esc(c.name.split(" /")[0])}</a>`).join(""),cr=CROPS.map(([id,n])=>`<a href="#" data-art="${id}"${id===kArt?' class="on"':""}>${n}</a>`).join("");let toc,body;
+  if(a.html){const d=document.createElement("div");d.innerHTML=a.html;[...d.childNodes].forEach(n=>{if(n.nodeType===3&&n.textContent.trim()){const w=document.createElement("div");w.textContent=n.textContent;n.replaceWith(w)}});toc=[];let last=0;
+  [...d.children].forEach(el=>{if(!/^(DIV|P|H3)$/.test(el.tagName))return;const t=el.textContent.replace(/\s+/g," ").trim(),hn=el.tagName==="H3";let lv=0,num=false;
+   if(t&&(hn||t.length<=130&&!/[.;,]$/.test(t)))for(const[r,f]of HR){const m=t.match(r);if(m){const x=f(m);lv=x||(last?Math.min(last+1,5):0);num=!!x;break}}
+   if(!lv&&hn&&t)lv=1;if(lv){if(num||hn)last=lv;el.id="s"+toc.length;el.classList.add("nwh","l"+lv);toc.push({t,lv})}});body=`<div class="nwb">${d.innerHTML}</div>`+(a.src&&a.src.trim()?`<div class="nwsrc"><b>Nguồn tham khảo</b>${a.src.split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>`<div>${esc(l).replace(/(https?:\/\/[^\s<]+)/g,'<a href="$1" target="_blank" rel="noopener noreferrer">$1</a>')}</div>`).join("")}</div>`:"")}
+  else{toc=a.s.map((x,i)=>({t:`${i+1}. ${x[0]}`,lv:1}));body=a.s.map(([h,p,f],i)=>`<h3 id="s${i}">${esc(h)}</h3>`+(f?nwImg(f[0],f[1]):"")+(p==="LV"?KL.map((c,j)=>`<div class="card" id="lv${j}" style="border-left:6px solid ${c.color}"><b>${esc(c.name)}</b> <span class="mute">${esc(c.action)}</span><p>${esc(c.state)}</p><ul><li>${esc(c.todo)}</li><li>${esc(c.tip)}</li></ul></div>`).join(""):p.map(x=>`<p>${esc(x)}</p>`).join(""))).join("")}
+  const bk=back==="ai"?['data-ai="form"',"← Sửa khung soạn bài"]:back==="lib"?['data-art=""',"← Tất cả bài viết"]:back==="edit"?['data-ed="edit"',"← Quay lại chỉnh sửa"]:['data-km="mng"',"← Về quản lý bài viết"];
+  return `<div class="nw"><aside><h4>Độ ẩm đất</h4>${lv}<h4>Cây trồng</h4>${cr}</aside><article><a class="lk" href="#" ${bk[0]}>${bk[1]}</a><h1>${esc(a.title)}</h1><div class="mute">${esc(a.tag)} · ${a.min} phút đọc</div>${a.lead?`<p class="lead">${esc(a.lead)}</p>`:""}${a.cover?nwU(a.cover):a.img?nwImg(a.img,a.dg):""}${body}</article><aside><h4>Mục lục</h4>${toc.length?toc.map((h,i)=>`<a href="#" data-sec="s${i}" style="padding-left:${(h.lv-1)*12}px;font-size:${h.lv>2?11.5:12.5}px">${esc(h.t)}</a>`).join(""):'<p class="mute">Bài viết chưa có mục.</p>'}<h4>Chủ đề</h4>${TOPICS.map(t=>`<a href="#" data-topic="${esc(t)}">${t}</a>`).join("")}</aside></div>`}
+const revBar=n=>{const a=(k,t,c)=>`<button class="${c}" data-ka="${k}" data-id="${n.id}">${t}</button>`,s=STV[n.status]||STV.draft;return `<div class="card pl nwrev"><div class="hd"><b>Xét duyệt bài viết</b><span class="plb ${s[1]}">${s[0]}</span></div><p class="mute">Tác giả: ${esc(n.author||"")} · ${esc(n.place||"")} · ${esc(n.category||"")}${n.crop?" · "+esc(n.crop):""}</p>${n.review_note?`<p class="mute">Lý do từ chối trước đó: ${esc(n.review_note)}</p>`:""}<div class="rs">${n.can.includes("publish")?a("publish","Duyệt và xuất bản","g"):""}${n.can.includes("reject")?a("reject","Từ chối","s r"):""}${n.can.includes("unpublish")?a("unpublish","Gỡ xuống","s r"):""}<button class="s" data-km="mng">← Danh sách</button></div></div>`};
+async function revView(){const L=await api("/admin/news"),c=s=>L.filter(x=>x.status===s).length,st=(a,b,k)=>`<div class="stat ${k}"><span class="mute">${a}</span><b>${String(b).padStart(2,"0")}</b></div>`,F=L.filter(x=>kRv==="all"||x.status===kRv),
+  rr=x=>{const s=STV[x.status],a=(k,t)=>`<a href="#" data-ka="${k}" data-id="${x.id}">${t}</a>`,Q=[["publish","Duyệt nhanh"],["reject","Từ chối"],["unpublish","Gỡ xuống"]].filter(([k])=>x.can.includes(k)).map(([k,t])=>a(k,t));
+   return `<div class="card nwrow"><div><b>${esc(x.title)}</b><div class="mute">${esc(x.category||"Chưa chọn chuyên mục")}${x.crop?" · "+esc(x.crop):""}</div><div class="mute">${esc(x.place||"")} · ${esc(x.author)}</div>${x.review_note?`<div class="mute">Lý do từ chối: ${esc(x.review_note)}</div>`:""}</div><div class="rcol"><span class="plb ${s[1]}">${s[0]}</span><div class="mute">${a("view",x.status==="pending"?"Xem và xét duyệt":"Xem")}</div>${Q.length?`<div class="mute">${Q.join(" · ")}</div>`:""}</div></div>`};
+  return `<div class="card pl"><div class="hd"><div><h2>Xét duyệt bài viết</h2><p class="mute">Duyệt bài viết do các xã/phường trong tỉnh gửi lên</p></div><span class="plb">${esc(me.role_vi)}</span></div>${kTabs()}<div class="stats">${st("Chờ duyệt",c("pending"),"sw")}${st("Đã xuất bản",c("published"),"")}${st("Tổng bài đã gửi",L.length,"sd")}</div><div class="nwt" style="margin-top:14px">${[["pending","Chờ duyệt"],["published","Đã xuất bản"],["all","Tất cả"]].map(([k,n])=>`<button class="s ${kRv===k?"g":""}" data-rv="${k}">${n}</button>`).join("")}</div>${F.length?F.map(rr).join(""):`<p class="mute">${kRv==="pending"?"Không có bài nào đang chờ duyệt.":"Chưa có bài viết nào."}</p>`}</div>`}
+async function mngView(){const L=await api("/admin/news"),c=s=>L.filter(x=>x.status===s).length,st=(a,b,k)=>`<div class="stat ${k}"><span class="mute">${a}</span><b>${String(b).padStart(2,"0")}</b></div>`,
+  row=x=>{const s=STV[x.status],a=(k,t)=>`<a href="#" data-ka="${k}" data-id="${x.id}">${t}</a>`,A=[a("view","Xem"),x.can.includes("edit")&&a("edit","Sửa"),x.can.includes("delete")&&a("del","Xóa")].filter(Boolean),B=[["submit","Gửi kiểm duyệt"],["publish",x.status==="pending"?"Duyệt và xuất bản":"Xuất bản"],["reject","Từ chối"],["unpublish","Gỡ xuống"]].filter(([k])=>x.can.includes(k)).map(([k,t])=>a(k,t));
+   return `<div class="card nwrow"><div><b>${esc(x.title)}</b><div class="mute">${esc(x.category||"Chưa chọn chuyên mục")}${x.crop?" · "+esc(x.crop):""} · ${esc(x.author)}${x.scope==="system"?" · Toàn hệ thống":""}</div>${x.review_note?`<div class="mute">Lý do từ chối: ${esc(x.review_note)}</div>`:""}</div><div class="rcol"><span class="plb ${s[1]}">${s[0]}</span><div class="mute">${A.join(" · ")}</div>${B.length?`<div class="mute">${B.join(" · ")}</div>`:""}</div></div>`};
+  return `<div class="card pl"><div class="hd"><div><h2>Quản lý kiến thức</h2><p class="mute">${me.role==="admin_ward"?"Soạn và đăng bài viết, tin tức nông nghiệp cho xã/phường của bạn":"Duyệt bài viết do các xã/phường trong tỉnh gửi lên"}</p></div><span class="plb">${esc(me.role_vi)}</span></div>${kTabs()}<div class="stats">${st("Tổng bài viết",L.length,"")}${st("Chờ kiểm duyệt",c("pending"),"sw")}${st("Đã xuất bản",c("published"),"")}${st("Bản nháp",c("draft"),"sd")}</div><div class="hd"><h3>${me.role==="admin_ward"?"Bài viết gần đây":"Bài viết cần xem xét"}</h3>${me.role==="admin_ward"?'<span><button class="s" data-ka="ai">Nhờ bác Nông soạn bài</button> <button class="g s" data-ka="new">+ Tạo bài viết</button></span>':""}</div>${L.length?L.map(row).join(""):`<p class="mute">${me.role==="admin_ward"?"Chưa có bài viết nào. Bấm \"+ Tạo bài viết\" để bắt đầu.":"Chưa có bài viết nào được gửi lên."}</p>`}</div>`}
+function editView(){const prov=false,st=STV[kF.status||"draft"];
+  return `<div class="card pl"><div class="hd"><h2>${kF.id?"Sửa bài viết":"Tạo bài viết mới"}</h2><span class="plb ${st[1]}">${st[0]}</span></div>
+  <label>Tiêu đề bài viết</label><input id="et" maxlength="150" placeholder="Nhập tiêu đề bài viết..." value="${esc(kF.title)}">
+  <label>Mô tả ngắn</label><input id="es" maxlength="300" placeholder="Tóm tắt nội dung chính của bài viết..." value="${esc(kF.summary)}">
+  <div class="row two"><div><label>Chuyên mục</label><select id="ec">${opts(CATS,kF.category,"")}</select></div><div><label>Cây trồng liên quan</label><select id="ep">${opts(CROPN,kF.crop,"Tất cả cây trồng")}</select></div></div>
+  <label>Phạm vi hiển thị</label>${prov?`<select id="eo"><option value="local"${kF.scope==="local"?" selected":""}>Địa phương (trong tỉnh của tôi)</option><option value="system"${kF.scope==="system"?" selected":""}>Toàn hệ thống</option></select>`:`<p class="mute">Nông dân trong xã/phường của bạn sẽ thấy bài này.</p>`}
+  <label>Ảnh bìa bài viết</label>${kF.cover?`<div class="plph">${phImg(kF.cover,"plimg")}</div><div class="rs"><button class="s" data-ei="cover">Đổi ảnh</button><button class="s r" data-ei="nocover">Xóa ảnh</button></div>`:`<div class="plph empty" data-ei="cover" role="button" tabindex="0"><span class="plus">+</span><span class="mute">Chọn ảnh JPG · Tỷ lệ khuyên dùng 16:9</span></div>`}
+  <label>Nội dung bài viết</label><div class="ed"><div class="edt"><button data-cmd="bold"><b>B</b></button><button data-cmd="italic"><i>I</i></button><button data-cmd="h3">H</button><button data-cmd="ul">• Danh sách</button><button data-cmd="img">Chèn ảnh</button><button data-cmd="link">Liên kết</button></div><div id="eb" class="edb" contenteditable="true" data-ph="Bắt đầu soạn nội dung bài viết tại đây...">${kF.body}</div></div>
+  <label>Nguồn tham khảo</label><textarea id="er" rows="3" maxlength="2000" placeholder="Mỗi nguồn một dòng: tên tài liệu hoặc đường dẫn...">${esc(kF.source)}</textarea>
+  <div class="rs" style="margin-top:14px"><button class="s" data-ed="save">Lưu bản nháp</button><button class="s" data-ed="prev">Xem trước</button><button class="g s" data-ed="sub">${prov?"Xuất bản":"Gửi kiểm duyệt"}</button><button class="s r" data-ed="cancel">Hủy</button></div><input type="file" id="efile" accept="image/*" hidden></div>`}
+const edCmd=c=>{const b=$("eb");if(!b)return;if(c==="img"){upT="body";const s=getSelection();savedR=s.rangeCount&&b.contains(s.anchorNode)?s.getRangeAt(0).cloneRange():null;$("efile").click();return}
+  b.focus();if(c==="h3")document.execCommand("formatBlock",false,/h3/i.test(document.queryCommandValue("formatBlock"))?"P":"H3");else if(c==="ul")document.execCommand("insertUnorderedList");else if(c==="link"){const u=prompt("Địa chỉ liên kết (bắt đầu bằng https://)");if(u&&/^https?:\/\//i.test(u))document.execCommand("createLink",false,u)}else document.execCommand(c)};
+const edImg=async w=>{if(w==="nocover"){rdF();kF.cover="";return show("know")}upT="cover";$("efile").click()};
+async function rowAct(a,id){if(a==="ai"){kAi={f:{topic:"",category:CATS[1],crop:"",points:"",facts:"",lon:"",lat:"",tone:TONES[0],length:LENS[1]},out:null};kMode="ai";return show("know")}
+  if(a==="new"){kF={id:0,title:"",summary:"",category:CATS[1],crop:"",cover:"",body:"",source:"",scope:"local",status:"draft"};kMode="edit";return show("know")}
+  if(a==="view"){kPv=id;return show("know")}
+  if(a==="edit"){kF=await api("/admin/news/"+id);kMode="edit";return show("know")}
+  if(a==="del"){if(!confirm("Xóa bài viết này?"))return;await api("/admin/news/"+id,"DELETE")}
+  else{let note="";if(a==="reject"){note=prompt("Lý do từ chối (có thể bỏ trống)");if(note===null)return}await api("/admin/news/"+id+"/status","POST",{action:a,note})}
+  kPv=null;try{me=await api("/me");badges()}catch{}return show("know")}
+async function edAct(a){if(a==="edit"){kPv=null;return show("know")}if(a==="cancel"){kMode="mng";kF=null;return show("know")}
+  rdF();if(!kF.title){alert("Hãy nhập tiêu đề bài viết");return}if(a==="prev"){kPv="form";return show("know")}
+  if(a==="sub"&&!kF.body.replace(/<[^>]*>|&nbsp;|\s/g,"")&&!/<img/.test(kF.body)){alert("Hãy nhập nội dung bài viết");return}
+  const b={title:kF.title,summary:kF.summary,category:kF.category,crop:kF.crop,cover:kF.cover,body:kF.body,source:kF.source,scope:kF.scope},r=kF.id?await api("/admin/news/"+kF.id,"PUT",b):await api("/admin/news","POST",b);kF.id=r.id;
+  if(a==="sub")await api("/admin/news/"+kF.id+"/status","POST",{action:"submit"});
+  kMode="mng";kF=null;return show("know")}
+const TONES=["Dễ hiểu, gần gũi","Trang trọng, chính thống","Ngắn gọn, mang tính khuyến cáo"],LENS=["Ngắn (~250 chữ)","Vừa (~500 chữ)","Dài (~900 chữ)"];
+const rdAi=()=>{const g=i=>$(i).value;Object.assign(kAi.f,{topic:g("at").trim(),category:g("ac"),crop:g("ap"),points:g("am"),facts:g("af").trim(),lon:g("ax").trim().replace(",","."),lat:g("ay").trim().replace(",","."),tone:g("al"),length:g("an")})};
+function aiView(){const f=kAi.f,o=kAi.out,c=(k,t,cl)=>`<button class="${cl}" data-ai="${k}">${t}</button>`;
+  if(o)return `<div class="card pl nwrev"><div class="hd"><b>Bản nháp do bác Nông soạn</b><span class="plb wait">Chưa gửi</span></div><p class="mute">Hãy đọc kỹ trước khi chấp nhận. Chấp nhận sẽ gửi bài lên chờ admin tỉnh duyệt.</p>${o.check&&o.check.length?`<b>Cần kiểm tra lại:</b><ul>${o.check.map(x=>`<li>${esc(x)}</li>`).join("")}</ul>`:""}<div class="rs">${c("accept","Chấp nhận và gửi duyệt","g")}${c("regen","Tạo lại","s")}${c("edit","Sửa trong trình soạn","s")}${c("form","← Sửa khung","s")}</div></div>`+artView(dbArt(o),"ai");
+  return `<div class="card pl"><div class="hd"><div><h2>Nhờ bác Nông soạn bài</h2><p class="mute">Điền khung bên dưới, bác Nông viết bài. Bạn xem lại rồi mới gửi duyệt.</p></div><span class="plb">Khung soạn bài</span></div>
+  <label>Chủ đề / tiêu đề gợi ý</label><input id="at" maxlength="150" placeholder="VD: Chăm sóc cà phê những ngày nắng nóng" value="${esc(f.topic)}">
+  <div class="row two"><div><label>Chuyên mục</label><select id="ac">${opts(CATS,f.category,"")}</select></div><div><label>Cây trồng liên quan</label><select id="ap">${opts(CROPN,f.crop,"Tất cả cây trồng")}</select></div></div>
+  <label>Ý chính (mỗi ý một dòng)</label><textarea id="am" rows="5" maxlength="2000" placeholder="- Nắng nóng kéo dài từ tuần sau&#10;- Cần tưới sáng sớm...">${esc(f.points)}</textarea>
+  <label>Số liệu, địa điểm, thời gian có thật (không bắt buộc)</label><textarea id="af" rows="3" maxlength="1500">${esc(f.facts)}</textarea>
+  <div class="row two"><div><label>Kinh độ (để bác lấy số liệu bản đồ)</label><input id="ax" inputmode="decimal" placeholder="108.1" value="${esc(f.lon)}"></div><div><label>Vĩ độ</label><input id="ay" inputmode="decimal" placeholder="13.99" value="${esc(f.lat)}"></div></div>
+  <div class="row two"><div><label>Giọng văn</label><select id="al">${opts(TONES,f.tone,"")}</select></div><div><label>Độ dài</label><select id="an">${opts(LENS,f.length,"")}</select></div></div>
+  <p class="mute">Bác chỉ dùng thông tin bạn cung cấp và số liệu bản đồ, không tự bịa số liệu.</p>
+  <div class="rs">${c("gen","Soạn bài","g")}${c("cancel","Hủy","s r")}</div></div>`}
+async function aiAct(a){if(a==="cancel"){kMode="mng";kAi=null;return show("know")}if(a==="form"){kAi.out=null;return show("know")}
+  if(a==="edit"){const o=kAi.out;kF={id:0,title:o.title,summary:o.summary,category:o.category,crop:o.crop,cover:"",body:o.body,source:o.source,scope:"local",status:"draft"};kAi=null;kMode="edit";return show("know")}
+  if(a==="accept"){const o=kAi.out,r=await api("/admin/news","POST",{title:o.title,summary:o.summary,category:o.category,crop:o.crop,cover:"",body:o.body,source:o.source,scope:"local"});await api("/admin/news/"+r.id+"/status","POST",{action:"submit"});kAi=null;kMode="mng";return show("know")}
+  if(a==="gen")rdAi();const f=kAi.f;if(!f.topic||!f.points.trim()){alert("Hãy nhập chủ đề và ít nhất một ý chính");return}
+  const btn=document.querySelector('[data-ai="gen"],[data-ai="regen"]'),t0=btn&&btn.textContent;if(btn){btn.disabled=true;btn.textContent="Đang soạn…"}
+  try{kAi.out=await api("/ai/article","POST",{...f,lon:f.lon===""?null:+f.lon,lat:f.lat===""?null:+f.lat})}catch(e){if(btn){btn.disabled=false;btn.textContent=t0}throw e}
+  return show("know")}
+const V={
+ async home(){const o=await api("/overview");let h=`<h2>Xin chào, ${esc(me.name)}</h2>`;
+  if(me.place)h+=`<p class="mute">${esc(me.role_vi)} · ${esc(me.place)}</p>`;
+  if(o.need_location)h+=locCard();
+  h+=`<div class="stats">`+(o.role!=="farmer"?card("Nông dân",o.farmers,"đang hoạt động")+(o.ward_admins!=null?card("Quản lý xã/phường",o.ward_admins):""):"")+card("Số thửa",o.plots,"đã khai báo")+card("Cần chú ý",o.attention,"thửa khô hoặc quá ẩm")+card("Ảnh vệ tinh gần nhất",o.last?age(o.last):"-")+`</div>`;
+  h+=`<h3>Tình trạng các thửa</h3><div class="card">${o.dist.map(d=>`<div class="bar"><span><i class="chip" style="background:${d.color}"></i>${esc(d.name)}</span><b>${d.n}</b></div>`).join("")}</div>`;
+  if(o.by_ward)h+=`<h3>Theo xã/phường</h3><div class="card" style="overflow:auto"><table><tr><th>Xã/phường</th><th>Nông dân</th><th>Quản lý</th></tr>${o.by_ward.map(w=>`<tr><td>${esc(w.ward)}</td><td>${w.farmers||0}</td><td>${w.admins||0}</td></tr>`).join("")||'<tr><td colspan="3" class="mute">Chưa có số liệu.</td></tr>'}</table></div>`;
+  h+=`<h3>Thông báo mới nhất</h3>`;
+  return h+(o.latest.map(n=>`<div class="card"><b>${esc(n.title)}</b><p>${esc(n.body)}</p></div>`).join("")||'<p class="mute">Chưa có thông báo.</p>')},
+ async plots(){if(plotSel)return plotDetail(plotSel);const L=await api("/plots"),cr=new Set(L.map(p=>(p.crop||"").trim().toLowerCase()).filter(Boolean)).size,ds=L.filter(p=>p.status).length,
+  st=(a,b,c)=>`<div class="stat"><span class="mute">${a}</span><b>${b}</b>${c?`<span class="mute">${c}</span>`:""}</div>`;
+  return `<div class="card pl"><div class="hd"><div><h2>Thửa của tôi</h2><p class="mute">Quản lý khu vực canh tác và theo dõi điều kiện môi trường</p></div><span class="plb">${L.length} thửa đất</span></div>${LIM()?"":`<details ${L.length?"":"open"}><summary class="lk">＋ Thêm thửa mới</summary><div class="row two"><input id="pn" placeholder="Tên thửa"><input id="pc" placeholder="Loại cây (cà phê, hồ tiêu…)"><input id="px" placeholder="Kinh độ (lon)" inputmode="decimal"><input id="py" placeholder="Vĩ độ (lat)" inputmode="decimal"></div><button class="g s" id="geo">Dùng vị trí của tôi</button> <button class="g" id="padd">Thêm thửa</button></details>`}
+  <h4 class="plh">Tổng quan canh tác</h4><div class="stats">${st("Tổng số thửa",L.length)}${st("Loại cây trồng",cr)}${st("Dữ liệu môi trường",L.length?ds+"/"+L.length:"--","thửa có dữ liệu vệ tinh")}</div>
+  <h3>Danh sách khu vực canh tác</h3>${L.length?`<div class="plg">${L.map(p=>`<div class="card plc" data-plot="${p.id}">${p.photo?`<div class="plph">${phImg(p.photo,"plimg")}</div>`:plus(p.id)}<div class="hd"><b>${esc(p.name)}</b><span class="plb">${esc(p.crop||"Chưa ghi")}</span></div><div class="mute">${place(p)}</div>${Number.isFinite(p.lon)&&Number.isFinite(p.lat)?`<div><b>${p.lon.toFixed(5)}° E · ${p.lat.toFixed(5)}° N</b></div>`:""}<div class="hd plf"><span class="mute">Độ ẩm đất: ${p.status&&Number.isFinite(Number(p.status.value))?mst(p.status):"Chưa có dữ liệu"}</span><span class="plb ${p.status?"ok":"wait"}">${p.status?esc(p.status.name):"Chờ dữ liệu"}</span></div><span class="lk">Xem chi tiết →</span></div>`).join("")}</div>`:'<p class="mute">Chưa có thửa nào.</p>'}<input type="file" id="pfile" accept="image/*" hidden></div>`},
+ async chat(){if(chatPeer){const r=await api("/chat/"+chatPeer);try{me=await api("/me");badges()}catch{}return threadView(r)}
+  const L=await api("/chat/contacts"),empty={farmer:"Khu vực của bạn chưa có cán bộ quản lý nào đăng ký.",admin_ward:"Chưa có nông dân nào đăng ký ở khu vực của bạn.",admin_province:"Chưa có cuộc trò chuyện nào."}[me.role];
+  return `<h2>Hộp thoại</h2><p class="mute">${me.role==="farmer"?"Nhắn tin với cán bộ quản lý nơi bạn ở.":"Nhắn tin với nông dân và cán bộ trong khu vực bạn quản lý."}</p>`+(L.length>8?`<input id="cfind" placeholder="Tìm theo tên…" style="margin-bottom:10px">`:"")+`<div id="clist" data-all='${esc(JSON.stringify(L))}'>${L.map(contactCard).join("")||`<p class="mute">${empty}</p>`}</div>`},
+ async users(){const L=await api("/admin/users"+(usrQ?"?search="+encodeURIComponent(usrQ):""));
+  return `<h2>${me.role==="admin_ward"?"Nông dân trong xã/phường":"Người dùng trong tỉnh"}</h2><div class="rs"><input id="usearch" placeholder="Tìm theo tên…" value="${esc(usrQ)}"><button class="s" id="usgo">Tìm</button></div><div class="card" style="overflow:auto"><table><tr><th>Tên</th><th>Vai trò</th><th>Xã/phường</th><th>Hoạt động gần nhất</th><th>Trạng thái</th><th></th></tr>${L.map(u=>{const m=u.last_seen?Math.max(0,Math.floor((Date.now()/1000-u.last_seen)/60)):null;
+   return `<tr><td>${esc(u.full_name)}</td><td>${esc(u.role_vi)}</td><td>${esc(u.place)}</td><td>${m==null?"-":m<5?"Đang hoạt động":ago(m)+" trước"}</td><td>${u.pending?"Chờ tỉnh duyệt":u.status==="active"?"Bình thường":"Đã khóa"}</td><td>${u.pending?`<button class="s g" data-us="${u.id}:approve">Duyệt</button> <button class="s r" data-us="${u.id}:reject">Từ chối</button>`:`<button class="s ${u.status==="active"?"r":"g"}" data-us="${u.id}:${u.status==="active"?"lock":"unlock"}">${u.status==="active"?"Khóa":"Mở khóa"}</button>`}</td></tr>`}).join("")||'<tr><td colspan="6" class="mute">Chưa có ai.</td></tr>'}</table></div>`},
+ async inbox(){const adm=me.role!=="farmer";let h=`<h2>Thông báo</h2>`;
+  if(adm)h+=`<div class="tabs"><button class="${annTab==="in"?"on":""}" data-at="in">Đã nhận</button><button class="${annTab==="out"?"on":""}" data-at="out">Gửi thông báo</button></div>`;
+  if(adm&&annTab==="out"){const [W,S]=await Promise.all([me.role==="admin_province"?api("/admin/wards"):[],api("/admin/sent")]);
+   return h+`<div class="card"><div class="row"><input id="at" placeholder="Tiêu đề" maxlength="100"><textarea id="ab" placeholder="Nội dung" maxlength="1000"></textarea>${me.role==="admin_province"?`<select id="aw"><option value="">Cả tỉnh (nông dân và quản lý xã/phường)</option>${W.map(w=>`<option value="${esc(w.key)}">${esc(w.ward)} (${w.farmers} nông dân)</option>`).join("")}</select>`:`<p class="mute">Chỉ nông dân thuộc ${esc(me.place)} nhận được thông báo này.</p>`}</div><button class="g" id="annsend">Gửi</button></div><h3>Đã gửi gần đây</h3>`+(S.map(x=>`<div class="card"><p>${esc(x.text)}</p><span class="mute">${when(x.at)}</span></div>`).join("")||'<p class="mute">Chưa gửi thông báo nào.</p>')}
+  const A=await api("/notifications"),KN={review:["Cần duyệt","red"],news:["Bài viết",""],alert:["Cảnh báo","wait"],info:["Thông báo",""]},L=A.filter(n=>inKind==="all"||n.kind===inKind);
+   h+=`<div class="nwt">${[["all","Tất cả"],["review","Cần duyệt"],["news","Bài viết"],["alert","Cảnh báo"],["info","Thông báo"]].filter(([k])=>k==="all"||A.some(n=>n.kind===k)).map(([k,t])=>{const c=A.filter(n=>(k==="all"||n.kind===k)&&!n.read).length;return `<button class="s ${inKind===k?"g":""}" data-ik="${k}">${t}${c?` <span class="dot">${c}</span>`:""}</button>`}).join("")}</div>`;
+   return h+(L.map(n=>{const k=KN[n.kind]||KN.info;return `<div class="card ${n.read?"":"unread"}${n.kind==="review"&&!n.read?" imp":""}"><div class="hd"><div><span class="plb ${k[1]}">${k[0]}</span> <b>${esc(n.title)}</b></div><div>${n.news_id?`<button class="s g" data-nv="${n.news_id}" data-nid="${n.id}">${n.kind==="review"?"Xem và duyệt":"Mở bài viết"}</button> `:""}${n.read?"":`<button class="s" data-read="${n.id}">Đã đọc</button>`}</div></div><p>${esc(n.body)}</p><span class="mute">${when(n.created_at)}</span></div>`}).join("")||'<p class="mute">Chưa có thông báo.</p>')},
+ async audit(){const L=await api("/admin/audit");return `<h2>Nhật ký hoạt động</h2><div class="card" style="overflow:auto"><table><tr><th>Thời gian</th><th>Người thực hiện</th><th>Việc đã làm</th></tr>${L.map(a=>`<tr><td>${when(a.at)}</td><td>${esc(a.who)}<div class="mute">${esc(a.role)}</div></td><td>${esc(a.text)}</td></tr>`).join("")||'<tr><td colspan="3" class="mute">Chưa có hoạt động nào.</td></tr>'}</table></div>`},
+ async know(){if(!KL){try{KL=await api("/knowledge")}catch{KL=FB}}
+  const adm=me.role!=="farmer";
+  if(kPv){let n=kPv==="form"?kF:await api("/admin/news/"+kPv);return (kPv!=="form"&&me.role==="admin_province"?revBar(n):"")+artView(dbArt(n),kPv==="form"?"edit":"mng")}
+  if(adm&&kMode==="mng")return me.role==="admin_province"?revView():mngView();
+  if(adm&&kMode==="edit")return editView();
+  if(adm&&kMode==="ai"&&kAi)return aiView();
+  const DB=await api("/news").catch(()=>[]),ALL=[...DB.map(n=>({id:"db"+n.id,topic:n.category,tag:n.category+" · "+(n.scope==="system"?"Toàn hệ thống":n.place||"Địa phương"),min:n.min,cover:n.cover,title:n.title,lead:n.summary})),...NEWS];
+  if(kArt){let a=null;if(kArt.startsWith("db")){const n=await api("/news/"+kArt.slice(2)).catch(()=>null);a=n&&dbArt(n)}else a=NEWS.find(x=>x.id===kArt);if(a)return artView(a,"lib");kArt=null}
+  const L=ALL.filter(a=>!kTopic||a.topic===kTopic),card=(a,big)=>`<div class="nwc${big?" big":""}" data-art="${a.id}">${cov(a)}<div class="b">${big?'<span class="nwtag">BÀI VIẾT NỔI BẬT</span>':""}<h3>${esc(a.title)}</h3><div class="mute">${esc(a.tag)} · ${a.min} phút đọc</div><p>${esc(a.lead)}</p></div></div>`;
+  return `<h2>Kiến thức nhà nông</h2>${kTabs()}<div class="nwt">${["",...new Set(ALL.map(a=>a.topic).filter(Boolean))].map(t=>`<button class="s ${(kTopic||"")===t?"g":""}" data-topic="${esc(t)}">${esc(t||"Tất cả")}</button>`).join("")}</div><div class="nwg">${L.map((a,i)=>card(a,i===0&&!kTopic)).join("")}</div>`}};
+function mascot(){
+ if(innerWidth<700)return;
+ const hidP=!!localStorage.getItem("bacHide"),quiet=hidP||(!!sessionStorage.getItem("bacDone")&&!/[?&]bac/.test(location.search));
+ let n=0;const iv=setInterval(()=>{if(window.THREE){clearInterval(iv);try{go()}catch(e){console.error("Bác Nông không tải được:",e);document.body.classList.remove("has-bac");["bac","bach","bacb","bacx"].forEach(i=>{const el=$(i);el&&el.remove()})}}else if(++n>60)clearInterval(iv)},200);
+ function go(){
+  const W=105,H=136,cv=document.createElement("canvas"),bub=document.createElement("div"),hit=document.createElement("div"),bx=document.createElement("div");cv.id="bac";bub.id="bacb";hit.id="bach";bx.id="bacx";bx.textContent="Ẩn";bx.title="Ẩn bác Nông";cv.width=W*2;cv.height=H*2;Object.assign(cv.style,{width:W+"px",height:H+"px"});Object.assign(hit.style,{width:"58px",height:"96px"});document.body.append(cv,hit,bub,bx);hit.title="Bấm để hỏi bác Nông, kéo để đổi chỗ";
+  const R=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});R.setSize(W*2,H*2,false);
+  const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(30,W/H,.1,50);C.position.set(0,2,10.5);C.lookAt(0,1.9,0);
+  S.add(new THREE.AmbientLight(0xffffff,.8));const Lg=new THREE.DirectionalLight(0xffffff,.7);Lg.position.set(3,6,6);S.add(Lg);
+  const mt=c=>new THREE.MeshLambertMaterial({color:c}),ol=new THREE.MeshBasicMaterial({color:0x2b1d12,side:THREE.BackSide}),
+   part=(geo,c,x=0,y=0,z=0,o=1.05)=>{const g=new THREE.Group(),b=new THREE.Mesh(geo,ol);b.scale.setScalar(o);g.add(b,new THREE.Mesh(geo,mt(c)));g.position.set(x,y,z);return g},
+   mesh=(geo,c,x,y,z)=>{const m=new THREE.Mesh(geo,c.isMaterial?c:mt(c));m.position.set(x,y,z);return m},SK=0xf1c7a0,bac=new THREE.Group();S.add(bac);
+  const shadow=mesh(new THREE.CircleGeometry(.9,24),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.22}),0,.01,0);shadow.rotation.x=-Math.PI/2;shadow.scale.y=.5;bac.add(shadow);
+  const body=part(new THREE.SphereGeometry(.6,24,16),0x8a5a2b,0,1,0);body.scale.set(1,1.15,.85);bac.add(body);
+  const scarf=mesh(new THREE.TorusGeometry(.42,.12,10,24),0xc0392b,0,1.62,0);scarf.rotation.x=Math.PI/2;bac.add(scarf);
+  const head=new THREE.Group();head.position.y=2.15;bac.add(head);head.add(part(new THREE.SphereGeometry(.85,32,24),SK));
+  const eg=new THREE.SphereGeometry(.1,12,10),eL=mesh(eg,0x1b1b1b,-.3,.05,.78),eR=mesh(eg,0x1b1b1b,.3,.05,.78);head.add(eL,eR);
+  [-1,1].forEach(s=>{head.add(mesh(new THREE.SphereGeometry(.035,8,8),0xffffff,.3*s+.03,.09,.86));
+   const bl=mesh(new THREE.CircleGeometry(.14,16),new THREE.MeshBasicMaterial({color:0xf29b9b,transparent:true,opacity:.7}),.5*s,-.12,.7);bl.rotation.y=.6*s;head.add(bl);
+   const eb=mesh(new THREE.BoxGeometry(.22,.05,.05),0xcfcfcf,.3*s,.27,.8);eb.rotation.z=-.2*s;head.add(eb);
+   const mu=mesh(new THREE.SphereGeometry(.13,12,8),0xdedede,.15*s,-.14,.83);mu.scale.set(1.6,.55,.7);mu.rotation.z=.3*s;head.add(mu);
+   head.add(mesh(new THREE.SphereGeometry(.16,12,10),SK,.84*s,0,0))});
+  head.add(mesh(new THREE.SphereGeometry(.07,10,8),0xe0a98a,0,-.03,.85));
+  const sm=mesh(new THREE.TorusGeometry(.18,.028,8,20,Math.PI),0x7a2e2e,0,-.28,.81);sm.rotation.z=Math.PI;head.add(sm);
+  const hat=part(new THREE.ConeGeometry(1.35,.85,32),0xe6cf86,0,.78,0,1.03);hat.rotation.z=.08;head.add(hat);
+  const arm=s=>{const g=new THREE.Group();g.position.set(.68*s,1.5,0);g.add(part(new THREE.CylinderGeometry(.14,.14,.75,12),0x8a5a2b,0,-.375,0),part(new THREE.SphereGeometry(.16,12,10),SK,0,-.82,0));bac.add(g);return g},
+   leg=s=>{const g=new THREE.Group();g.position.set(.27*s,.74,0);const ft=part(new THREE.SphereGeometry(.2,12,10),0x5a3a1e,0,-.6,.1);ft.scale.set(1,.7,1.4);g.add(part(new THREE.CylinderGeometry(.17,.17,.55,12),0x4a3a2a,0,-.27,0),ft);bac.add(g);return g},
+   aR=arm(1),aL=arm(-1),lR=leg(1),lL=leg(-1);
+  const sv=(()=>{try{return JSON.parse(localStorage.getItem("bacpos")||"null")}catch{return null}})(),pw=()=>innerWidth-W;
+  let hid=hidP,run=0,y=sv?Math.max(0,Math.min(innerHeight-H,sv.y)):10,x=-W-20,st="walk",face=Math.PI/2,tx=sv?Math.max(0,Math.min(pw(),pw()-sv.r)):Math.max(16,pw()-20),spd=Math.max(130,Math.min(260,(tx+W+20)/4.5)),arr=0,asked=0,h1=0,dead=0,raf,mx=0,last=performance.now();
+  if(quiet){x=tx;st="idle";face=0;arr=last/1000-100;asked=1;h1=1}
+  const pOn=()=>$("botp").classList.contains("on"),say=h=>{bub.innerHTML=h;if(!hid&&!pOn())bub.classList.add("on")};
+  function die(){if(dead)return;dead=1;document.body.classList.remove("has-bac");cancelAnimationFrame(raf);cv.remove();hit.remove();bx.remove();bub.remove();R.dispose()}
+  const open=()=>{if(!dead&&!pOn())$("botb").click()},
+   sync=()=>{const v=!hid&&!pOn();[cv,hit,bx].forEach(el=>el.style.display=v?"":"none");document.body.classList.toggle("has-bac",!hid);if(!v)bub.classList.remove("on");if(v&&!run){run=1;last=performance.now();raf=requestAnimationFrame(frame)}if(!v&&run){run=0;cancelAnimationFrame(raf)}const bv=$("botv");if(bv)bv.textContent=hid?"Hiện bác":"Ẩn bác"};
+  bub.onclick=open;new MutationObserver(sync).observe($("botp"),{attributes:true,attributeFilter:["class"]});
+  let dg=0,mv=0,gx=0,gy=0,ox=0,oy=0;
+  hit.onpointerdown=e=>{hit.setPointerCapture(e.pointerId);dg=1;mv=0;gx=e.clientX;gy=e.clientY;ox=x;oy=y};
+  hit.onpointermove=e=>{if(!dg)return;const dx=e.clientX-gx,dy=e.clientY-gy;if(!mv&&Math.hypot(dx,dy)<5)return;if(!mv&&(st==="walk"||st==="turn")){st="idle";face=0;arr=performance.now()/1000-100;asked=1;h1=1;bub.classList.remove("on")}mv=1;x=Math.max(0,Math.min(pw(),ox+dx));y=Math.max(0,Math.min(innerHeight-H,oy-dy))};
+  hit.onpointerup=()=>{if(!dg)return;dg=0;if(mv){try{localStorage.setItem("bacpos",JSON.stringify({r:Math.round(pw()-x),y:Math.round(y)}))}catch{}}else open()};
+  bx.onclick=()=>window.bacSet(true);
+  addEventListener("mousemove",e=>mx=(e.clientX/innerWidth-.5)*2);
+  addEventListener("resize",()=>{x=Math.max(0,Math.min(x,pw()));y=Math.max(0,Math.min(y,innerHeight-H))});
+  const frame=now=>{if(dead||!run)return;raf=requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000),T=now/1000;last=now;
+   if(st==="walk"){x+=spd*dt;const p=T*9;lL.rotation.x=Math.sin(p)*.7;lR.rotation.x=-Math.sin(p)*.7;aL.rotation.x=-Math.sin(p)*.6;aR.rotation.x=Math.sin(p)*.6;bac.position.y=Math.abs(Math.sin(p))*.12;if(x>=tx){x=tx;st="turn"}}
+   else{lL.rotation.x*=.85;lR.rotation.x*=.85;aL.rotation.x*=.85;bac.position.y*=.8;
+    if(st==="turn"){aR.rotation.x*=.85;face+=(0-face)*Math.min(1,dt*7);if(Math.abs(face)<.03){face=0;st="idle";arr=T;say(`Xin chào, ${esc(me.name||"bà con")}! Bác Nông đây.`)}}
+    else{const ta=T-arr,w=ta<3.2?2.5+Math.sin(T*11)*.3:0;aR.rotation.x*=.85;aR.rotation.z+=(w-aR.rotation.z)*Math.min(1,dt*10);head.rotation.x=ta<3.2?Math.sin(T*8)*.05:0;
+     if(ta>6&&!h1){bub.classList.remove("on");h1=1}
+     if(ta>15&&!asked){asked=1;say("Bạn muốn gì?<br><small>Bấm vào bác để hỏi nhé</small>")}
+     if(ta>15&&ta<15.7)bac.position.y=Math.abs(Math.sin((ta-15)*Math.PI/.7))*.5;
+     body.scale.y=1.15+Math.sin(T*2)*.02;head.position.y=2.15+Math.sin(T*2)*.02;eL.scale.y=eR.scale.y=(T%3.4)<.12?.1:1;head.rotation.y+=(mx*.5-head.rotation.y)*.08}}
+   bac.rotation.y=face;cv.style.transform=`translateX(${x}px)`;hit.style.transform=`translateX(${x+24}px)`;cv.style.bottom=y+"px";hit.style.bottom=(y+2)+"px";bx.style.transform=`translateX(${x+W-34}px)`;bx.style.bottom=(y+H-20)+"px";bub.style.bottom=(y+H-8)+"px";bub.style.left=Math.min(innerWidth-216,Math.max(8,x+W/2-100))+"px";R.render(S,C)};
+  sync();sessionStorage.setItem("bacDone","1");window.bacSet=v=>{hid=v;try{v?localStorage.setItem("bacHide","1"):localStorage.removeItem("bacHide")}catch{}sync()};const bv=$("botv");if(bv)bv.style.display=""}}
+const BOT=[];let botBusy=false;
+const fmtB=t=>esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
+function mkBot(){if($("botb"))return;const b=document.createElement("button"),p=document.createElement("div");b.id="botb";b.textContent="Bác Nông";p.id="botp";
+ p.innerHTML=`<header><span>Bác Nông · kéo thanh này để di chuyển</span><span><button class="s" id="botv" title="Ẩn hoặc hiện bác Nông" style="display:none">Ẩn bác</button> <button class="s" id="botr" title="Đưa hộp chat về vị trí ban đầu">Về chỗ cũ</button> <button class="s" id="botx">Đóng</button></span></header><div id="botm"></div><div id="botf"><input id="boti" maxlength="400" placeholder="Hỏi bác Nông: độ ẩm đất, thời tiết, cách dùng..."><button class="g" id="bots">Gửi</button></div>`;document.body.append(b,p);
+ const m=$("botm"),draw=()=>{m.innerHTML=(BOT.length?"":`<div class="bub">Xin chào bà con, bác Nông đây! Bác tra giúp độ ẩm đất từ dữ liệu vệ tinh, thời tiết theo tọa độ và chỉ cách dùng ứng dụng. Ví dụ: <b>Độ ẩm đất ở kinh độ 108.1, vĩ độ 13.99?</b></div>`)+BOT.map(x=>`<div class="bub ${x.role==="user"?"me":""}">${fmtB(x.content)}</div>`).join("")+(botBusy?`<div class="bub">Đang trả lời…</div>`:"");m.scrollTop=m.scrollHeight},
+ send=async()=>{const i=$("boti"),t=i.value.trim();if(!t||botBusy)return;i.value="";BOT.push({role:"user",content:t});botBusy=true;draw();try{BOT.push({role:"assistant",content:(await api("/ai/chat","POST",{message:t,reset:!BOT.some(x=>x.role==="assistant")})).reply})}catch(e){BOT.push({role:"assistant",content:"Bác xin lỗi, "+e.message})}botBusy=false;draw()};
+ const POS="botpos",fit=()=>{if(!p.style.left){const r=p.getBoundingClientRect();p.style.left=r.left+"px";p.style.top=r.top+"px"}p.style.right=p.style.bottom="auto";const r=p.getBoundingClientRect();p.style.left=Math.min(Math.max(0,r.left),Math.max(0,innerWidth-120))+"px";p.style.top=Math.min(Math.max(0,r.top),Math.max(0,innerHeight-60))+"px"},save=()=>{try{localStorage.setItem(POS,JSON.stringify({l:p.style.left,t:p.style.top,w:p.style.width,h:p.style.height}))}catch{}};
+ try{const v=JSON.parse(localStorage.getItem(POS)||"null");if(v&&v.l)Object.assign(p.style,{left:v.l,top:v.t,width:v.w||"",height:v.h||"",right:"auto",bottom:"auto"})}catch{}
+ const hd=p.querySelector("header");hd.onpointerdown=e=>{if(e.target.closest("button"))return;fit();const r=p.getBoundingClientRect(),dx=e.clientX-r.left,dy=e.clientY-r.top;hd.setPointerCapture(e.pointerId);
+  hd.onpointermove=ev=>{p.style.left=Math.min(Math.max(0,ev.clientX-dx),innerWidth-120)+"px";p.style.top=Math.min(Math.max(0,ev.clientY-dy),innerHeight-60)+"px"};hd.onpointerup=()=>{hd.onpointermove=hd.onpointerup=null;save()}};
+ p.addEventListener("pointerup",save);addEventListener("resize",()=>p.classList.contains("on")&&fit());
+ $("botv").onclick=()=>window.bacSet&&window.bacSet(!localStorage.getItem("bacHide"));$("botr").onclick=()=>{["left","top","width","height"].forEach(k=>p.style[k]="");p.style.right="18px";p.style.bottom="70px";try{localStorage.removeItem(POS)}catch{}};
+ b.onclick=()=>{p.classList.toggle("on");if(p.classList.contains("on")){fit();draw();$("boti").focus()}};$("botx").onclick=()=>p.classList.remove("on");$("bots").onclick=send;$("boti").onkeydown=e=>{if(e.key==="Enter")send()};mascot()}
+function bind(k){if(!LIM())mkBot();const v=$("view"),on=(id,f)=>$(id)&&($(id).onclick=f),act=async f=>{try{await f();await re()}catch(e){alert(e.message)}};
+  v.onclick=null;v.onmousedown=null;if(k==="know"){v.classList.add("wide");v.parentElement.scrollTop=0;
+  v.onmousedown=e=>{if(e.target.closest("[data-cmd]"))e.preventDefault()};
+  v.onclick=async e=>{const t=e.target.closest("[data-art],[data-topic],[data-lv],[data-sec],[data-km],[data-ka],[data-ei],[data-cmd],[data-ed],[data-rv],[data-ai]");if(!t)return;e.preventDefault();const d=t.dataset;try{
+   if(d.sec){$(d.sec).scrollIntoView({behavior:"smooth"});return}
+   if(d.cmd)return edCmd(d.cmd);if(d.ei)return await edImg(d.ei);if(d.ka)return await rowAct(d.ka,+d.id);if(d.ed)return await edAct(d.ed);if(d.ai)return await aiAct(d.ai);if(d.rv){kRv=d.rv;kPv=null;return await show("know")}
+   kPv=null;if(d.km){kMode=d.km;kArt=null}else if(d.lv!==undefined){kArt="am";kLv=+d.lv}else if(d.art!==undefined){kArt=d.art||null;kLv=null}else{kTopic=d.topic||null;kArt=null}
+   await show("know")}catch(x){alert(x.message)}};
+  const fi=$("efile");if(fi)fi.onchange=async()=>{const f=fi.files[0];fi.value="";if(!f)return;try{const b=await shrink(f),r=await fetch("/admin/news/image",{method:"POST",headers:{"Content-Type":b.type||"application/octet-stream"},body:b}),j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(typeof j.detail==="string"?j.detail:"Không tải được ảnh (lỗi "+r.status+")");
+    if(upT==="cover"){rdF();kF.cover=j.url;await show("know")}else{const eb=$("eb");eb.focus();if(savedR){const s=getSelection();s.removeAllRanges();s.addRange(savedR)}document.execCommand("insertImage",false,j.url)}}catch(x){alert(x.message)}};
+  const eb=$("eb");if(eb)eb.onpaste=e=>{e.preventDefault();document.execCommand("insertText",false,e.clipboardData.getData("text/plain"))};if(!kPv&&kMode==="lib"&&kLv!==null){const e=$("lv"+kLv);kLv=null;e&&e.scrollIntoView({block:"start"})}}
+  if(k==="plots"){v.classList.add("wide2");v.querySelectorAll("[data-go]").forEach(b=>b.onclick=e=>{e.preventDefault();show(b.dataset.go)});const fi=$("pfile"),dl=v.querySelector("[data-ph=del]");
+   v.querySelectorAll("[data-up]").forEach(b=>b.onclick=e=>{e.stopPropagation();upId=b.dataset.up;fi.click()});
+   v.querySelectorAll("[data-hist]").forEach(b=>b.onclick=()=>{v.querySelectorAll("[data-hist]").forEach(x=>x.classList.toggle("g",x===b));$("hchart").innerHTML=hChart(HIS,b.dataset.hist)});
+   if(dl)dl.onclick=()=>confirm("Xóa ảnh thửa này?")&&act(()=>api("/plots/"+plotSel+"/photo","DELETE"));
+   if(fi)fi.onchange=()=>{const f=fi.files[0];fi.value="";if(f)act(async()=>{const b=await shrink(f),r=await fetch("/plots/"+upId+"/photo",{method:"POST",headers:{"Content-Type":b.type||"application/octet-stream"},body:b});if(!r.ok){const j=await r.json().catch(()=>({}));throw new Error(typeof j.detail==="string"?j.detail:"Không tải được ảnh (lỗi "+r.status+")")}})}}
+  on("locsave",()=>act(()=>api("/me/location","POST",{province:$("lp").value,ward:$("lw").value})));
+  v.querySelectorAll("[data-gps]").forEach(b=>b.onclick=()=>geoFill(b.dataset.gps));
+  /* thửa */
+  on("padd",()=>{const x=parseFloat($("px").value.replace(",",".")),y=parseFloat($("py").value.replace(",","."));act(()=>api("/plots","POST",{name:$("pn").value,crop:$("pc").value,lon:x,lat:y}))});
+  on("geo",()=>navigator.geolocation?.getCurrentPosition(p=>{$("px").value=p.coords.longitude.toFixed(5);$("py").value=p.coords.latitude.toFixed(5)},()=>alert("Không lấy được vị trí. Hãy nhập tay.")));
+  v.querySelectorAll("[data-plot]").forEach(b=>b.onclick=()=>{plotSel=b.dataset.plot;show("plots")});
+  on("back",()=>{plotSel=null;show("plots")});
+  on("pdel",()=>confirm("Xóa thửa này?")&&act(async()=>{await api("/plots/"+plotSel,"DELETE");plotSel=null}));
+  on("ask",async()=>{try{const nm=v.querySelector("h2").textContent,L=await api("/chat/contacts"),p=L.find(x=>x.role==="admin_ward")||L[0];
+    if(!p){alert("Khu vực của bạn chưa có cán bộ quản lý nào đăng ký. Bạn vẫn có thể xem gợi ý ngay trong trang này.");return}
+    chatPeer=p.id;prefill=`Tôi muốn hỏi về thửa ${nm}: `;show("chat")}catch(e){alert(e.message)}});
+  /* hộp thoại và ngữ cảnh nông hộ */
+  on("farmPlotSelect",()=>{});
+  if($("farmPlotSelect"))$("farmPlotSelect").onchange=()=>{chatFarmPlot=$("farmPlotSelect").value;show("chat")};
+  v.querySelectorAll("[data-goto]").forEach(b=>b.onclick=()=>show(b.dataset.goto));
+  const say=()=>v.querySelectorAll("[data-say]").forEach(b=>b.onclick=()=>speak(curMsgs[b.dataset.say].body,b));
+  v.querySelectorAll("[data-peer]").forEach(b=>b.onclick=()=>{chatPeer=b.dataset.peer;show("chat")});
+  on("cback",()=>{chatPeer=null;show("chat")});
+  if($("cfind"))$("cfind").oninput=()=>{const t=$("cfind").value.trim().toLowerCase(),all=JSON.parse($("clist").dataset.all);
+    $("clist").innerHTML=all.filter(p=>p.name.toLowerCase().includes(t)).map(contactCard).join("")||'<p class="mute">Không có kết quả.</p>';
+    v.querySelectorAll("[data-peer]").forEach(b=>b.onclick=()=>{chatPeer=b.dataset.peer;show("chat")})};
+  if(k==="chat"&&chatPeer){const T=()=>$("thr"),toEnd=()=>{T().scrollTop=T().scrollHeight},far=()=>T().scrollHeight-T().scrollTop-T().clientHeight,upd=()=>$("tobottom").classList.toggle("hide",far()<80);
+    toEnd();say();T().onscroll=upd;on("tobottom",()=>{toEnd();upd()});
+    if(prefill){$("mtext").value=prefill;prefill="";$("mtext").focus()}
+    const redraw=(r,force)=>{const t=T();if(!t)return;const near=far()<120;curMsgs=r.messages;t.innerHTML=bubbles(curMsgs);say();if(force||near)toEnd();upd()};
+    const send=async()=>{const x=$("mtext").value.trim();if(!x)return;try{await api("/chat/"+chatPeer,"POST",{body:x});$("mtext").value="";redraw(await api("/chat/"+chatPeer),true)}catch(e){alert(e.message)}};
+    on("send",send);$("mtext").focus();
+    on("bgbtn",()=>$("bgrow").classList.toggle("hide"));
+    v.querySelectorAll("[data-bg]").forEach(b=>b.onclick=()=>{const n=b.dataset.bg;st.set("hn_chatbg",n);$("thr").style.cssText=bgCss(n);v.querySelectorAll("[data-bg]").forEach(x=>x.classList.toggle("on",x===b))});$("mtext").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();send()}};
+    poll=setInterval(async()=>{try{const r=await api("/chat/"+chatPeer);if(r.messages.length!==curMsgs.length)redraw(r)}catch{}},5000)}
+  else if(k==="chat")poll=setInterval(()=>{if(tab==="chat"&&!chatPeer&&!($("cfind")&&$("cfind").value)&&document.activeElement?.tagName!=="INPUT")show("chat")},10000);
+  /* thông báo */
+  v.querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{annTab=b.dataset.at;show("inbox")});
+  on("annsend",()=>act(async()=>{const r=await api("/admin/announce","POST",{title:$("at").value,body:$("ab").value,ward_key:$("aw")?$("aw").value:""});alert("Đã gửi tới "+r.sent+" người")}));
+  v.querySelectorAll("[data-ik]").forEach(b=>b.onclick=()=>{inKind=b.dataset.ik;show("inbox")});
+  v.querySelectorAll("[data-nv]").forEach(b=>b.onclick=async()=>{try{await api(`/notifications/${b.dataset.nid}/read`,"POST");me=await api("/me");badges()}catch{}kPv=+b.dataset.nv;kMode="mng";kArt=null;show("know")});
+  v.querySelectorAll("[data-read]").forEach(b=>b.onclick=()=>act(()=>api(`/notifications/${b.dataset.read}/read`,"POST")));
+  /* quản lý người dùng */
+  const find=()=>{usrQ=$("usearch").value.trim();show("users")};on("usgo",find);if($("usearch"))$("usearch").onkeydown=e=>{if(e.key==="Enter")find()};
+  v.querySelectorAll("[data-us]").forEach(b=>b.onclick=()=>{const[id,a]=b.dataset.us.split(":");if(a==="reject"&&!confirm("Từ chối và xóa đăng ký này?"))return;act(()=>api(`/admin/users/${id}/${a}`,"POST"))})}
+
+/*I18N*/
+const EN={"Đăng nhập": "Sign in", "Đăng ký": "Register", "Số điện thoại": "Phone number", "Họ và tên": "Full name", "Mật khẩu (từ 8 ký tự)": "Password (8+ characters)", "Tạo tài khoản": "Create account", "Nông dân đăng ký dùng ngay. Hợp tác xã cần quản trị viên duyệt hồ sơ": "Farmers can start right away. Cooperatives need admin approval", "Thoát": "Log out", "Đang tải": "Loading", "Bản đồ độ ẩm đất": "Soil moisture map", "Đổi ngôn ngữ": "Switch language", "Đổi giao diện sáng/tối": "Switch light/dark theme", "Sáng": "Light", "Tối": "Dark", "Tổng quan": "Overview", "Bản đồ": "Map", "Thửa của tôi": "My plots", "Thông báo": "Notifications", "Hộp thoại": "Messages", "Kiến thức": "Knowledge", "Hợp tác xã": "Cooperative", "Thửa thành viên": "Member plots", "Thành viên & mã mời": "Members & invite code", "Thông báo chung": "Announcements", "Hồ sơ chờ duyệt": "Pending applications", "Người dùng": "Users", "Thông báo toàn hệ thống": "System-wide announcements", "Nhật ký": "Audit log", "Nông dân": "Farmer", "Quản trị": "Admin", "Cần chú ý": "Needs attention", "thửa khô hoặc quá ẩm": "dry or over-wet plots", "Số thửa": "Plots", "đã khai báo": "registered", "Thành viên": "Members", "Ảnh vệ tinh gần nhất": "Latest satellite image", "Ảnh gần nhất": "Latest image", "Cảnh trong bộ nhớ": "Scenes cached", "cảnh NISAR": "NISAR scenes", "hợp tác xã": "cooperatives", "Tình trạng các thửa": "Plot conditions", "Thông báo mới nhất": "Latest notifications", "Chưa có thông báo": "No notifications yet", "Chưa có thửa nào": "No plots yet", "Chưa có thửa nào được chia sẻ": "No shared plots yet", "Chưa có thành viên": "No members yet", "Chưa có tin nhắn": "No messages yet", "Thửa của thành viên đã đồng ý chia sẻ": "Plots shared by consenting members", "Tên thửa": "Plot name", "Loại cây (cà phê, hồ tiêu…)": "Crop (coffee, pepper…)", "Kinh độ (lon)": "Longitude (lon)", "Vĩ độ (lat)": "Latitude (lat)", "Dùng vị trí của tôi": "Use my location", "Thêm thửa": "Add plot", "Xóa": "Delete", "Xóa thửa này": "Delete this plot", "Không lấy được vị trí. Hãy nhập tay": "Could not get your location. Enter it manually", "Chưa có ảnh vệ tinh phủ vị trí này": "No satellite image covers this location yet", "Nhập tin nhắn…": "Type a message…", "Gửi": "Send", "Hộp thoại với thành viên": "Messages with members", "Thông báo chung cho thành viên": "Announcement to members", "Tiêu đề": "Title", "Nội dung": "Content", "Hãy tham gia hợp tác xã trong mục Hợp tác xã": "Join a cooperative in the Cooperative section", "Kiến thức nhà nông: đọc độ ẩm đất": "Farmer knowledge: reading soil moisture", "Độ ẩm đất mặt do vệ tinh ước tính, tính theo m³/m³": "Surface soil moisture estimated by satellite, in m³/m³", "Sai số còn lớn nên hãy kiểm tra thêm tại ruộng": "Errors are still large, so also check in the field", "Tham gia bằng mã mời": "Join with an invite code", "Khi tham gia, bạn đồng ý chia sẻ vị trí và tình trạng thửa với hợp tác xã": "By joining, you agree to share plot locations and conditions with the cooperative", "Rời đi là dừng chia sẻ ngay": "Leaving stops sharing immediately", "Mã mời": "Invite code", "Tham gia": "Join", "Rời hợp tác xã": "Leave cooperative", "Bạn đang là thành viên": "You are a member of", "Hợp tác xã xem được vị trí và tình trạng các thửa bạn chia sẻ": "The cooperative can see the location and condition of the plots you share", "Đang chờ quản trị viên duyệt": "Awaiting admin review", "Đã duyệt": "Approved", "Bị từ chối": "Rejected", "Đăng ký hợp tác xã": "Register a cooperative", "Tên hợp tác xã": "Cooperative name", "Mã số hợp tác xã": "Registration number", "Người đại diện": "Representative", "Địa bàn hoạt động": "Operating area", "Gửi hồ sơ": "Submit application", "Mã mời của bạn": "Your invite code", "Gửi mã này cho nông dân để họ tham gia": "Share this code with farmers so they can join", "Số thửa chia sẻ": "Shared plots", "Tên": "Name", "Hồ sơ hợp tác xã chờ duyệt": "Cooperative applications awaiting review", "Ghi chú hoặc lý do từ chối": "Note or rejection reason", "Duyệt": "Approve", "Từ chối": "Reject", "Không có hồ sơ nào chờ duyệt": "No applications awaiting review", "Điện thoại": "Phone", "Vai trò": "Role", "Trạng thái": "Status", "Khóa": "Lock", "Mở": "Unlock", "Nhật ký hoạt động": "Activity log", "Lúc": "Time", "Người": "User", "Hành động": "Action", "Đối tượng": "Target", "Đã đọc": "Mark read", "Thông tin nhập chưa hợp lệ": "Invalid input", "Mưa hoặc tưới sau đó chưa được tính; vệ tinh chỉ đo lớp đất mặt, ô ảnh khoảng 200 m": "Rain or irrigation after that is not counted; the satellite only measures the surface layer, with a pixel of about 200 m", "Dữ liệu NISAR còn đang hiệu chuẩn": "NISAR data is still being calibrated", "Hãy kiểm tra lại tại ruộng": "Please check again in the field", "Bạn chưa tham gia hợp tác xã nào": "You have not joined any cooperative", "Bạn đang ở một hợp tác xã. Hãy rời trước khi tham gia nơi khác": "You are already in a cooperative. Leave it before joining another", "Bạn đã gửi hồ sơ, hoặc mã số này đã tồn tại": "You already applied, or this registration number exists", "Chưa đăng nhập": "Not signed in", "Hành động không hợp lệ": "Invalid action", "Hợp tác xã chưa được duyệt": "The cooperative is not approved yet", "Không có hồ sơ chờ duyệt này": "No such application awaiting review", "Không phải thành viên của hợp tác xã bạn": "Not a member of your cooperative", "Không thực hiện được": "Could not perform this action", "Không đủ quyền": "Not enough permission", "Mã mời không đúng": "Invalid invite code", "Sai số điện thoại hoặc mật khẩu, hoặc tài khoản đang bị khóa": "Wrong phone number or password, or the account is locked", "Số điện thoại đã đăng ký": "This phone number is already registered", "Hồ sơ hợp tác xã đã được duyệt": "Your cooperative application was approved", "Hồ sơ hợp tác xã bị từ chối": "Your cooperative application was rejected", "Rất khô": "Very dry", "Cần tưới ngay lập tức": "Irrigate immediately", "Đất mặt rất khô, cây dễ thiếu nước, héo lá": "Surface soil is very dry; plants may lack water and wilt", "Tưới ngay, ưu tiên vườn đang ra hoa, đậu quả. Tưới sáng sớm hoặc chiều mát, tưới đủ thấm sâu vùng rễ thay vì tưới ít nhiều lần": "Irrigate now, prioritizing plots that are flowering or setting fruit. Water early in the morning or in the cool of the evening, and water deeply into the root zone rather than a little many times", "Phủ gốc bằng rơm, cỏ khô để giữ ẩm lâu hơn": "Mulch the base with straw or dry grass to keep moisture longer", "Khô vừa": "Moderately dry", "Bắt đầu bật hệ thống tưới": "Start the irrigation system", "Đất bắt đầu thiếu nước, chưa nguy cấp": "Soil is starting to lack water, but it is not critical", "Chuẩn bị và bật hệ thống tưới, tưới nhẹ theo chu kỳ. Kiểm tra lại sau 1-2 ngày, xem thêm dự báo mưa": "Prepare and switch on the irrigation system, with light watering at regular intervals. Check again after 1-2 days and look at the rain forecast", "Nếu sắp có mưa to trong 1-2 ngày tới thì có thể hoãn tưới": "If heavy rain is expected within 1-2 days, you can postpone watering", "Lý tưởng": "Ideal", "Tắt tưới / Duy trì": "Irrigation off / Maintain", "Độ ẩm phù hợp với đa số cây trồng": "Moisture suits most crops", "Không cần tưới thêm. Giữ nguyên chế độ chăm sóc, kiểm tra lại sau 2-3 ngày hoặc sau đợt nắng nóng": "No extra watering needed. Keep your usual care and check again after 2-3 days or after a hot spell", "Đây là mức nên giữ ổn định, tránh tưới thừa gây lãng phí nước và điện": "Keep this level stable and avoid over-watering, which wastes water and electricity", "Ẩm ướt": "Wet", "Tắt tưới": "Irrigation off", "Đất khá ẩm, đủ nước": "Soil is fairly moist and has enough water", "Tắt tưới. Theo dõi dự báo mưa và kiểm tra rãnh thoát nước nếu sắp có mưa lớn": "Turn irrigation off. Watch the rain forecast and check the drainage ditches if heavy rain is coming", "Chưa nguy hiểm nhưng không nên tưới thêm": "Not dangerous yet, but do not add more water", "Quá ẩm / Thừa nước": "Waterlogged", "Cảnh báo ngập úng": "Waterlogging warning", "Đất rất ẩm hoặc bão hòa nước, có nguy cơ úng rễ": "Soil is very wet or saturated, with a risk of root rot", "Ngừng tưới hoàn toàn, khơi thông rãnh thoát nước, hạn chế bón phân và phun thuốc lúc này. Kiểm tra gốc những cây dễ úng như tiêu, sầu riêng, cà phê": "Stop irrigation completely, clear the drainage ditches, and limit fertilizing and spraying for now. Check the roots of plants prone to waterlogging such as pepper, durian and coffee", "Ruộng lúa hoặc vùng trũng có thể ẩm cao là bình thường, hãy đối chiếu với loại cây trồng": "Paddy fields or low-lying areas can naturally be very moist, so compare with the crop type", "Quá ẩm": "Over-wet"};
+const RX=[[/^Xin chào, ([\s\S]+)$/,"Hello, $1"],[/^Hộp thoại với ([\s\S]+)$/,"Messages with $1"],[/^Hồ sơ hợp tác xã của bạn: ([\s\S]+)$/,"Your cooperative application: $1"],
+ [/^(\d+) ngày trước$/,"$1 days ago"],[/^Ảnh vệ tinh (\d+) ngày trước$/,"Satellite image from $1 days ago"],[/^Đã gửi tới (\d+) người$/,"Sent to $1 people"],[/^Lỗi (\d+)$/,"Error $1"],
+ [/^· mã số ([\s\S]+)$/,"· reg. no. $1"],[/^Đại diện: (.+) · (.+) · Địa bàn: (.+)$/,"Representative: $1 · $2 · Area: $3"],
+ [/^· (\d+)% · ([\s\S]+)$/,(m,p,a)=>`· ${p}% · ${EN[a]||a}`],[/^([\s\S]+) · (Nông dân|Hợp tác xã|Quản trị)$/,(m,a,r)=>`${a} · ${EN[r]}`],
+ [/^Giá trị gần ngưỡng giữa (.+) và (.+) \(sai số vệ tinh khoảng ±(\d+)%\)$/,(m,a,b,c)=>`Value is near the threshold between ${EN[a]||a} and ${EN[b]||b} (satellite error about ±${c}%)`],
+ [/^Thửa (.+): (.+)$/,(m,n,c)=>`Plot ${n}: ${EN[c]||c}`]];
+function one(c){if(c in EN)return EN[c];const m=c.match(/^([\s\S]*?)([.:!?…]*)$/);if(m[1] in EN)return EN[m[1]]+m[2];for(const [r,f] of RX)if(r.test(m[1]))return m[1].replace(r,f)+m[2];return null}
+function trEn(s){const m=s.match(/^(\s*)([\s\S]*?)(\s*)$/);if(!m[2])return s;const r=one(m[2]);if(r!==null)return m[1]+r+m[3];
+  const p=m[2].split(/(?<=[.!?])\s+/);return p.length>1?m[1]+p.map(x=>one(x)??x).join(" ")+m[3]:s}
+/*END I18N*/
+Object.assign(EN,{"Hình nền":"Background","Mặc định":"Default","Đổi hình nền":"Change background","Chưa có tin nhắn. Hãy gửi lời chào!":"No messages yet. Say hello!","Tên (nông dân) hoặc email (quản lý)":"Name (farmer) or email (manager)","Quên mật khẩu?":"Forgot password?","Quên mật khẩu":"Forgot password","Vào ngay":"Sign in now","← Quay lại đăng nhập":"← Back to sign in","Chỉ dành cho nông dân: nhập tên đã đăng ký để vào thẳng, không cần mật khẩu":"Farmers only: enter your registered name to sign in without a password","Họ và tên đã đăng ký":"Registered full name","Quản lý xã/phường":"Ward/commune manager","Quản lý tỉnh":"Province manager","Tỉnh / thành phố":"Province / city","Xã / phường":"Ward / commune","📍 Dùng vị trí hiện tại":"📍 Use my current location","Chỉ lấy tỉnh và xã/phường, không lưu tọa độ":"Only the province and ward are used; coordinates are not stored","Số điện thoại":"Phone number","Gửi mã OTP về email":"Send OTP code to email","Mã xác nhận sẽ được gửi về email bạn nhập":"A verification code will be sent to the email you enter","Nhập mã xác nhận":"Enter verification code","Mã OTP":"OTP code","Xác nhận":"Confirm","Gửi lại mã":"Resend code","Sửa thông tin":"Edit details","Tên đăng nhập là họ tên của bạn nên không được trùng với người khác":"Your full name is your username, so it must be unique","Hiện mật khẩu":"Show password","Ẩn mật khẩu":"Hide password","Bạn ở xã/phường nào?":"Which ward/commune are you in?","Lưu nơi ở":"Save location","Nông dân trong xã/phường":"Farmers in this ward","Người dùng trong tỉnh":"Users in this province","Theo xã/phường":"By ward/commune","Quản lý":"Managers","đang hoạt động":"active","Tìm":"Search","Tìm theo tên…":"Search by name…","Tên":"Name","Vai trò":"Role","Xã/phường":"Ward/commune","Hoạt động gần nhất":"Last active","Trạng thái":"Status","Bình thường":"Normal","Đã khóa":"Locked","Khóa":"Lock","Mở khóa":"Unlock","Đang hoạt động":"Active now","Không hoạt động":"Inactive","Chưa chọn":"Not selected","Đã nhận":"Received","Gửi thông báo":"Send announcement","Tiêu đề":"Title","Nội dung":"Content","Đã gửi gần đây":"Recently sent","Chưa gửi thông báo nào":"No announcements sent yet","Nhật ký hoạt động":"Activity log","Thời gian":"Time","Người thực hiện":"Done by","Việc đã làm":"Action","Chưa có hoạt động nào":"No activity yet","← Các thửa":"← Plots","← Danh sách":"← List","＋ Thêm thửa mới":"＋ Add a new plot","Chưa ghi loại cây":"Crop not recorded","Chưa ghi":"Not recorded","Loại cây":"Crop","Kinh độ":"Longitude","Vĩ độ":"Latitude","Độ ẩm đất":"Soil moisture","Nhiệt độ":"Temperature","Lượng mưa sắp tới":"Upcoming rain","Giải pháp":"Solutions","Ngày":"Day","Lượng mưa":"Rainfall","Khả năng mưa":"Chance of rain","Hôm nay":"Today","Ngày mai":"Tomorrow","Hỏi hợp tác xã":"Ask the cooperative","Xóa thửa":"Delete plot","Chưa lấy được dữ liệu thời tiết lúc này":"Weather data is unavailable right now","Chưa lấy được dự báo mưa lúc này":"Rain forecast is unavailable right now","Gợi ý chung theo dự báo, hãy đối chiếu với tình hình thực tế tại ruộng":"General advice based on the forecast; please check conditions in the field","Nhắn tin với cán bộ quản lý nơi bạn ở":"Message the managers in your area","Nhắn tin với nông dân và cán bộ trong khu vực bạn quản lý":"Message farmers and officials in your area","Khu vực của bạn chưa có cán bộ quản lý nào đăng ký":"No manager has registered in your area yet","Chưa có nông dân nào đăng ký ở khu vực của bạn":"No farmer has registered in your area yet","Chưa có cuộc trò chuyện nào":"No conversations yet","Bấm 🔊 cạnh tin nhắn để nghe đọc thành giọng nói":"Tap 🔊 next to a message to hear it read aloud","Nghe tin nhắn":"Listen to message","Trình duyệt này không hỗ trợ đọc tin nhắn thành giọng nói":"This browser cannot read messages aloud","Đang lấy vị trí…":"Getting your location…","Không lấy được vị trí. Hãy nhập tay":"Could not get your location. Enter it manually","Đã gửi lại mã":"Code sent again","Quản trị":"Admin"});
+RX.push([/^([\s\S]+) · (Nông dân|Quản lý xã\/phường|Quản lý tỉnh)$/,(m,a,r)=>`${a} · ${EN[r]||r}`],[/^Không hoạt động · Hoạt động trước đó (\d+) (phút|giờ|ngày)$/,(m,n,u)=>`Inactive · Last active ${n} ${{"phút":"min","giờ":"h","ngày":"d"}[u]} ago`],
+ [/^Đang hoạt động$/,"Active now"],[/^(\d+) (phút|giờ|ngày) trước$/,(m,n,u)=>`${n} ${{"phút":"min","giờ":"h","ngày":"d"}[u]} ago`],[/^Tổng 3 ngày: ([\d.]+) mm$/,"3-day total: $1 mm"],
+ [/^Hiện tại (\d+)°C · độ ẩm không khí (\d+)% · 3 ngày tới từ (\d+)°C đến (\d+)°C$/,"Now $1°C · air humidity $2% · next 3 days $3–$4°C"],[/^Chỉ nông dân thuộc (.+) nhận được thông báo này$/,"Only farmers in $1 will receive this announcement"],
+ [/^Tôi muốn hỏi về thửa (.+)$/,"I would like to ask about plot $1"]);
+const st={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,v)=>{try{localStorage.setItem(k,v)}catch{}}};
+let theme=st.get("hn_theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"),lang=st.get("hn_lang")==="en"?"en":"vi";
+const tr=s=>lang==="en"?trEn(s):s;
+function tx(n){if(n.parentNode&&/^(SCRIPT|STYLE)$/.test(n.parentNode.nodeName))return;if(n.__vi===undefined)n.__vi=n.nodeValue;const v=tr(n.__vi);if(n.nodeValue!==v)n.nodeValue=v}
+function walk(r){if(r.nodeType===3)return tx(r);if(r.nodeType!==1)return;const w=document.createTreeWalker(r,NodeFilter.SHOW_TEXT);let n;while(n=w.nextNode())tx(n);
+  [r,...r.querySelectorAll("[placeholder],[title],[aria-label]")].forEach(el=>{el.__v=el.__v||{};["placeholder","title","aria-label"].forEach(a=>{if(el.hasAttribute(a)){if(el.__v[a]===undefined)el.__v[a]=el.getAttribute(a);el.setAttribute(a,tr(el.__v[a]))}})})}
+new MutationObserver(ms=>ms.forEach(m=>m.addedNodes.forEach(walk))).observe(document.body,{childList:true,subtree:true});
+const _al=window.alert.bind(window),_cf=window.confirm.bind(window);window.alert=m=>_al(tr(String(m)));window.confirm=m=>_cf(tr(String(m)));
+function applyTheme(){document.documentElement.dataset.theme=theme;$("thm").textContent=theme==="dark"?"Sáng":"Tối"}
+function applyLang(){document.documentElement.lang=lang;$("lng").textContent=lang==="en"?"VI":"EN";walk(document.body)}
+$("thm").onclick=()=>{theme=theme==="dark"?"light":"dark";st.set("hn_theme",theme);applyTheme();walk($("thm"))};
+$("lng").onclick=()=>{lang=lang==="en"?"vi":"en";st.set("hn_lang",lang);applyLang()};
+applyTheme();drawAuth();applyLang();
+boot();
+</script></body></html>

@@ -1,0 +1,991 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Bản đồ NISAR – Tây Nguyên & Bình Phước</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<style>
+  :root{--ink:#16262b;--mute:#5d6f74;--paper:#f2f5f4;--line:#d5dddb;--asc:#0e8a7d;--bad:#b3261e}
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font:14px/1.45 "Be Vietnam Pro",system-ui,sans-serif;color:var(--ink)}
+  #app{display:grid;grid-template-columns:340px 1fr;height:100%}
+  aside{background:var(--paper);border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+  header{padding:16px 16px 12px;border-bottom:1px solid var(--line)}
+  h1{font-size:17px;margin:0 0 2px}
+  header p{margin:0;color:var(--mute);font-size:12.5px}
+  .ctl{display:flex;gap:8px;padding:12px 16px;border-bottom:1px solid var(--line);flex-wrap:wrap;align-items:end}
+  label{display:flex;flex-direction:column;font-size:12px;color:var(--mute);gap:3px;flex:1;min-width:90px}
+  select,button{font:inherit;padding:7px 8px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+  button{background:var(--ink);color:#fff;border-color:var(--ink);cursor:pointer;font-weight:600}
+  button:focus-visible,select:focus-visible,li:focus-visible{outline:2px solid var(--asc);outline-offset:2px}
+  .srch{position:relative;padding:12px 16px;border-bottom:1px solid var(--line)}
+  .srch input{width:100%;font:inherit;padding:9px 34px 9px 10px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+  .srch input:focus-visible{outline:2px solid var(--asc);outline-offset:1px}
+  #qx{position:absolute;right:22px;top:17px;padding:2px 7px;background:none;color:var(--mute);border:0;font-weight:400}
+  #sug{display:none;position:absolute;left:16px;right:16px;top:calc(100% - 6px);z-index:20;background:#fff;border:1px solid var(--line);border-radius:6px;box-shadow:0 4px 14px #0003;max-height:280px;overflow:auto;flex:none}
+  #sug li{padding:8px 12px;font-size:13px}
+  #sug li small{display:block;color:var(--mute);font-size:11.5px}
+  #status{padding:10px 16px;font-size:12.5px;color:var(--mute);border-bottom:1px solid var(--line);word-break:break-word}
+  #status.err{color:var(--bad)}
+  ul{list-style:none;margin:0;padding:0;overflow:auto;flex:1}
+  li{padding:10px 16px;border-bottom:1px solid var(--line);cursor:pointer}
+  li:hover,li.on{background:#e4ebe9}
+  li b{display:block;font-size:13px}
+  li span{color:var(--mute);font-size:12px}
+  .wrap{position:relative;min-height:0}
+  /* thu gọn / mở rộng bảng bên trái */
+  #app{transition:grid-template-columns .25s ease}
+  #app.collapsed{grid-template-columns:0 1fr}
+  aside{min-width:0;overflow:hidden}
+  aside>*{min-width:339px}
+  #app.collapsed aside{border-right:0}
+  #asideToggle{position:absolute;left:0;top:50%;transform:translateY(-50%);z-index:6;width:22px;height:64px;padding:0;border:1px solid var(--line);border-left:0;border-radius:0 8px 8px 0;background:var(--paper);color:var(--ink);font-size:22px;line-height:1;cursor:pointer;box-shadow:2px 0 8px #0003}
+  #asideToggle:hover{background:#fff}
+  #map{height:100%}
+  .mode{display:flex;gap:4px;padding:10px 16px 0;margin:0}
+  .mode button{flex:1;padding:8px 6px;font-size:13px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .mode button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  #nisarPane,#wxPane{display:flex;flex-direction:column;flex:1;min-height:0}
+  #wxPane{display:none}
+  .wxv{display:flex;gap:6px;width:100%}
+  #wxReload{width:100%}
+  .wxv button{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;font-size:12px;background:#fff;color:var(--ink);border:1px solid var(--line)}
+  .wxv button svg{width:26px;height:26px}
+  .wxv button.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .wxmk{width:20px;height:20px;cursor:pointer;filter:drop-shadow(0 1px 2px #0009);transition:opacity .3s,transform .15s}
+  .wxmk:hover{opacity:1!important;transform:scale(1.35)}
+  .wxmk svg{width:100%;height:100%;display:block}
+  .wxmk.alert{filter:drop-shadow(0 0 4px #ff6b6b) drop-shadow(0 1px 2px #0009)}
+  .wxkey{display:flex;gap:14px;flex-wrap:wrap;margin:12px 0 0;font-size:12.5px;color:var(--ink)}
+  .wxkey span{display:flex;align-items:center;gap:6px}.wxkey svg{width:18px;height:18px}
+  #wxStatus{padding:10px 16px;font-size:12.5px;color:var(--mute);border-bottom:1px solid var(--line)}
+  #wxStatus.err{color:var(--bad)}
+  .wxbody{padding:14px 16px;overflow:auto}
+  #wxLegBar{height:14px;border-radius:4px;border:1px solid var(--line)}
+  #wxLegTicks{position:relative;height:18px;font-size:11.5px;color:var(--mute);margin-top:3px}
+  #wxLegTicks span{position:absolute;transform:translateX(-50%);white-space:nowrap}
+  #wxLegTicks span:first-child{transform:none}#wxLegTicks span:last-child{transform:translateX(-100%)}
+  .wxbody p{margin:10px 0 0;font-size:12.5px;color:var(--mute)}
+  .wxbody h2{font-size:15px;margin:0 0 10px}
+  #info{background:#fff;border-bottom:1px solid var(--line);padding:12px 16px;max-height:46vh;overflow:auto;flex:none}
+  #close:disabled{opacity:.4;cursor:not-allowed}
+  select:disabled{opacity:.5}
+  #notebox summary{cursor:pointer;font-size:12px;color:var(--mute);margin:0 0 6px}
+  #info h2{font-size:15px;margin:0 0 8px}
+  #bar{height:12px;border-radius:3px}
+  #rng{display:flex;justify-content:space-between;font-size:11.5px;color:var(--mute);margin:3px 0 8px}
+  #mean{font-weight:600;margin:0 0 6px}
+  #cls details{border-top:1px solid var(--line);padding:6px 0}
+  #cls summary{cursor:pointer;display:flex;gap:8px;align-items:center;font-weight:600;font-size:13px}
+  #cls summary i{width:14px;height:14px;border-radius:3px;flex:none;border:1px solid #0003}
+  #cls summary span{margin-left:auto;color:var(--mute);font-weight:400;font-size:12px}
+  #cls p{margin:4px 0 0 22px;font-size:12.5px}
+  .maplibregl-popup-content p{margin:6px 0}
+  .m{color:var(--mute);font-size:12px}
+  .warn{background:#fff3cd;border-radius:6px;padding:6px 8px;font-size:12.5px}
+  .sum{background:#eef4f3;border-radius:6px;padding:6px 8px;font-size:12.5px;margin:0 0 6px}
+  .pv{margin:0 0 8px}
+  .pv label{display:block;flex:none;min-width:0;font-size:12px;color:var(--mute);margin-bottom:3px}
+  .pv .row{display:flex;gap:6px}
+  .pv select{flex:1;min-width:0}
+  .pv button{padding:7px 12px;white-space:nowrap}
+  .pv button:disabled{opacity:.4;cursor:not-allowed}
+  #sug li.more{color:var(--asc);font-weight:600}
+  #note{font-size:12px;color:var(--mute);margin:0 0 10px}
+  .maplibregl-popup-content{font:13px/1.5 "Be Vietnam Pro",sans-serif;padding:12px 14px;max-width:340px}
+  .maplibregl-popup-content dl{margin:6px 0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+  .maplibregl-popup-content dt{color:var(--mute)}
+  .maplibregl-popup-content dd{margin:0;word-break:break-all}
+  .maplibregl-popup-content a{color:var(--asc);font-weight:600;margin-right:12px}
+  .maplibregl-popup-content button{margin:4px 6px 0 0;padding:6px 10px}
+  .togs{position:absolute;top:10px;left:10px;right:56px;z-index:2;display:flex;flex-direction:column;align-items:flex-start;gap:6px;pointer-events:none}
+  .togs>*{pointer-events:auto}
+  .togs .row{display:flex;gap:8px;flex-wrap:wrap}
+  .tog{padding:8px 12px;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:6px;box-shadow:0 1px 4px #0004;font-size:13px}
+  .tog:hover:not(:disabled){background:var(--paper)}
+  .tog[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .tog:disabled{opacity:.6;cursor:progress}
+  #bndmsg{display:none;max-width:300px;background:#fff;border-radius:6px;padding:6px 10px;font-size:12.5px;box-shadow:0 1px 4px #0004}
+  #bndmsg.err{color:var(--bad)}
+  @media (max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:50vh 1fr;transition:grid-template-rows .25s ease}#app.collapsed{grid-template-columns:1fr;grid-template-rows:1fr 0}#asideToggle{left:50%;top:auto;bottom:0;transform:translateX(-50%) rotate(-90deg)}aside{order:2}.wrap{order:1}#info{max-height:34vh}}
+</style>
+</head>
+<body>
+<div id="app">
+  <aside id="aside">
+    <header>
+      <h1>Dữ liệu NISAR theo vùng</h1>
+      <p>Tây Nguyên và Bình Phước. Chọn một cảnh rồi bấm xem chỉ số trên bản đồ.</p>
+    </header>
+    <div class="mode" role="group" aria-label="Chọn bản đồ">
+      <button id="mNisar" type="button" class="on" aria-pressed="true">Vệ tinh NISAR</button>
+      <button id="mWx" type="button" aria-pressed="false">Thời tiết</button>
+    </div>
+    <div class="srch">
+      <input id="q" type="search" placeholder="Nhập tỉnh, huyện, xã hoặc địa điểm…" autocomplete="off" aria-label="Tìm địa điểm">
+      <button id="qx" type="button" aria-label="Xóa tìm kiếm">✕</button>
+      <ul id="sug"></ul>
+    </div>
+    <div id="nisarPane">
+    <div class="ctl">
+      <label>Loại dữ liệu
+        <select id="level">
+          <option value="SME2">Độ ẩm đất (SME2)</option>
+          <option value="GCOV">Thảm thực vật (GCOV)</option>
+          <option value="GSLC">GSLC (chỉ xem khung)</option>
+          <option value="RSLC">RSLC (chỉ xem khung)</option>
+        </select>
+      </label>
+      <label>Thời gian
+        <select id="days">
+          <option value="14">14 ngày</option>
+          <option value="60" selected>60 ngày</option>
+          <option value="180">180 ngày</option>
+        </select>
+      </label>
+      <button id="reload" type="button">Tải lại</button>
+      <label>Nền bản đồ
+        <select id="base">
+          <option value="gray" selected>Trắng đen (dễ thấy màu dữ liệu)</option>
+          <option value="color">Vệ tinh màu</option>
+        </select>
+      </label>
+    </div>
+    <div id="status">Đang tải…</div>
+    <section id="info">
+      <h2 id="ititle"></h2>
+      <div class="pv"><label for="prov">Xem chi tiết theo tỉnh (tự chọn điểm đại diện)</label>
+        <div class="row"><select id="prov"><option value="">Chọn tỉnh…</option></select>
+          <button id="provGo" type="button" disabled>Áp dụng</button></div></div>
+      <div id="bar"></div>
+      <div id="cls"></div>
+      <div id="rng"><span id="lo"></span><span id="hi"></span></div>
+      <p id="mean"></p>
+      <details id="notebox"><summary>Lưu ý về dữ liệu</summary><p id="note"></p></details>
+      <button id="close" type="button">Quay lại danh sách cảnh</button>
+    </section>
+    <ul id="list"></ul>
+    </div>
+    <div id="wxPane">
+      <div class="ctl">
+        <div class="wxv" role="group" aria-label="Chọn lớp thời tiết">
+          <button type="button" data-v="rain" class="on"><svg viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="#2a9fe0"/><path d="M9 15a3 3 0 003 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Mưa</button>
+          <button type="button" data-v="temp"><svg viewBox="0 0 24 24"><path d="M12 2c1.2 4.2 5.6 6.3 5.6 11.3a5.6 5.6 0 01-11.2 0c0-2.2 1-3.8 2.2-5.3.4 1.6 1.1 2.4 2.2 2.8C10.5 8.6 10.7 5 12 2z" fill="#f08c00"/><path d="M12 22a3 3 0 01-3-3c0-1.6 1.4-2.4 2-3.8.9.8 1.4 1.4 1.4 2.4.6-.3.9-.7 1.1-1.2.5 1.8-.1 3.9-1.5 5.6z" fill="#e03131" transform="translate(0 -1.2)"/></svg>Nhiệt độ</button>
+          <button type="button" data-v="rh"><svg viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#2f9e5a" stroke-width="1.8"/><path d="M8.5 15c1-1 2-1 3.5 0s2.500 1 3.500 0" stroke="#2f9e5a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Độ ẩm</button>
+        </div>
+        <label style="display:none">Hiển thị
+          <select id="wxVar">
+            <option value="rain">Lượng mưa (mm/ngày)</option>
+            <option value="temp">Nhiệt độ (°C)</option>
+            <option value="rh">Độ ẩm không khí (%)</option>
+          </select>
+        </label>
+        <label id="wxDayL">Ngày
+          <select id="wxDay"><option value="0">Hôm qua</option><option value="1" selected>Hôm nay</option><option value="2">Ngày mai</option></select>
+        </label>
+        <button id="wxReload" type="button">Làm mới</button>
+      </div>
+      <div id="wxStatus">Đang tải…</div>
+      <div class="wxbody">
+        <h2 id="wxTitle"></h2>
+        <div id="wxLegBar"></div><div id="wxLegTicks"></div>
+        <div class="wxkey">
+          <span><svg viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="#2a9fe0"/><path d="M9 15a3 3 0 003 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>Mưa to: từ 50 mm/ngày</span>
+          <span><svg viewBox="0 0 24 24"><path d="M12 2c1.2 4.2 5.6 6.3 5.6 11.3a5.6 5.6 0 01-11.2 0c0-2.2 1-3.8 2.2-5.3.4 1.6 1.1 2.4 2.2 2.8C10.5 8.6 10.7 5 12 2z" fill="#f08c00"/><path d="M12 22a3 3 0 01-3-3c0-1.6 1.4-2.4 2-3.8.9.8 1.4 1.4 1.4 2.4.6-.3.9-.7 1.1-1.2.5 1.8-.1 3.9-1.5 5.6z" fill="#e03131" transform="translate(0 -1.2)"/></svg>Nắng nóng: từ 35 °C</span>
+        </div>
+        <p>Biểu tượng mờ rải trong ranh giới tỉnh chỉ để minh họa lớp đang chọn (đậm hơn là giá trị cao hơn); bấm vào để xem số liệu. Biểu tượng phát sáng đỏ là điểm vượt ngưỡng; ngưỡng lấy theo cách gọi thông thường (mưa to, nắng nóng), chưa phải ngưỡng riêng cho từng loại cây.</p>
+        <p>Bấm lên bản đồ để xem mưa, nhiệt độ, độ ẩm tại điểm đó. Màu được nội suy từ lưới điểm cách nhau khoảng 40 km, nên chỉ mang tính tham khảo vùng, không thay cho số đo tại vườn.</p>
+        <p>Nhiệt độ và độ ẩm là giá trị hiện tại. Lượng mưa là tổng cả ngày (hôm nay và ngày mai là dự báo). Nguồn: Open-Meteo.com, giấy phép CC BY 4.0. Đây là dữ liệu mô hình số, không phải số đo từ trạm khí tượng.</p>
+      </div>
+    </div>
+  </aside>
+  <div class="wrap">
+    <div id="map"></div>
+    <button id="asideToggle" type="button" aria-controls="aside" aria-expanded="true" aria-label="Thu gọn bảng" title="Thu gọn bảng">‹</button>
+    <div class="togs">
+      <div class="row">
+        <button id="bnd" class="tog" type="button" aria-pressed="false" disabled>Hiện đường ranh giới</button>
+        <button id="scn" class="tog" type="button" aria-pressed="false" disabled>Hiện khung cảnh</button>
+        <button id="rvr" class="tog" type="button" aria-pressed="false" disabled>Hiện mạch nước</button>
+      </div>
+      <div id="bndmsg" role="status"></div>
+    </div>
+    
+  </div>
+</div>
+
+<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? "—").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const fmt = t => t ? new Date(t).toLocaleString("vi-VN", {timeZone:"Asia/Ho_Chi_Minh", dateStyle:"short", timeStyle:"short"}) : "—";
+const isAsc = p => String(p.flightDirection || "").toUpperCase().startsWith("A");
+const vertex = p => `https://search.asf.alaska.edu/#/?dataset=NISAR&granule=${encodeURIComponent(p.fileID || "")}`;
+const provsOf = p => { let a = p.provinces; if (typeof a === "string") { try { a = JSON.parse(a); } catch { a = []; } } return Array.isArray(a) ? a : []; };
+const provLine = (p, max = 5) => provsOf(p).slice(0, max).map(x => p.provApprox ? x.name : `${x.name} (${Math.round(x.share * 100)}%)`).join(", ");
+const mb = b => Math.round((b || 0) / 1048576);
+const sizeOf = p => { let b = p.bytes; if (typeof b === "string") { try { b = JSON.parse(b); } catch { b = Number(b); } }
+  if (b && typeof b === "object") { const e = Object.entries(b), m = e.find(([k]) => k.endsWith(".h5")) || e[0]; b = m && (typeof m[1] === "object" ? m[1].bytes : m[1]); }
+  return b > 0 ? b : null; };
+const sz = p => { const b = sizeOf(p); return b ? (b >= 1073741824 ? (b / 1073741824).toFixed(1) + " GB" : mb(b) + " MB") : null; };
+const LAYERS = {SME2: [["soil", "Xem độ ẩm đất"]], GCOV: [["veg", "Xem thảm thực vật"], ["hv", "Xem cường độ HV"]]};
+
+let locSeq = 0, shown = [], target = null, marker = null, sugItems = [], baseRasters = [], map, popup, cfg, current = [], active = null, timer = null;
+
+async function init() {
+  cfg = await (await fetch("/api/config")).json();
+  const [w, s, e, n] = cfg.aoi;
+  map = new maplibregl.Map({container: "map", style: `https://api.maptiler.com/maps/hybrid/style.json?key=${cfg.maptilerKey}`,
+    bounds: [[w, s], [e, n]], fitBoundsOptions: {padding: 30}});
+  map.addControl(new maplibregl.NavigationControl(), "top-right");
+  map.addControl(new maplibregl.ScaleControl(), "bottom-right");
+  popup = new maplibregl.Popup({maxWidth: "340px"});
+  map.on("load", () => {
+    fillProv();
+    $("bnd").disabled = false; $("scn").disabled = false; $("rvr").disabled = false;
+  idlePanel();
+  baseRasters = map.getStyle().layers.filter(l => l.type === "raster").map(l => l.id);
+    setBase();
+    map.addSource("aoi", {type: "geojson", data: {type: "Feature", geometry: {type: "Polygon", coordinates: [[[w,s],[e,s],[e,n],[w,n],[w,s]]]}}});
+    // Đã bỏ khung nét đứt. Giữ lại lớp trong suốt này làm mốc thứ tự cho lớp nền trắng "prov-fill" (nút Hiện đường ranh giới).
+    map.addLayer({id: "aoi-line", type: "line", source: "aoi", paint: {"line-opacity": 0}});
+    map.addSource("scenes", {type: "geojson", data: {type: "FeatureCollection", features: []}});
+    const color = ["case", ["==", ["slice", ["coalesce", ["get", "flightDirection"], ""], 0, 1], "A"], "#0e8a7d", "#d98e04"];
+    map.addLayer({id: "scenes-fill", type: "fill", source: "scenes", paint: {"fill-color": color, "fill-opacity": 0.2}});
+    map.addLayer({id: "scenes-line", type: "line", source: "scenes", paint: {"line-color": color, "line-width": 1.6}});
+    syncScenes();   // mặc định ẩn khung cảnh, bấm nút "Hiện khung cảnh" khi cần
+    map.on("click", "scenes-fill", ev => {
+      const f = ev.features.sort((a, b) => (b.properties.startTime || "").localeCompare(a.properties.startTime || ""))[0];
+      show(f.properties, ev.lngLat);
+    });
+    map.on("click", ev => { if (active && window.hnMode !== "wx") readValue(ev.lngLat); });
+    map.on("mouseenter", "scenes-fill", () => map.getCanvas().style.cursor = "pointer");
+    map.on("mouseleave", "scenes-fill", () => map.getCanvas().style.cursor = "");
+    load();
+  });
+}
+
+function setBase() {
+  const gray = $("base").value === "gray";
+  baseRasters.forEach(id => {
+    map.setPaintProperty(id, "raster-saturation", gray ? -1 : 0);
+    map.setPaintProperty(id, "raster-brightness-min", gray ? 0.2 : 0);
+    map.setPaintProperty(id, "raster-contrast", gray ? -0.15 : 0);
+  });
+}
+
+function show(p, lngLat) {
+  document.querySelectorAll("li.on").forEach(x => x.classList.remove("on"));
+  const li = document.querySelector(`li[data-id="${CSS.escape(p.fileID || "")}"]`);
+  if (li) { li.classList.add("on"); li.scrollIntoView({block: "nearest"}); }
+  const pol = p.polarization || p.mainPolarization;
+  const btns = (LAYERS[p.processingLevel] || []).map(([k, t]) => `<button data-layer="${k}">${t}</button>`).join("");
+  popup.setLngLat(lngLat).setHTML(`
+    <b>${esc(p.processingLevel)} · ${isAsc(p) ? "đi lên" : "đi xuống"}</b>
+    <dl><dt>Chụp lúc</dt><dd>${fmt(p.startTime)}</dd>
+      <dt>Track / Frame</dt><dd>${esc(p.pathNumber)} / ${esc(p.frameNumber)}</dd>
+      ${provLine(p) ? `<dt>Gồm các tỉnh</dt><dd>${esc(provLine(p))}${p.provApprox ? " <i>(gần đúng)</i>" : ""}</dd>` : ""}
+      ${pol ? `<dt>Phân cực</dt><dd>${esc(pol)}</dd>` : ""}
+      ${sz(p) ? `<dt>Dung lượng</dt><dd>${sz(p)}</dd>` : ""}
+      <dt>Tên cảnh</dt><dd>${esc(p.fileID)}</dd></dl>
+    ${btns}<div><a href="${vertex(p)}" target="_blank" rel="noopener">Mở trên ASF</a></div>`).addTo(map);
+  popup.getElement().querySelectorAll("button[data-layer]").forEach(b => b.onclick = () => render(p, b.dataset.layer));
+}
+
+async function render(p, layer) {
+  clearInterval(timer);
+  const st = $("status"); st.className = "";
+  const q = `/api/render?id=${encodeURIComponent(p.fileID)}&url=${encodeURIComponent(p.url)}&layer=${layer}`;
+  let first = true;
+  const poll = async () => {
+    const r = await (await fetch(q + (first ? "&retry=1" : ""))).json();
+    first = false;
+    if (r.status === "running") {
+      st.textContent = r.phase === "download" ? `Đang tải: ${mb(r.done)} / ${mb(r.total)} MB${r.total ? " (" + Math.round(r.done / r.total * 100) + "%)" : ""}`
+        : r.phase === "process" ? "Đã tải xong, đang xử lý thành ảnh…" : "Đang kết nối ASF…";
+      return; }
+    clearInterval(timer);
+    if (r.status === "error" || r.detail) {
+      st.className = "err";
+      st.textContent = "Lỗi xử lý: " + (r.detail || "") + (r.layers ? "\nCác lớp trong file: " + r.layers : "");
+      st.style.whiteSpace = "pre-wrap"; return;
+    }
+    st.textContent = "Đã hiển thị. Bấm lên bản đồ để xem giá trị tại điểm đó.";
+    overlay(p, layer, r);
+  };
+  popup.remove(); st.textContent = "Đang gửi yêu cầu…";
+  await poll(); timer = setInterval(poll, 4000);
+}
+
+function overlay(p, layer, r) {
+  clearOverlay(false);
+  const [w, s, e, n] = r.bounds, L = r.legend;
+  map.addSource("ov", {type: "image", url: r.png + "?t=" + Date.now(), coordinates: [[w,n],[e,n],[e,s],[w,s]]});
+  map.addLayer({id: "ov", type: "raster", source: "ov", paint: {"raster-opacity": 0.95, "raster-fade-duration": 0}}, "scenes-fill");
+  if (!target) map.fitBounds([[w, s], [e, n]], {padding: 40});
+  const f = v => (v * L.scale).toFixed(L.digits) + L.unit;
+  $("bar").style.display = $("rng").style.display = L.cls ? "none" : "";
+  $("cls").innerHTML = clsHtml(L, r.hist);
+  if (!L.cls) {
+    const lo = L.stops[0][0], hi = L.stops[L.stops.length - 1][0];
+    $("bar").style.background = "linear-gradient(90deg," + L.stops.map(([v, c]) => `${c} ${(v - lo) / (hi - lo) * 100}%`).join(",") + ")";
+    $("lo").textContent = f(lo); $("hi").textContent = f(hi);
+  }
+  $("ititle").textContent = L.title + " · " + fmt(p.startTime);
+  $("mean").textContent = `Trung bình vùng phủ: ${f(r.mean)} (${label(L, r.mean)})`;
+  $("note").textContent = L.note;
+  $("prov").disabled = false; $("close").disabled = false;
+  $("prov").value = ""; $("provGo").disabled = true;
+  active = {id: p.fileID, layer, L, f, t: fmt(p.startTime)};
+  syncScenes();
+}
+
+const cidx = (L, v) => L.cls.findIndex(c => c.max == null || v < c.max);
+const rngTxt = (L, i) => { const lo = i ? L.cls[i - 1].max : 0, hi = L.cls[i].max; return hi == null ? `>${lo.toFixed(2)}` : `${lo.toFixed(2)}–${hi.toFixed(2)}`; };
+const clsHtml = (L, hist) => L.cls ? L.cls.map((c, i) => `<details><summary><i style="background:${c.color}"></i>${c.name}
+    <span>${rngTxt(L, i)}${hist ? " · " + Math.round(hist[i] * 100) + "%" : ""}</span></summary>
+    <p><b>${c.action}</b></p><p>${c.state}</p><p><b>Nên làm:</b> ${c.todo}</p></details>`).join("") : "";
+function idlePanel() {  // trạng thái chờ: bảng luôn hiện, chú thích 5 mức có sẵn
+  const L = cfg && cfg.soil;
+  if (!L) return;
+  $("ititle").textContent = L.title;
+  $("bar").style.display = $("rng").style.display = "none";
+  $("cls").innerHTML = clsHtml(L, null);
+  $("mean").textContent = "Chọn một cảnh rồi bấm “Xem độ ẩm đất” để có số liệu.";
+  $("note").textContent = L.note;
+  $("prov").disabled = true; $("provGo").disabled = true; $("close").disabled = true; $("prov").value = "";
+}
+const label = (L, v) => L.cls ? L.cls[cidx(L, v)].name : (L.classes.find(c => v <= c[0]) || [0, ""])[1];
+
+async function readValue(ll, extra = "") {
+  const r = await (await fetch(`/api/value?id=${encodeURIComponent(active.id)}&layer=${active.layer}&lng=${ll.lng}&lat=${ll.lat}`)).json(), L = active.L;
+  let html;
+  if (r.value == null) html = "Không có dữ liệu tại điểm này";
+  else if (L.cls) {
+    const v = r.value, c = L.cls[cidx(L, v)], a = cidx(L, v - L.unc), b = cidx(L, v + L.unc);
+    const near = a !== b ? `<p class="warn">Giá trị gần ngưỡng giữa "${L.cls[a].name}" và "${L.cls[b].name}" (sai số vệ tinh khoảng ±${L.unc}). Nên kiểm tra thực tế trước khi quyết định.</p>` : "";
+    html = `<div style="border-left:6px solid ${c.color};padding-left:8px"><b style="font-size:15px">${c.name}: ${(v * 100).toFixed(0)}%</b><br>
+      <span class="m">${v.toFixed(2)} m³/m³ · ước tính ${Math.max(0, v - L.unc).toFixed(2)}–${(v + L.unc).toFixed(2)}</span></div>
+      <p><b>${c.action}</b></p><p>${c.state}</p><p><b>Nên làm:</b> ${c.todo}</p><p><b>Mẹo:</b> ${c.tip}</p>${near}
+      <p class="m">Độ ẩm lớp đất mặt (vài cm), chụp lúc ${active.t}. Cây rễ sâu: đào 10-15 cm, nắm đất kiểm tra thêm. Xem dự báo mưa trước khi tưới.</p>`;
+  } else html = `<b>${L.title}: ${active.f(r.value)}</b><br>${label(L, r.value)}`;
+  const seq = ++locSeq;
+  popup.setLngLat(ll).setHTML('<p class="m" id="loc">Đang xác định vị trí…</p>' + extra + html).addTo(map);
+  whereIs(ll).then(w => {
+    const el = seq === locSeq && popup.getElement() && popup.getElement().querySelector("#loc");
+    if (!el) return;
+    if (!w) { el.remove(); return; }
+    const old = PLACES.find(p => p.note.startsWith("nay thuộc") && w.prov && norm(w.prov).includes(norm(p.n)));
+    el.innerHTML = (w.prov ? `<b style="color:var(--ink);font-size:13.5px">${esc(w.prov)}${old ? " (" + esc(old.note) + ")" : ""}</b>` : "") +
+      (w.full && w.full !== w.prov ? `<br>${esc(w.full)}` : "");
+  });
+}
+
+async function whereIs(ll) {  // xác định tỉnh/xã tại điểm bấm (reverse geocoding của MapTiler)
+  try {
+    const ctl = new AbortController(), t = setTimeout(() => ctl.abort(), 4000);
+    const r = await fetch(`https://api.maptiler.com/geocoding/${ll.lng},${ll.lat}.json?key=${cfg.maptilerKey}&language=vi`, {signal: ctl.signal});
+    clearTimeout(t);
+    if (!r.ok) return null;
+    const fs = (await r.json()).features || [];
+    if (!fs.length) return null;
+    const clean = s => String(s || "").replace(/,?\s*(Việt Nam|Vietnam)\s*$/i, "");
+    const prov = fs.find(f => (f.place_type || f.types || []).includes("region"));
+    return {full: clean(fs[0].place_name || fs[0].text), prov: prov ? (prov.text || clean(prov.place_name)) : null};
+  } catch { return null; }
+}
+
+function clearOverlay(restore = true) {
+  if (map.getLayer("ov")) map.removeLayer("ov");
+  if (map.getSource("ov")) map.removeSource("ov");
+  idlePanel(); active = null; popup.remove();
+  if (restore) syncScenes();
+}
+
+function centroid(g) {
+  const ring = g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0], n = ring.length - 1;
+  return ring.slice(0, n).reduce((a, c) => [a[0] + c[0] / n, a[1] + c[1] / n], [0, 0]);
+}
+
+async function load() {
+  const st = $("status"); st.className = ""; st.textContent = "Đang tải danh sách cảnh…";
+  try {
+    const r = await fetch(`/api/scenes?level=${$("level").value}&days=${$("days").value}`);
+    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    const gj = await r.json();
+    current = gj.features.sort((a, b) => (b.properties.startTime || "").localeCompare(a.properties.startTime || ""));
+    map.getSource("scenes").setData({type: "FeatureCollection", features: current});
+    st.textContent = current.length ? `${current.length} cảnh · cập nhật ${fmt(gj.meta.fetchedAt)}${gj.stale ? " (dữ liệu cũ)" : ""}${gj.meta.provinces && gj.meta.provinces.warn ? " · " + gj.meta.provinces.warn : ""}`
+      : "Chưa có cảnh nào. Thử tăng số ngày hoặc đổi loại dữ liệu.";
+    if (target) applyTarget(false); else renderList(current);
+  } catch (e) { st.className = "err"; st.textContent = "Lỗi: " + e.message; $("list").innerHTML = ""; }
+}
+
+$("base").onchange = setBase;
+const PLACES = [  // dự phòng khi dịch vụ tìm địa danh lỗi; khung tỉnh là gần đúng [Tây, Nam, Đông, Bắc]
+  {n: "Tây Nguyên", note: "5 tỉnh Kon Tum, Gia Lai, Đắk Lắk, Đắk Nông, Lâm Đồng", bbox: [107.2, 11.2, 108.9, 15.4]},
+  {n: "Kon Tum", note: "nay thuộc tỉnh Quảng Ngãi", bbox: [107.2, 13.8, 108.5, 15.4]},
+  {n: "Gia Lai", note: "phần Tây Nguyên của tỉnh Gia Lai", bbox: [107.6, 12.9, 108.9, 14.6]},
+  {n: "Đắk Lắk", note: "phần Tây Nguyên của tỉnh Đắk Lắk", bbox: [107.4, 12.2, 108.9, 13.4]},
+  {n: "Đắk Nông", note: "nay thuộc tỉnh Lâm Đồng", bbox: [107.2, 11.7, 108.1, 12.5]},
+  {n: "Lâm Đồng", note: "phần Tây Nguyên của tỉnh Lâm Đồng", bbox: [107.3, 11.2, 108.7, 12.3]},
+  {n: "Bình Phước", note: "nay thuộc tỉnh Đồng Nai", bbox: [106.4, 11.3, 107.5, 12.3]},
+  {n: "Buôn Ma Thuột", note: "thành phố, Đắk Lắk", center: [108.05, 12.67]},
+  {n: "Pleiku", note: "thành phố, Gia Lai", center: [108.0, 13.98]},
+  {n: "Kon Tum (thành phố)", note: "Quảng Ngãi", center: [108.0, 14.35]},
+  {n: "Gia Nghĩa", note: "Lâm Đồng", center: [107.7, 12.0]},
+  {n: "Đà Lạt", note: "Lâm Đồng", center: [108.44, 11.94]},
+  {n: "Đồng Xoài", note: "Bình Phước cũ, nay thuộc Đồng Nai", center: [106.9, 11.53]}
+];
+const norm = s => String(s).toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/đ/g, "d").trim();
+
+function inPoly(g, x, y) {
+  const ring = g.type === "Polygon" ? g.coordinates[0] : g.coordinates[0][0];
+  let c = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const [xi, yi] = ring[i], [xj, yj] = ring[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+}
+function cover(g, b) {  // tỷ lệ khung tỉnh nằm trong cảnh (lấy mẫu 12x12 điểm)
+  if (!b) return 1;
+  let n = 0;
+  for (let i = 0; i < 12; i++) for (let j = 0; j < 12; j++)
+    if (inPoly(g, b[0] + (b[2] - b[0]) * (i + .5) / 12, b[1] + (b[3] - b[1]) * (j + .5) / 12)) n++;
+  return n / 144;
+}
+
+function renderList(arr, covs) {
+  shown = arr;
+  map.getSource("scenes").setData({type: "FeatureCollection", features: arr});
+  $("list").innerHTML = arr.map((f, i) => `<li tabindex="0" data-id="${esc(f.properties.fileID)}">
+    <b>${fmt(f.properties.startTime)} · ${isAsc(f.properties) ? "đi lên" : "đi xuống"}</b>
+    <span>Track ${esc(f.properties.pathNumber)} · Frame ${esc(f.properties.frameNumber)}${sz(f.properties) ? " · " + sz(f.properties) : ""}${covs && target && target.bbox ? " · phủ ~" + Math.round(covs[i] * 100) + "% khung tỉnh" : ""}</span>
+    ${provLine(f.properties, 3) ? `<span><br>${esc(provsOf(f.properties).slice(0, 3).map(x => x.name).join(" · "))}</span>` : ""}</li>`).join("");
+  document.querySelectorAll("#list li").forEach((li, i) => {
+    const go = () => { const f = shown[i], c = target ? target.c : centroid(f.geometry);
+      map.flyTo({center: c, zoom: Math.max(map.getZoom(), 7.5)}); show(f.properties, {lng: c[0], lat: c[1]}); };
+    li.onclick = go; li.onkeydown = e => { if (e.key === "Enter") go(); };
+  });
+}
+
+function applyTarget(open) {
+  const [lng, lat] = target.c, A = cfg.aoi, st = $("status");
+  st.className = "";
+  const tn = norm(target.n).replace(/^tinh /, "");
+  const byProv = target.bbox ? current.map(f => ({f, p: provsOf(f.properties).find(x => norm(x.name).replace(/^tinh /, "") === tn)}))
+    .filter(x => x.p && x.p.cover >= 0.02).map(x => ({f: x.f, cov: x.p.cover})) : [];
+  const hits = (byProv.length ? byProv : current.filter(f => inPoly(f.geometry, lng, lat))
+    .map(f => ({f, cov: cover(f.geometry, target.bbox)})))
+    .sort((a, b) => (b.f.properties.startTime || "").localeCompare(a.f.properties.startTime || ""));
+  renderList(hits.map(x => x.f), hits.map(x => x.cov));
+  if (!hits.length) {
+    const out = lng < A[0] || lng > A[2] || lat < A[1] || lat > A[3];
+    st.textContent = `Chưa có cảnh nào phủ "${target.n}" trong ${$("days").value} ngày gần nhất.` +
+      (out ? " Địa điểm này nằm ngoài vùng Tây Nguyên và Bình Phước." : " Thử tăng số ngày hoặc đổi loại dữ liệu.");
+    return;
+  }
+  const top = Math.max(...hits.map(x => x.cov)), best = hits.find(x => x.cov >= top * 0.9);
+  st.textContent = `${hits.length} cảnh phủ "${target.n}", mới nhất lúc ${fmt(hits[0].f.properties.startTime)}. Bấm "Xem độ ẩm đất" trong bảng nhỏ trên bản đồ.`;
+  if (open) show(best.f.properties, {lng, lat});
+}
+
+function pick(it) {
+  $("sug").style.display = "none"; $("q").value = it.n;
+  const b = it.bbox || null, c = it.center || [(b[0] + b[2]) / 2, (b[1] + b[3]) / 2];
+  target = {n: it.n, c, bbox: b};
+  if (marker) marker.remove();
+  marker = new maplibregl.Marker({color: "#16262b"}).setLngLat(c).addTo(map);
+  if (b) map.fitBounds([[b[0], b[1]], [b[2], b[3]]], {padding: 50, maxZoom: 10}); else map.flyTo({center: c, zoom: 11});
+  addProv(it);
+  if (active) probeArea(it); else applyTarget(true);
+}
+
+async function geocode(q) {
+  try {
+    const r = await fetch(`https://api.maptiler.com/geocoding/${encodeURIComponent(q)}.json?key=${cfg.maptilerKey}&country=vn&language=vi&limit=6&proximity=107.6,12.8`);
+    if (!r.ok) return [];
+    return (await r.json()).features.map(f => ({n: String(f.place_name || f.text).replace(/,?\s*(Việt Nam|Vietnam)\s*$/i, ""), note: "", center: f.center, bbox: f.bbox || null}));
+  } catch { return []; }
+}
+function showSug(items, q) {
+  sugItems = items;
+  const more = q && q.length >= 3;
+  $("sug").innerHTML = items.map(i => `<li>${esc(i.n)}<small>${esc(i.note || (outside(i) ? "ngoài vùng bản đồ NISAR" : ""))}</small></li>`).join("")
+    + (more ? `<li class="more">Không thấy? Tìm thêm trên OpenStreetMap: “${esc(q)}”</li>` : "");
+  $("sug").style.display = items.length || more ? "block" : "none";
+  const lis = document.querySelectorAll("#sug li");
+  lis.forEach((li, k) => li.onclick = () => k < items.length ? pick(items[k]) : osmSearch(q));
+  fillWhere(items);
+}
+
+const outside = it => { const A = cfg.aoi, c = it.center; return !!c && (c[0] < A[0] || c[0] > A[2] || c[1] < A[1] || c[1] > A[3]); };
+const coreName = n => norm(String(n).split(",")[0]).replace(/^(phuong|xa|thi tran|quan|huyen|thanh pho|tp\.?|tinh)\s+/, "");
+function tidy(items) {  // bỏ kết quả trùng (cùng tên, gần nhau), ưu tiên kết quả nằm trong vùng bản đồ
+  const out = [];
+  for (const it of items) {
+    const c = it.center || [(it.bbox[0] + it.bbox[2]) / 2, (it.bbox[1] + it.bbox[3]) / 2];
+    if (out.some(o => coreName(o.n) === coreName(it.n) && o.center && Math.abs(o.center[0] - c[0]) < 0.03 && Math.abs(o.center[1] - c[1]) < 0.03)) continue;
+    out.push(it.center ? it : {...it, center: c});
+  }
+  return out.filter(o => !outside(o)).concat(out.filter(outside));
+}
+const whereCache = new Map();
+function fillWhere(items) {  // điền tên tỉnh dưới mỗi gợi ý (tra theo tọa độ)
+  items.forEach(async (it, k) => {
+    if (it.note || !it.center) return;
+    const key = it.center.map(v => v.toFixed(3)).join(",");
+    let w = whereCache.get(key);
+    if (w === undefined) { w = await whereIs({lng: it.center[0], lat: it.center[1]}); whereCache.set(key, w); }
+    if (sugItems !== items || !w) return;
+    const sm = document.querySelectorAll("#sug li")[k]?.querySelector("small");
+    if (sm) sm.textContent = [w.prov, outside(it) ? "ngoài vùng bản đồ NISAR" : ""].filter(Boolean).join(" · ");
+  });
+}
+async function osmSearch(q) {
+  $("sug").innerHTML = "<li>Đang tìm trên OpenStreetMap…</li>"; $("sug").style.display = "block";
+  try {
+    const r = await fetch("/api/geocode?q=" + encodeURIComponent(q));
+    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    const items = await r.json();
+    if (!items.length) { $("sug").innerHTML = "<li>Không tìm thấy. Thử gõ thêm tên huyện hoặc tỉnh, ví dụ “Chánh Hiệp Bình Dương”.</li>"; return; }
+    showSug(tidy(items), null);
+  } catch (e) { $("sug").innerHTML = `<li>Lỗi tìm kiếm: ${esc(e.message)}</li>`; }
+}
+let qt;
+$("q").oninput = () => {
+  clearTimeout(qt);
+  const q = $("q").value.trim();
+  if (q.length < 2) { $("sug").style.display = "none"; return; }
+  const local = PLACES.filter(p => norm(p.n).includes(norm(q)));
+  showSug(local, q);
+  qt = setTimeout(async () => {
+    const g = await geocode(q);
+    if ($("q").value.trim() !== q) return;
+    const seen = new Set(local.map(p => norm(p.n)));
+    showSug(tidy(local.concat(g.filter(x => !seen.has(norm(x.n))))), q);
+  }, 350);
+};
+$("q").onkeydown = e => { if (e.key !== "Enter") return; const q = $("q").value.trim(); if (sugItems.length) pick(sugItems[0]); else if (q.length >= 2) osmSearch(q); };
+$("qx").onclick = () => { target = null; $("q").value = ""; $("sug").style.display = "none"; if (marker) marker.remove(); marker = null; load(); };
+document.addEventListener("click", e => { if (!e.target.closest(".srch")) $("sug").style.display = "none"; });
+
+let provItems = [];
+function addProv(it) {
+  if (!it.bbox || provItems.some(p => norm(p.n) === norm(it.n))) return;
+  provItems.push(it);
+  const t = it.n.replace(/,?\s*(Việt Nam|Vietnam)\s*$/i, "");
+  $("prov").add(new Option(t.length > 48 ? t.slice(0, 46) + "…" : t, provItems.length - 1));
+}
+function fillProv() { PLACES.filter(p => p.bbox).forEach(addProv); }
+
+async function probeArea(it) {
+  const st = $("status"), L = active.L;
+  const b = it.bbox || [it.center[0] - .01, it.center[1] - .01, it.center[0] + .01, it.center[1] + .01];
+  const q = `/api/probe?id=${encodeURIComponent(active.id)}&layer=${active.layer}&w=${b[0]}&s=${b[1]}&e=${b[2]}&n=${b[3]}` + (it.bbox ? "" : `&lng=${it.center[0]}&lat=${it.center[1]}`);
+  const r = await (await fetch(q)).json();
+  st.className = "";
+  if (!r.found) {
+    popup.remove();
+    st.textContent = `Cảnh đang xem chưa có dữ liệu độ ẩm tại "${it.n}". Bấm "Quay lại danh sách cảnh" để chọn cảnh khác.`;
+    return;
+  }
+  let sum = "";
+  if (it.bbox) {
+    const parts = L.cls ? L.cls.map((c, i) => [c.name, r.hist[i]]).filter(x => x[1] >= 0.01).sort((a, b) => b[1] - a[1]).map(x => `${x[0]} ${Math.round(x[1] * 100)}%`).join(" · ") : "";
+    sum = `<div class="sum"><b>Tổng quan: ${esc(it.n)}</b> (khung gần đúng, có dữ liệu ở ${Math.round(r.cover * 100)}% diện tích)<br>
+      Trung bình ${active.f(r.mean)} (${label(L, r.mean)})${parts ? "<br>" + parts : ""}<br>
+      <span class="m">Dưới đây là một điểm đại diện trong vùng.</span></div>`;
+  }
+  st.textContent = `Đã chọn điểm đại diện của "${it.n}". Muốn xem chỗ khác, bấm trực tiếp lên bản đồ.`;
+  map.flyTo({center: [r.lng, r.lat], zoom: it.bbox ? 9 : 12, offset: [0, 170]});
+  readValue({lng: r.lng, lat: r.lat}, sum);
+}
+$("prov").onchange = () => { $("provGo").disabled = $("prov").value === ""; };   // chọn chưa chạy, phải bấm Áp dụng
+$("provGo").onclick = () => { const v = $("prov").value; if (v !== "" && active) probeArea(provItems[+v]); };
+
+$("close").onclick = () => clearOverlay();
+$("reload").onclick = load; $("level").onchange = () => { scenesOn = /^[GR]SLC$/.test($("level").value); clearOverlay(); load(); }; $("days").onchange = load;
+setInterval(() => { if (!active) load(); }, 15 * 60 * 1000);
+/* ===== Ranh giới tỉnh (nút "Hiện đường ranh giới") ===== */
+const BND = {
+  fill: 0.95,   // độ đặc của nền trắng: 1 = trắng hoàn toàn như ảnh mẫu, giảm xuống nếu muốn thấy nền vệ tinh mờ bên dưới
+  layers: ["prov-fill", "prov-case", "prov-line", "prov-label"]
+};
+let bndOn = false, bndBusy = false, bndTimer = null;
+
+function bndMsg(t, err) {
+  const el = $("bndmsg"); clearTimeout(bndTimer);
+  el.textContent = t || ""; el.className = err ? "err" : ""; el.style.display = t ? "block" : "none";
+  if (t) bndTimer = setTimeout(() => el.style.display = "none", err ? 15000 : 7000);
+}
+
+async function fetchBoundaries() {   // backend (backend/boundaries.py) đã lọc sẵn các tỉnh
+  const r = await fetch("/api/boundaries");
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || "lỗi " + r.status);
+  const fs = ((await r.json()).features || []).filter(f => f.geometry && f.properties && f.properties.label);
+  if (fs.length < 5) throw new Error("dữ liệu thiếu tỉnh");
+  return fs;
+}
+
+function areaOf(ring) { let a = 0; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) a += (ring[j][0] + ring[i][0]) * (ring[j][1] - ring[i][1]); return Math.abs(a / 2); }
+function segDist2(px, py, ax, ay, bx, by) {
+  const dx = bx - ax, dy = by - ay, l = dx * dx + dy * dy;
+  const t = l ? Math.max(0, Math.min(1, ((px - ax) * dx + (py - ay) * dy) / l)) : 0, x = ax + t * dx - px, y = ay + t * dy - py;
+  return x * x + y * y;
+}
+function labelPoint(g) {  // điểm đặt tên: chỗ nằm sâu nhất bên trong phần lớn nhất của tỉnh (lưới 36x36)
+  const polys = g.type === "Polygon" ? [g.coordinates] : g.coordinates;
+  const main = polys.reduce((m, p) => areaOf(p[0]) > areaOf(m[0]) ? p : m), ring = main[0], poly = {type: "Polygon", coordinates: [ring]};
+  let w = Infinity, s = Infinity, e = -Infinity, n = -Infinity;
+  for (const [x, y] of ring) { w = Math.min(w, x); e = Math.max(e, x); s = Math.min(s, y); n = Math.max(n, y); }
+  let best = null, bd = -1;
+  for (let i = 0; i < 36; i++) for (let j = 0; j < 36; j++) {
+    const x = w + (e - w) * (i + .5) / 36, y = s + (n - s) * (j + .5) / 36;
+    if (!inPoly(poly, x, y)) continue;
+    let d = Infinity;
+    for (let k = 0, m = ring.length - 1; k < ring.length; m = k++) d = Math.min(d, segDist2(x, y, ring[m][0], ring[m][1], ring[k][0], ring[k][1]));
+    if (d > bd) { bd = d; best = [x, y]; }
+  }
+  return best || [(w + e) / 2, (s + n) / 2];
+}
+
+function addBoundaryLayers(fs) {
+  const fc = a => ({type: "FeatureCollection", features: a});
+  map.addSource("prov", {type: "geojson", data: fc(fs)});
+  map.addSource("prov-pts", {type: "geojson", data: fc(fs.map(f => ({type: "Feature", properties: {label: f.properties.label}, geometry: {type: "Point", coordinates: labelPoint(f.geometry)}})))});
+  // nền trắng nằm dưới lớp dữ liệu NISAR để số liệu vẫn hiện rõ; viền và tên nằm trên cùng
+  map.addLayer({id: "prov-fill", type: "fill", source: "prov", paint: {"fill-color": "#ffffff", "fill-opacity": BND.fill}}, "aoi-line");
+  map.addLayer({id: "prov-case", type: "line", source: "prov", layout: {"line-join": "round"}, paint: {"line-color": "#ffffff", "line-width": 3.2, "line-opacity": 0.55}});
+  map.addLayer({id: "prov-line", type: "line", source: "prov", layout: {"line-join": "round"}, paint: {"line-color": "#3d4a52", "line-width": 1.3}});
+  const fonts = map.getStyle().layers.filter(l => l.type === "symbol").map(l => l.layout && l.layout["text-font"]).filter(Array.isArray).flat();
+  const font = fonts.find(x => typeof x === "string" && /regular/i.test(x)) || "Noto Sans Regular";
+  map.addLayer({id: "prov-label", type: "symbol", source: "prov-pts",
+    layout: {"text-field": ["get", "label"], "text-font": [font], "text-size": ["interpolate", ["linear"], ["zoom"], 5, 11, 9, 17], "text-letter-spacing": 0.03, "text-max-width": 8, "text-allow-overlap": true},
+    paint: {"text-color": "#2f3b42", "text-halo-color": "#ffffff", "text-halo-width": 1.4}});
+}
+
+function setBnd(on) {
+  bndOn = on;
+  BND.layers.forEach(id => map.setLayoutProperty(id, "visibility", on ? "visible" : "none"));
+  if (window.hnMode === "wx" && map.getLayer("prov-fill")) map.setLayoutProperty("prov-fill", "visibility", "none");   // thời tiết: bỏ nền trắng để thấy màu
+  $("bnd").setAttribute("aria-pressed", String(on));
+  $("bnd").textContent = on ? "Ẩn đường ranh giới" : "Hiện đường ranh giới";
+}
+
+$("bnd").onclick = async () => {
+  if (bndBusy) return;
+  if (bndOn) { setBnd(false); return; }
+  const b = $("bnd");
+  if (!map.getSource("prov")) {
+    bndBusy = true; b.disabled = true; b.textContent = "Đang tải ranh giới…"; bndMsg("");
+    let fs = null, err = "";
+    try { fs = await fetchBoundaries(); } catch (e) { err = e.message; }
+    bndBusy = false; b.disabled = false;
+    if (!fs) { b.textContent = "Hiện đường ranh giới"; bndMsg("Không tải được ranh giới: " + err, true); return; }
+    addBoundaryLayers(fs);
+  }
+  setBnd(true);
+};
+
+/* ===== Nút "Hiện khung cảnh" ===== */
+let scenesOn = false;
+function syncScenes() {
+  // đang xem ảnh dữ liệu thì chỉ vẽ viền khung (không tô nền, để bấm lên bản đồ đọc giá trị không bị vướng)
+  const set = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+  set("scenes-fill", scenesOn && !active);
+  set("scenes-line", scenesOn);
+  $("scn").setAttribute("aria-pressed", String(scenesOn));
+  $("scn").textContent = scenesOn ? "Ẩn khung cảnh" : "Hiện khung cảnh";
+}
+$("scn").onclick = () => { scenesOn = !scenesOn; syncScenes(); };
+
+/* ===== Mạch nước (nút "Hiện mạch nước"): sông, suối, kênh từ backend/rivers.py (static/rivers.geojson) ===== */
+const RVR = {
+  color: "#2e9d63",   // xanh lá: khác hẳn 5 màu độ ẩm (đỏ, vàng, lam, xanh, chàm) nên không bị lẫn trên ảnh NISAR
+  layers: ["river-case", "river-line", "river-label"]
+};
+let rvrOn = false, rvrBusy = false;
+
+async function fetchRivers() {
+  const r = await fetch("/api/rivers");
+  if (!r.ok) throw new Error((await r.json().catch(() => ({}))).detail || "lỗi " + r.status);
+  const gj = await r.json();
+  if (!(gj.features || []).length) throw new Error("dữ liệu rỗng");
+  return gj;
+}
+
+function addRiverLayers(gj) {
+  map.addSource("rivers", {type: "geojson", data: gj});
+  const before = map.getLayer("prov-case") ? "prov-case" : undefined;   // viền và tên tỉnh luôn nằm trên mạch nước
+  const wd = k => ["interpolate", ["linear"], ["zoom"],
+    5, ["match", ["get", "t"], "river", 0.8 + k, "canal", 0.6 + k, 0.4 + k],
+    10, ["match", ["get", "t"], "river", 1.8 + k, "canal", 1.4 + k, 1 + k],
+    14, ["match", ["get", "t"], "river", 3.4 + k, "canal", 2.6 + k, 1.8 + k]];
+  const op = ["case", ["==", ["get", "i"], 1], 0.55, 1];                // suối theo mùa nhạt hơn
+  const lay = {"line-join": "round", "line-cap": "round"};
+  map.addLayer({id: "river-case", type: "line", source: "rivers", layout: lay, paint: {"line-color": "#ffffff", "line-opacity": 0.55, "line-width": wd(1.4)}}, before);
+  map.addLayer({id: "river-line", type: "line", source: "rivers", layout: lay, paint: {"line-color": RVR.color, "line-opacity": op, "line-width": wd(0)}}, before);
+  const fonts = map.getStyle().layers.filter(l => l.type === "symbol").map(l => l.layout && l.layout["text-font"]).filter(Array.isArray).flat();
+  const font = fonts.find(x => typeof x === "string" && /regular/i.test(x)) || "Noto Sans Regular";
+  map.addLayer({id: "river-label", type: "symbol", source: "rivers", minzoom: 9, filter: ["has", "n"],
+    layout: {"symbol-placement": "line", "text-field": ["get", "n"], "text-font": [font], "text-size": ["interpolate", ["linear"], ["zoom"], 9, 10, 14, 13], "text-letter-spacing": 0.05},
+    paint: {"text-color": "#1b6b43", "text-halo-color": "#ffffff", "text-halo-width": 1.6}}, before);
+}
+
+function setRvr(on) {
+  rvrOn = on;
+  RVR.layers.forEach(id => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none"));
+  $("rvr").setAttribute("aria-pressed", String(on));
+  $("rvr").textContent = on ? "Ẩn mạch nước" : "Hiện mạch nước";
+}
+
+$("rvr").onclick = async () => {
+  if (rvrBusy) return;
+  if (rvrOn) { setRvr(false); return; }
+  const b = $("rvr");
+  if (!map.getSource("rivers")) {
+    rvrBusy = true; b.disabled = true; b.textContent = "Đang tải mạch nước…"; bndMsg("");
+    let gj = null, err = "";
+    try { gj = await fetchRivers(); } catch (e) { err = e.message; }
+    rvrBusy = false; b.disabled = false;
+    if (!gj) { b.textContent = "Hiện mạch nước"; bndMsg("Không tải được mạch nước: " + err, true); return; }
+    addRiverLayers(gj);
+  }
+  setRvr(true);
+};
+/* ===== hết phần Mạch nước ===== */
+
+
+/* ===== Bản đồ thời tiết (mưa, nhiệt độ, độ ẩm) – nút "Thời tiết" ===== */
+(function () {
+  const VARS = {
+    rain: {title: "Lượng mưa (mm/ngày)", unit: "mm", min: 0, max: 100, fix: 1, day: true,
+      stops: [[0, [255,255,255,0]], [0.3, [200,230,252,120]], [1, [150,205,250,170]], [5, [70,150,235,185]], [15, [40,190,110,195]], [30, [245,215,60,200]], [60, [240,130,40,205]], [100, [200,40,60,215]], [150, [140,40,160,220]]],
+      ticks: [0, 1, 5, 15, 30, 60, 100], get: (p, d) => p.r && p.r[d]},
+    temp: {title: "Nhiệt độ không khí hiện tại (°C)", unit: "°C", min: 10, max: 40, fix: 1, day: false,
+      stops: [[10, [60,100,200,170]], [18, [80,170,220,170]], [24, [110,200,120,170]], [28, [245,220,80,175]], [32, [245,150,50,180]], [36, [215,60,50,185]], [40, [150,20,60,190]]],
+      ticks: [10, 18, 24, 28, 32, 36, 40], get: p => p.t},
+    rh: {title: "Độ ẩm không khí hiện tại (%)", unit: "%", min: 30, max: 100, fix: 0, day: false,
+      stops: [[30, [190,140,80,170]], [50, [225,200,120,170]], [70, [150,205,150,170]], [85, [70,170,200,175]], [100, [30,80,170,185]]],
+      ticks: [30, 50, 70, 85, 100], get: p => p.rh}
+  };
+  const ICON = {hum: `<svg viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#2f9e5a" stroke-width="1.8"/><path d="M8.5 15c1-1 2-1 3.5 0s2.500 1 3.500 0" stroke="#2f9e5a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`, rain: `<svg viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="#2a9fe0"/><path d="M9 15a3 3 0 003 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`, hot: `<svg viewBox="0 0 24 24"><path d="M12 2c1.2 4.2 5.6 6.3 5.6 11.3a5.6 5.6 0 01-11.2 0c0-2.2 1-3.8 2.2-5.3.4 1.6 1.1 2.4 2.2 2.8C10.5 8.6 10.7 5 12 2z" fill="#f08c00"/><path d="M12 22a3 3 0 01-3-3c0-1.6 1.4-2.4 2-3.8.9.8 1.4 1.4 1.4 2.4.6-.3.9-.7 1.1-1.2.5 1.8-.1 3.9-1.5 5.6z" fill="#e03131" transform="translate(0 -1.2)"/></svg>`};
+  const RAIN_MM = 50, HOT_C = 35;
+  const EMPTY = {type: "FeatureCollection", features: []};
+  const clearMarks = () => { const src = map.getSource("wx-ic"); if (src) src.setData(EMPTY); };
+  // biểu tượng vẽ bằng WebGL (lớp symbol) nên dính chặt vào bản đồ khi kéo, thu phóng
+  function mkImage(name, svg, glow) {
+    return new Promise(res => {
+      const img = new Image(); img.onload = () => {
+        const c = document.createElement("canvas"); c.width = c.height = 80; const x = c.getContext("2d");
+        x.shadowColor = glow || "rgba(0,0,0,.6)"; x.shadowBlur = glow ? 10 : 4; x.shadowOffsetY = glow ? 0 : 1.5;
+        x.drawImage(img, 8, 8, 64, 64); if (glow) x.drawImage(img, 8, 8, 64, 64);
+        map.addImage(name, x.getImageData(0, 0, 80, 80), {pixelRatio: 2}); res();
+      };
+      img.onerror = res; img.src = "data:image/svg+xml;charset=utf-8," + encodeURIComponent(svg);
+    });
+  }
+  async function ensureIcons() {
+    if (map.hasImage("wx-rain")) return;
+    const wrap = k => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="64" height="64">${ICON[k].replace(/^<svg[^>]*>|<\/svg>$/g, "")}</svg>`;
+    await Promise.all([["rain", "rain"], ["hot", "hot"], ["hum", "hum"]].flatMap(([n, k]) => [mkImage("wx-" + n, wrap(k)), mkImage("wx-" + n + "-a", wrap(k), "#ff4d4d")]));
+  }
+  function inProv(x, y) {   // điểm nằm trong tỉnh nào đó (tính cả nhiều mảnh, bỏ lỗ)
+    if (!provFs) return true;
+    const inR = (ring) => { let c = false; for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) { const [xi, yi] = ring[i], [xj, yj] = ring[j]; if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) c = !c; } return c; };
+    return provFs.some(f => (f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates).some(pl => inR(pl[0]) && !pl.slice(1).some(inR)));
+  }
+  async function drawMarks() {   // icon mờ, thưa, rải ngẫu nhiên (cố định); số liệu xem khi bấm
+    if (!data || mode !== "wx") { clearMarks(); return; }
+    await ensureIcons();
+    if (mode !== "wx") return;
+    if (!map.getSource("wx-ic")) {
+      map.addSource("wx-ic", {type: "geojson", data: EMPTY});
+      map.addLayer({id: "wx-ic", type: "symbol", source: "wx-ic",
+        layout: {"icon-image": ["get", "img"], "icon-size": ["get", "sz"], "icon-allow-overlap": true, "icon-ignore-placement": true},
+        paint: {"icon-opacity": ["get", "op"]}});
+    }
+    const key = $("wxVar").value, day = +$("wxDay").value, feats = [];
+    const rnd = k => { const x = Math.sin(k * 12.9898) * 43758.5453; return x - Math.floor(x); };
+    data.points.forEach((p, k) => {
+      if (rnd(k + 0.5) > 0.5) return;                              // chỉ giữ khoảng một nửa số điểm
+      const lon = p.lon + (rnd(k + 11.1) - .5) * 0.34, lat = p.lat + (rnd(k + 23.7) - .5) * 0.34;   // xô lệch khỏi hàng
+      if (!inProv(lon, lat)) return;
+      let name, op, alert = false;
+      if (key === "rain") { const v = p.r && p.r[day]; if (v == null) return; name = "rain"; op = Math.min(.85, .4 + v / 25); alert = v >= RAIN_MM; }
+      else if (key === "temp") { const v = p.t; if (v == null) return; name = "hot"; op = Math.min(.85, .4 + Math.max(0, v - 20) / 25); alert = v >= HOT_C; }
+      else { const v = p.rh; if (v == null) return; name = "hum"; op = Math.min(.85, .35 + Math.max(0, v - 40) / 80); }
+      feats.push({type: "Feature", geometry: {type: "Point", coordinates: [lon, lat]},
+        properties: {img: "wx-" + name + (alert ? "-a" : ""), op: alert ? 1 : op, sz: 0.45 + rnd(k + 5.3) * 0.35}});
+    });
+    map.getSource("wx-ic").setData({type: "FeatureCollection", features: feats});
+  }
+  let mode = "nisar", data = null, wxPop = null, inited = false, provFs = null, bndBefore = false;
+  window.hnMode = mode;
+
+  function colorAt(V, v) {
+    const S = V.stops;
+    if (v <= S[0][0]) return S[0][1];
+    for (let i = 1; i < S.length; i++) if (v <= S[i][0]) {
+      const [a, ca] = S[i - 1], [b, cb] = S[i], t = (v - a) / (b - a);
+      return ca.map((c, k) => c + (cb[k] - c) * t);
+    }
+    return S[S.length - 1][1];
+  }
+  // nội suy nghịch đảo khoảng cách (IDW) từ 6 điểm lưới gần nhất
+  function idw(getv, lon, lat) {
+    let best = [];
+    for (const p of data.points) {
+      const v = getv(p); if (v == null) continue;
+      const d = (p.lon - lon) ** 2 + (p.lat - lat) ** 2;
+      if (d < 1e-10) return v;
+      if (best.length < 6 || d < best[best.length - 1][0]) { best.push([d, v]); best.sort((x, y) => x[0] - y[0]); if (best.length > 6) best.pop(); }
+    }
+    if (!best.length) return null;
+    let sw = 0, sv = 0; for (const [d, v] of best) { const w = 1 / d; sw += w; sv += w * v; }
+    return sv / sw;
+  }
+  const mercY = la => Math.log(Math.tan(Math.PI / 4 + la * Math.PI / 360));
+  const invY = y => (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * 180 / Math.PI;
+
+  function draw() {
+    if (!data) return;
+    const key = $("wxVar").value, V = VARS[key], day = +$("wxDay").value;
+    $("wxDayL").style.display = V.day ? "" : "none";
+    $("wxTitle").textContent = V.title + (V.day ? " · " + $("wxDay").selectedOptions[0].text.toLowerCase() : "");
+    const getv = p => V.get(p, day);
+    const [w, s, e, n] = data.bbox, y0 = mercY(n), y1 = mercY(s);
+    const W = 260, H = Math.round(W * (y0 - y1) / ((e - w) * Math.PI / 180));
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const ctx = cv.getContext("2d"), img = ctx.createImageData(W, H);
+    // mặt nạ: chỉ tô trong ranh giới các tỉnh (nếu chưa có ranh giới thì tô cả khung)
+    let mask = null;
+    if (provFs) {
+      const mc = document.createElement("canvas"); mc.width = W; mc.height = H;
+      const m = mc.getContext("2d"); m.fillStyle = "#000"; m.beginPath();
+      for (const f of provFs) {
+        const polys = f.geometry.type === "Polygon" ? [f.geometry.coordinates] : f.geometry.coordinates;
+        for (const poly of polys) for (const ring of poly) {
+          ring.forEach(([x, y], k) => { const px = (x - w) / (e - w) * W, py = (y0 - mercY(y)) / (y0 - y1) * H; k ? m.lineTo(px, py) : m.moveTo(px, py); });
+          m.closePath();
+        }
+      }
+      m.fill("evenodd");
+      mask = m.getImageData(0, 0, W, H).data;
+    }
+    for (let j = 0; j < H; j++) {
+      const lat = invY(y0 + (y1 - y0) * (j + .5) / H);
+      for (let i = 0; i < W; i++) {
+        const o = (j * W + i) * 4;
+        if (mask && mask[o + 3] < 8) continue;
+        const v = idw(getv, w + (e - w) * (i + .5) / W, lat);
+        if (v == null) continue;
+        const c = colorAt(V, v), k = mask ? mask[o + 3] / 255 : 1;
+        img.data[o] = c[0]; img.data[o + 1] = c[1]; img.data[o + 2] = c[2]; img.data[o + 3] = c[3] * k;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    const url = cv.toDataURL(), coords = [[w, n], [e, n], [e, s], [w, s]];
+    if (map.getSource("wx")) map.getSource("wx").updateImage({url, coordinates: coords});
+    else {
+      map.addSource("wx", {type: "image", url, coordinates: coords});
+      map.addLayer({id: "wx-img", type: "raster", source: "wx", paint: {"raster-opacity": 0.9, "raster-fade-duration": 0, "raster-resampling": "linear"}}, map.getLayer("aoi-line") ? "aoi-line" : undefined);
+    }
+    map.setLayoutProperty("wx-img", "visibility", mode === "wx" ? "visible" : "none");
+    // chú thích màu
+    const span = V.max - V.min, pos = v => Math.min(100, Math.max(0, (v - V.min) / span * 100));
+    const grad = V.stops.filter(x => x[0] >= V.min && x[0] <= V.max).map(([v, c]) => `rgba(${c[0]},${c[1]},${c[2]},${key === "rain" && v === 0 ? 0.15 : 1}) ${pos(v)}%`).join(",");
+    $("wxLegBar").style.background = `linear-gradient(90deg,${grad})`;
+    document.querySelectorAll(".wxv button").forEach(b => b.classList.toggle("on", b.dataset.v === key));
+    drawMarks();
+    $("wxLegTicks").innerHTML = V.ticks.map((t, i) => `<span style="left:${pos(t)}%">${t}${i === V.ticks.length - 1 && key === "rain" ? "+" : ""}</span>`).join("");
+  }
+
+  async function prep() {   // nạp ranh giới tỉnh (dùng để cắt màu và vẽ viền)
+    try {
+      if (!provFs) provFs = await fetchBoundaries();
+      if (!map.getSource("prov")) addBoundaryLayers(provFs);
+      setBnd(true);
+    } catch (e) { provFs = null; $("wxStatus").className = "err"; $("wxStatus").textContent = "Không tải được ranh giới tỉnh (" + e.message + "), đang hiện cả khung."; }
+  }
+
+  async function load(refresh) {
+    const st = $("wxStatus"); st.className = ""; st.textContent = "Đang tải dữ liệu thời tiết…";
+    if (!provFs) await prep();
+    try {
+      const r = await fetch("/api/weather/grid" + (refresh ? "?refresh=1" : ""));
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "Lỗi " + r.status);
+      data = j; draw();
+      st.textContent = (j.obs_time ? "Dữ liệu mô hình lúc " + j.obs_time.replace("T", " ") + " (giờ VN) · " : "") + "tải về lúc " + fmt(j.updated * 1000) + " · Open-Meteo.com (CC BY 4.0), không phải số đo trạm" + (j.stale ? " (đang dùng dữ liệu cũ, nguồn tạm lỗi)" : "") + (provFs ? "" : " · chưa có ranh giới tỉnh, đang hiện cả khung");
+    } catch (e) { st.className = "err"; st.textContent = e.message; }
+  }
+
+  function onClick(ev) {
+    if (mode !== "wx" || !data) return;
+    const {lng, lat} = ev.lngLat, [w, s, e, n] = data.bbox;
+    if (lng < w || lng > e || lat < s || lat > n) return;
+    const day = +$("wxDay").value, f = (v, d) => v == null ? "—" : v.toFixed(d);
+    const rain = idw(p => p.r && p.r[day], lng, lat), t = idw(p => p.t, lng, lat), rh = idw(p => p.rh, lng, lat);
+    if (wxPop) wxPop.remove();
+    wxPop = new maplibregl.Popup({maxWidth: "260px", offset: 18}).setLngLat(ev.lngLat).setHTML(`
+      <b>Thời tiết tại điểm này</b>
+      <dl><dt>Nhiệt độ</dt><dd>${f(t, 1)} °C</dd><dt>Độ ẩm KK</dt><dd>${f(rh, 0)} %</dd>
+      <dt>Mưa ${esc($("wxDay").selectedOptions[0].text.toLowerCase())}</dt><dd>${f(rain, 1)} mm</dd>
+      <dt>Tọa độ</dt><dd>${lat.toFixed(3)}, ${lng.toFixed(3)}</dd></dl>`).addTo(map);
+  }
+
+  function setMode(m) {
+    mode = m; window.hnMode = m;
+    const wxOn = m === "wx";
+    $("nisarPane").style.display = wxOn ? "none" : "flex";
+    $("wxPane").style.display = wxOn ? "flex" : "none";
+    $("mNisar").classList.toggle("on", !wxOn); $("mWx").classList.toggle("on", wxOn);
+    $("mNisar").setAttribute("aria-pressed", String(!wxOn)); $("mWx").setAttribute("aria-pressed", String(wxOn));
+    $("scn").style.display = wxOn ? "none" : "";
+    popup && popup.remove(); wxPop && wxPop.remove(); if (!wxOn) clearMarks();
+    const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
+    if (wxOn) {
+      bndBefore = bndOn;
+      vis("ov", false); vis("scenes-fill", false); vis("scenes-line", false); vis("wx-img", true);
+      if (!inited) { inited = true; map.on("click", onClick);  }
+      if (!data) load(false); else prep().then(draw);
+    } else {
+      vis("wx-img", false); vis("ov", true); syncScenes();
+      if (map.getSource("prov")) setBnd(bndBefore);   // trả lại trạng thái ranh giới như trước
+    }
+  }
+  const ready = () => map && map.loaded();
+  const go = m => () => { if (ready()) setMode(m); else map && map.once("idle", () => setMode(m)); };
+  $("mNisar").onclick = go("nisar"); $("mWx").onclick = go("wx");
+  $("wxVar").onchange = $("wxDay").onchange = draw;
+  document.querySelectorAll(".wxv button").forEach(b => b.onclick = () => { $("wxVar").value = b.dataset.v; draw(); });
+  $("wxReload").onclick = () => load(true);
+})();
+/* ===== hết phần Thời tiết ===== */
+
+(function () {  // nút ‹ thu bảng vào, nút › kéo bảng ra
+  const app = $("app") || document.getElementById("app"), btn = $("asideToggle"), KEY = "hn_aside_collapsed";
+  let saved = false;
+  try { saved = localStorage.getItem(KEY) === "1"; } catch {}
+  function apply(collapsed, save) {
+    app.classList.toggle("collapsed", collapsed);
+    btn.textContent = collapsed ? "›" : "‹";
+    btn.setAttribute("aria-expanded", String(!collapsed));
+    const t = collapsed ? "Mở rộng bảng" : "Thu gọn bảng";
+    btn.title = t; btn.setAttribute("aria-label", t);
+    if (save) { try { localStorage.setItem(KEY, collapsed ? "1" : "0"); } catch {} }
+    const t0 = performance.now();   // bản đồ tính lại kích thước suốt lúc khung chuyển động
+    (function tick() { if (typeof map !== "undefined" && map && map.resize) map.resize(); if (performance.now() - t0 < 350) requestAnimationFrame(tick); })();
+  }
+  btn.onclick = () => apply(!app.classList.contains("collapsed"), true);
+  apply(saved, false);
+})();
+init();
+</script>
+</body>
+</html>
