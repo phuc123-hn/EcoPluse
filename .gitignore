@@ -1,9 +1,9 @@
-# Bí mật: KHÔNG bao giờ đưa lên git
+# ko push
 .env
 .env.*
 !.env.example
 
-# Dữ liệu chạy thật (nằm trên ổ đĩa của Railway, không phải trong git)
+# Dữ liệu chạy thật khi deploy
 data/
 cache/
 *.db
