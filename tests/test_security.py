@@ -86,6 +86,23 @@ def test_limited_cannot_read_other_users_photo_or_plots(env):
     assert c.get(f"/plots/{pb}/photo").status_code == 404
 
 
+def test_rollback_migration_keeps_accounts_with_duplicate_names_loginable(env):
+    h = env.hydro
+    first = add_user(h, "Nguyen Van A", "farmer")
+    h.q("DROP INDEX farmer_name", write=True)
+    second = add_user(h, "Nguyen Van A", "farmer")
+    h.q("ALTER TABLE users ADD COLUMN username TEXT NOT NULL DEFAULT ''", write=True)
+    h.q("ALTER TABLE users ADD COLUMN username_key TEXT NOT NULL DEFAULT ''", write=True)
+    h.q("UPDATE users SET username='vuon_xanh',username_key='vuon_xanh' WHERE id=?", (first,), write=True)
+    h.q("UPDATE users SET username='vuon_xanh_2',username_key='vuon_xanh_2' WHERE id=?", (second,), write=True)
+
+    h.migrate()
+    keys = h.q("SELECT name_key FROM users WHERE role='farmer' ORDER BY id")
+    assert len({row["name_key"] for row in keys}) == 2
+    assert h.q("SELECT name_key FROM users WHERE id=?", (second,), one=True)["name_key"] == "vuon xanh 2"
+    assert env.client().post("/auth/login", json={"ident": "vuon_xanh_2", "password": "matkhau123"}).status_code == 200
+
+
 # ---------- 2. Quản lý xã/phường phải được tỉnh duyệt ----------
 def register_ward_admin(env, email="xa@example.com"):
     c = env.client()

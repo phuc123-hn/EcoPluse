@@ -171,6 +171,21 @@ def migrate():
                 seen.add(k)
                 c.execute("INSERT INTO users(id,full_name,name_key,phone,pw_hash,role,status,fails,locked_until,created_at) VALUES(?,?,?,?,?,?,?,?,?,?)",
                           (i, nm, k, ph, pw, "admin_province" if role == "admin" else "farmer", st, fl, lu, ca))
+        cols = {r[1] for r in c.execute("PRAGMA table_info(users)")}
+        if "username" in cols:
+            rows = c.execute("SELECT id,name_key,username FROM users WHERE role='farmer' ORDER BY id").fetchall()
+            reserved = {r[1] for r in rows}
+            seen = set()
+            for uid, name_key, username in rows:
+                if name_key in seen:
+                    base = fold(username) or f"nong dan {uid}"
+                    candidate, suffix = base, 1
+                    while candidate in reserved or candidate in seen:
+                        suffix += 1
+                        candidate = f"{base} {uid}" if suffix == 2 else f"{base} {uid} {suffix}"
+                    c.execute("UPDATE users SET name_key=? WHERE id=?", (candidate, uid))
+                    name_key = candidate
+                seen.add(name_key)
         c.executescript(SCHEMA_V2)
         cols = {r[1] for r in c.execute("PRAGMA table_info(audit_log)")}
         for col in ("province_key", "ward_key"):

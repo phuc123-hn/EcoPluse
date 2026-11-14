@@ -121,6 +121,40 @@ a{color:inherit}
   .three .ph{order:-1}
 }
 
+@media(max-width:600px){
+  .top{gap:8px;padding:8px 12px}
+  .logo{font-size:18px}
+  .logo img{width:34px!important;height:34px!important}
+  .enter{gap:4px;padding:8px 13px;font-size:13px}
+  .weather{height:100svh;min-height:480px}
+  .weather .cap{padding:0 16px 24px}
+  .weather .bg{object-position:center}
+  .globe-cap{top:72px;padding:0 16px}
+  .prog{right:12px;height:100px}
+  .intro{padding:64px 16px 28px}
+  .intro p{font-size:16px}
+  .feats{grid-template-columns:1fr;gap:10px;margin-top:24px}
+  .crop{padding:48px 16px;scroll-margin-top:44px}
+  .two,.three{gap:16px}
+  .ph{aspect-ratio:4/3;border-radius:18px}
+  .blk{padding:15px 16px}
+  .cta{padding:58px 16px}
+  .cta .enter{padding:12px 20px;font-size:15px}
+  footer{padding:18px 14px}
+}
+
+@media(max-width:380px){
+  .logo{gap:5px;font-size:16px}
+  .enter{padding:8px 10px}
+  .weather h1{font-size:clamp(25px,8vw,34px)}
+  .stat{font-size:12px}
+}
+
+@media(max-height:500px) and (orientation:landscape){
+  .weather{height:100svh;min-height:360px}
+  .weather .cap{padding-bottom:18px}
+}
+
 /* ---------- 5. kêu gọi ---------- */
 .cta{padding:90px 24px;text-align:center;background:linear-gradient(135deg,#123d2a,#0e3550);color:#fff}
 .cta h2{margin:0 0 8px;font-size:clamp(26px,4vw,40px);font-weight:800}

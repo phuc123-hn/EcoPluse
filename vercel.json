@@ -1,0 +1,5 @@
+{
+  "rewrites": [
+    { "source": "/(.*)", "destination": "https://ecopulse.onrender.com/$1" }
+  ]
+}
