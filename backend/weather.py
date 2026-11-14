@@ -13,7 +13,9 @@ Hạn mức miễn phí của Open-Meteo: 600 lượt/phút, 5.000 lượt/giờ
 gọi nhiều hơn 10 biến hoặc hơn 7 ngày thì tính thành nhiều lượt. Vì vậy mọi lần gọi đều đi qua _get():
 giãn nhịp theo phút, chỉ một luồng gọi ra ngoài một lúc, gặp 429 thì chờ thử lại, và nghỉ một lúc sau khi lỗi.
 """
+import json
 import math
+import os
 import re
 import threading
 import time
@@ -25,46 +27,68 @@ from . import hydro
 
 router = APIRouter()
 
+
+def _env(k, d):
+    try:
+        return int(os.environ.get(k, d))
+    except ValueError:
+        return d
+
+
 AOI = (105.8, 10.3, 109.6, 15.7)      # W, S, E, N: phủ trọn 5 tỉnh sau sáp nhập (rộng hơn AOI của NISAR)
-NX, NY = 16, 22                       # 16 x 22 = 352 điểm, khoảng 0,25 độ (~28 km) một ô
+NX, NY = _env("WEATHER_NX", 16), _env("WEATHER_NY", 22)   # mặc định 16 x 22 = 352 điểm (~0,25 độ, ~28 km); 8 x 11 chỉ còn 88 điểm
 CACHE_TTL = 2 * 60 * 60               # 2 giờ (352 điểm x 12 lần/ngày, nằm trong hạn mức miễn phí)
 CHUNK = 40                            # số điểm mỗi lần gọi Open-Meteo
 PAUSE = 0.25                          # nghỉ giữa các nhóm gọi để không dồn dập
 URL = "https://api.open-meteo.com/v1/forecast"
-_cache = {"t": 0.0, "data": None, "fail": 0.0}
+_cache = {"t": 0.0, "data": None, "fail": 0.0, "wait": 0, "file": "grid"}
 
 MARINE_URL = "https://marine-api.open-meteo.com/v1/marine"
 SEA_AOI = (105.0, 8.0, 113.0, 16.4)   # W, S, E, N: Biển Đông phía đông Tây Nguyên và Nam Trung Bộ
-SEA_NX, SEA_NY = 21, 22               # bước 0,4 độ, 462 điểm
+SEA_NX, SEA_NY = _env("SEA_NX", 21), _env("SEA_NY", 22)   # mặc định bước 0,4 độ, 462 điểm; 11 x 11 chỉ còn 121 điểm
 SEA_TTL = 6 * 60 * 60                 # dữ liệu hải lưu chỉ cập nhật mỗi ngày
 SEA_FALLBACK_BUDGET = 120             # số lượt gọi lẻ tối đa khi một nhóm bị lỗi (do có điểm trên đất liền)
-_sea = {"t": 0.0, "data": None, "fail": 0.0}
+_sea = {"t": 0.0, "data": None, "fail": 0.0, "wait": 0, "file": "sea"}
 
 # ---------------------------------------------------------------- giới hạn lượt gọi dùng chung
 PER_MIN = 400                         # tự giữ dưới hạn mức 600 lượt/phút của Open-Meteo
-FAIL_COOLDOWN = 120                   # sau khi lỗi, không gọi lại ngay (giây)
+DAILY_CAP = 8000                      # ngân sách nội bộ mỗi ngày (UTC), chừa chỗ dưới hạn mức 10.000 lượt của Open-Meteo
+FAIL_COOLDOWN = 120                   # sau lỗi thường, không gọi lại ngay (giây)
+LIMIT_COOLDOWN = 30 * 60              # sau khi hết hạn mức giờ/ngày: nghỉ 30 phút rồi tự thử lại
+CACHE_DIR = os.environ.get("WEATHER_CACHE_DIR", "/tmp")   # nơi lưu bản sao dữ liệu cuối cùng (xem _save)
 _lock = threading.Lock()              # chỉ một luồng gọi Open-Meteo tại một thời điểm
 _win = []                             # [(thời điểm, số lượt)] trong 60 giây gần nhất
+_used = {"day": "", "n": 0}           # số lượt MÁY CHỦ NÀY đã gọi trong ngày (UTC)
 
 
 class RateLimited(Exception):
-    """Open-Meteo trả 429 và chờ thử lại vẫn không được."""
+    """Bị giới hạn lượt gọi (429 từ Open-Meteo hoặc hết ngân sách nội bộ). `wait` = số giây nên nghỉ trước khi thử lại."""
+
+    def __init__(self, msg, wait=FAIL_COOLDOWN):
+        super().__init__(msg)
+        self.wait = wait
 
 
 def _pace(cost):
-    """Chờ nếu 60 giây gần nhất đã dùng gần hết hạn mức phút."""
+    """Đếm lượt đã dùng trong ngày; chờ nếu 60 giây gần nhất đã dùng gần hết hạn mức phút."""
+    today = time.strftime("%Y-%m-%d", time.gmtime())
+    if _used["day"] != today:
+        _used.update(day=today, n=0)
+    if _used["n"] + cost > DAILY_CAP:
+        raise RateLimited(f"máy chủ đã gọi {_used['n']}/{DAILY_CAP} lượt hôm nay (UTC), tạm dừng để không vượt hạn mức", LIMIT_COOLDOWN)
     while True:
         now = time.time()
         _win[:] = [(t, c) for t, c in _win if now - t < 60]
         if not _win or sum(c for _, c in _win) + cost <= PER_MIN:
             _win.append((now, cost))
+            _used["n"] += cost
             return
         time.sleep(max(0.5, 60 - (now - _win[0][0])))
 
 
 def _get(cl, url, params, cost=1):
     """GET + JSON. 429 theo phút: chờ rồi thử lại (tối đa 3 lần). 429 theo giờ/ngày: dừng ngay vì chờ vài giây vô ích."""
-    why = ""
+    low = ""
     for k in range(3):
         _pace(cost)
         r = cl.get(url, params=params)
@@ -72,14 +96,39 @@ def _get(cl, url, params, cost=1):
             r.raise_for_status()
             return r.json()
         try:
-            why = r.json().get("reason", "")
+            low = str(r.json().get("reason", "")).lower()
         except Exception:
-            why = ""
-        if why and "minute" not in why.lower():
+            low = ""
+        if low and "minute" not in low:
             break
         if k < 2:
             time.sleep(20 * (k + 1))
-    raise RateLimited(why or "429 Too Many Requests")
+    if "daily" in low:
+        raise RateLimited("Open-Meteo báo hết hạn mức NGÀY (tính theo IP máy chủ; Render dùng chung IP nên có thể do app khác)", LIMIT_COOLDOWN)
+    if "hourly" in low:
+        raise RateLimited("Open-Meteo báo hết hạn mức GIỜ", LIMIT_COOLDOWN)
+    raise RateLimited(low or "429 Too Many Requests")
+
+
+def _save(store):
+    """Lưu bản dữ liệu cuối cùng ra đĩa để lần khởi động sau còn có gì hiển thị khi nguồn đang bị chặn.
+    Trên Render chỉ giữ được qua lần deploy/khởi động lại nếu bạn gắn Persistent Disk và trỏ WEATHER_CACHE_DIR vào đó."""
+    try:
+        path = os.path.join(CACHE_DIR, f"weather_{store['file']}.json")
+        with open(path + ".tmp", "w", encoding="utf-8") as f:
+            json.dump({"t": store["t"], "data": store["data"]}, f)
+        os.replace(path + ".tmp", path)
+    except Exception:
+        pass
+
+
+def _load(store):
+    try:
+        with open(os.path.join(CACHE_DIR, f"weather_{store['file']}.json"), encoding="utf-8") as f:
+            d = json.load(f)
+        store["data"], store["t"] = d["data"], d["t"]
+    except Exception:
+        pass
 
 
 def _ok(store, ttl, refresh, gap):
@@ -94,18 +143,37 @@ def _serve(store, ttl, refresh, gap, fetch, name):
     with _lock:
         if _ok(store, ttl, refresh, gap):          # luồng khác vừa nạp xong trong lúc mình chờ khóa
             return store["data"]
-        if time.time() - store["fail"] < FAIL_COOLDOWN:
+        left = store["wait"] - (time.time() - store["fail"])
+        if left > 0:                               # vừa lỗi: chưa gọi lại, dùng dữ liệu cũ nếu có
             if store["data"]:
                 return {**store["data"], "stale": True}
-            raise HTTPException(502, f"{name}: nguồn vừa lỗi, thử lại sau ít phút")
+            raise HTTPException(502, f"{name}: nguồn đang bị giới hạn lượt gọi, tự thử lại sau khoảng {math.ceil(left / 60)} phút")
         try:
             store["data"], store["t"] = fetch(), time.time()
+            _save(store)
         except Exception as e:
-            store["fail"] = time.time()
+            store["fail"], store["wait"] = time.time(), getattr(e, "wait", FAIL_COOLDOWN)
             if store["data"]:
                 return {**store["data"], "stale": True}
             raise HTTPException(502, f"Không lấy được dữ liệu {name}: {e}")
         return store["data"]
+
+
+for _s in (_cache, _sea):
+    _load(_s)
+
+
+@router.get("/api/weather/usage", dependencies=[Depends(hydro.user)])
+def weather_usage():
+    """Máy chủ này đã gọi Open-Meteo bao nhiêu lượt hôm nay? Nếu con số nhỏ mà vẫn bị báo hết hạn mức ngày
+    thì hạn mức đang bị tính chung với app khác trên cùng IP."""
+    now = time.time()
+    return {"day_utc": _used["day"], "used_today": _used["n"], "cap": DAILY_CAP,
+            "grid_age_min": round((now - _cache["t"]) / 60) if _cache["data"] else None,
+            "sea_age_min": round((now - _sea["t"]) / 60) if _sea["data"] else None,
+            "grid_retry_in_min": max(0, math.ceil((_cache["wait"] - (now - _cache["fail"])) / 60)),
+            "sea_retry_in_min": max(0, math.ceil((_sea["wait"] - (now - _sea["fail"])) / 60)),
+            "points_cached": len(_points)}
 
 
 # ---------------------------------------------------------------- lưới thời tiết
@@ -236,7 +304,7 @@ POINT_TTL = 60 * 60                    # 1 giờ cho mỗi điểm
 POINT_MAX = 24                         # giữ tối đa 24 điểm trong bộ nhớ
 POINT_COST = 40                        # ước tính số lượt Open-Meteo tính cho một lần gọi nhiều biến x nhiều ngày
 _points = {}                           # (lat, lon) -> {"t": thời điểm nạp, "data": JSON Open-Meteo}
-_pfail = {"t": 0.0}
+_pfail = {"t": 0.0, "wait": 30}
 
 BASE = {
     "weather_code": "Mã thời tiết (WMO)", "temperature_2m": "Nhiệt độ 2 m", "apparent_temperature": "Nhiệt độ cảm nhận",
@@ -310,10 +378,10 @@ def _point(lat, lon, refresh=0):
         if fresh():
             return key, fresh()
         old = _points.get(key)
-        if time.time() - _pfail["t"] < 30:
+        if time.time() - _pfail["t"] < _pfail["wait"]:
             if old:
                 return key, old
-            raise HTTPException(502, "Điểm chi tiết: nguồn vừa lỗi, thử lại sau ít phút")
+            raise HTTPException(502, "Điểm chi tiết: nguồn đang bị giới hạn lượt gọi, thử lại sau ít phút")
         try:
             with httpx.Client(timeout=40) as cl:
                 data = _get(cl, URL, {
@@ -322,7 +390,7 @@ def _point(lat, lon, refresh=0):
                     "past_days": POINT_PAST, "forecast_days": POINT_FUTURE, "timezone": "Asia/Bangkok",
                 }, cost=POINT_COST)
         except Exception as e:
-            _pfail["t"] = time.time()
+            _pfail.update(t=time.time(), wait=getattr(e, "wait", 30))
             if old:
                 return key, old
             raise HTTPException(502, f"Không lấy được dữ liệu điểm chi tiết: {e}")
