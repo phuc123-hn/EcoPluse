@@ -550,30 +550,35 @@ class OtpIn(BaseModel):
 
 @router.post("/auth/admin/start")
 def admin_start(b: AdminReg, req: Request):
-    throttle("adminreg_ip", client_ip(req), 8, 3600, "Gửi mã quá nhiều lần từ cùng một nơi, hãy thử lại sau")
-    if q("SELECT 1 FROM users WHERE lower(email)=?", (b.email.lower(),), one=True):
+    """Đăng ký quản lý xã/phường. KHÔNG còn mã OTP qua email: tạo luôn tài khoản ở trạng thái CHỜ DUYỆT
+    (khóa + pending=1): chưa đăng nhập được, chưa hiện trong danh bạ, chưa nhận tin nhắn cho tới khi quản lý tỉnh bấm Duyệt."""
+    throttle("adminreg_ip", client_ip(req), 8, 3600, "Đăng ký quá nhiều lần từ cùng một nơi, hãy thử lại sau")
+    email = b.email.lower()
+    if q("SELECT 1 FROM users WHERE lower(email)=?", (email,), one=True):
         raise HTTPException(409, "Email này đã được đăng ký")
     if not q("SELECT 1 FROM users WHERE role='admin_province' AND status='active' AND (province_key IS NULL OR province_key=?)", (province_key(b.province),), one=True):
         raise HTTPException(400, "Tỉnh này chưa có quản lý tỉnh để duyệt đăng ký. Hãy liên hệ quản trị hệ thống.")
-    payload = {"full_name": clean(b.full_name), "phone": b.phone, "email": b.email.lower(), "province": prov_name(b.province), "ward": clean(b.ward), "pw_hash": hash_pw(b.password)}
-    sent = issue_otp("admin_reg", b.email, payload, "Mã xác nhận đăng ký quản lý EcoPulse", "Bạn đang đăng ký tài khoản quản lý xã/phường trên EcoPulse. Mã xác nhận của bạn là:")
-    return {"ok": True, "emailed": sent}
+    name, prov, ward = clean(b.full_name), prov_name(b.province), clean(b.ward)
+    try:
+        uid = q("INSERT INTO users(full_name,name_key,phone,email,pw_hash,role,province,province_key,ward,ward_key,status,pending) VALUES(?,?,?,?,?,'admin_ward',?,?,?,?,'locked',1)",
+                (name, fold(name), b.phone, email, hash_pw(b.password), prov, province_key(prov), ward, ward_key(ward)), write=True)
+    except sqlite3.IntegrityError:
+        raise HTTPException(409, "Email này đã được đăng ký")
+    me_ = q("SELECT * FROM users WHERE id=?", (uid,), one=True)
+    audit(me_, f"{me_['full_name']} đăng ký tài khoản quản lý {place(me_)} (chờ tỉnh duyệt)")
+    for a in q("SELECT id FROM users WHERE role='admin_province' AND status='active' AND (province_key IS NULL OR province_key=?)", (me_["province_key"],)):
+        notify(a["id"], "Có quản lý xã/phường chờ duyệt", f"{me_['full_name']} đăng ký quản lý {place(me_)}. Vào mục Người dùng để duyệt hoặc từ chối.", f"adminreg:{uid}:{a['id']}")
+    return {"ok": True, "pending": True, "emailed": False}
 
 
 @router.post("/auth/admin/verify")
 def admin_verify(b: OtpIn, req: Request):
+    """Giữ lại để giao diện cũ (còn bước nhập mã) không bị lỗi: không kiểm tra mã nữa, chỉ xác nhận đăng ký đang chờ duyệt.
+    Khi giao diện đã bỏ bước nhập mã thì có thể xóa hàm này."""
     throttle("adminverify_ip", client_ip(req), 30, 3600)
-    p = check_otp("admin_reg", b.email, b.code)
-    if q("SELECT 1 FROM users WHERE lower(email)=?", (p["email"],), one=True):
-        raise HTTPException(409, "Email này đã được đăng ký")
-    # Tạo ở trạng thái CHỜ DUYỆT (khóa + pending=1): chưa đăng nhập được, chưa hiện trong danh bạ, chưa nhận tin nhắn cho tới khi quản lý tỉnh bấm Duyệt.
-    uid = q("INSERT INTO users(full_name,name_key,phone,email,pw_hash,role,province,province_key,ward,ward_key,status,pending) VALUES(?,?,?,?,?,'admin_ward',?,?,?,?,'locked',1)",
-            (p["full_name"], fold(p["full_name"]), p["phone"], p["email"], p["pw_hash"], p["province"], province_key(p["province"]), p["ward"], ward_key(p["ward"])), write=True)
-    me_ = q("SELECT * FROM users WHERE id=?", (uid,), one=True)
-    audit(me_, f"{me_['full_name']} đăng ký tài khoản quản lý {place(me_)} (đã xác nhận email, chờ tỉnh duyệt)")
-    for a in q("SELECT id FROM users WHERE role='admin_province' AND status='active' AND (province_key IS NULL OR province_key=?)", (me_["province_key"],)):
-        notify(a["id"], "Có quản lý xã/phường chờ duyệt", f"{me_['full_name']} đăng ký quản lý {place(me_)}. Vào mục Người dùng để duyệt hoặc từ chối.", f"adminreg:{uid}:{a['id']}")
-    return {"ok": True, "pending": True}
+    if q("SELECT 1 FROM users WHERE lower(email)=? AND pending=1", (b.email.lower(),), one=True):
+        return {"ok": True, "pending": True}
+    raise HTTPException(400, "Không tìm thấy đăng ký đang chờ duyệt. Hãy đăng ký lại.")
 
 
 # ---------- thông tin tài khoản ----------
