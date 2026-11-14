@@ -166,6 +166,8 @@
   #status.busy,#wxStatus.busy{position:relative;overflow:hidden}
   #status.busy::after,#wxStatus.busy::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:40%;background:linear-gradient(90deg,transparent,var(--asc),transparent);animation:busy 1.1s ease-in-out infinite}
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
+/* google translate: ẩn thanh và tooltip của Google */
+.skiptranslate iframe,.goog-te-banner-frame{display:none!important}body{top:0!important}.goog-tooltip,.goog-te-balloon-frame{display:none!important}.goog-text-highlight{background:none!important;box-shadow:none!important}
 </style>
 </head>
 <body>
@@ -275,6 +277,11 @@
 </div>
 
 <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<div id="google_translate_element" style="display:none"></div>
+<script>
+function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'vi',includedLanguages:'en',autoDisplay:false},'google_translate_element')}
+</script>
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "—").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
