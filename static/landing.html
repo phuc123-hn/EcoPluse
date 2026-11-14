@@ -6,8 +6,11 @@
 <title>EcoPulse – Độ ẩm đất từ vệ tinh cho nông dân Tây Nguyên</title>
 <link rel="icon" type="image/png" href="/static/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://unpkg.com">
+<link rel="dns-prefetch" href="https://server.arcgisonline.com">
+<link rel="preload" as="image" href="/static/img/begin.png" fetchpriority="high">
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link href="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css" rel="stylesheet">
 <style>
 :root{--g:#2f9e5a;--gd:#1f7a43;--b:#2a9fe0;--ink:#17323a;--mute:#5d7279;--line:#d8e4e8;--bg:#fbfdfc;--sand:#f1f6f3;--bad:#c0392b}
 *{box-sizing:border-box}
@@ -35,14 +38,12 @@ a{color:inherit}
 
 /* ---------- 1. thời tiết ---------- */
 .weather{position:relative;height:100vh;min-height:560px;overflow:hidden;background:radial-gradient(120% 90% at 30% 20%,#14503a 0,#0b171b 60%),#0b171b}
-.weather .bgb{position:absolute;left:-5%;top:-5%;width:110%;height:110%;object-fit:cover;filter:blur(32px) brightness(.5) saturate(1.1);opacity:0;transition:opacity 1.6s ease}
-.weather .bg{position:absolute;left:0;right:0;top:var(--hh,70px);bottom:0;width:100%;height:calc(100% - var(--hh,70px));object-fit:contain;object-position:center;-webkit-mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);mask-image:linear-gradient(90deg,transparent 0,#000 6%,#000 94%,transparent 100%);opacity:0;transition:opacity 1.6s ease}
-.weather .bgb.ok{opacity:1}
+.weather .bg{position:absolute;left:0;right:0;top:var(--hh,70px);bottom:0;width:100%;height:calc(100% - var(--hh,70px));object-fit:contain;object-position:center;opacity:0;transition:opacity 1.2s ease}
 .weather .bg.ok{opacity:1}
 @keyframes rise{from{opacity:0;transform:translateY(34px)}to{opacity:1;transform:none}}
 .weather .cap>*{opacity:0;animation:rise 1.1s cubic-bezier(.2,.7,.2,1) forwards}
 .weather .cap h1{animation-delay:.35s}.weather .cap p{animation-delay:.65s}.weather .cap .scroll{animation:rise 1s 1s cubic-bezier(.2,.7,.2,1) forwards,bob 1.6s 2s infinite}
-.weather .shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,#0b171bcc 0,#0b171b00 28%,#0b171b00 62%,#0b171bee 100%)}
+.weather .shade{position:absolute;inset:0;pointer-events:none;background:linear-gradient(90deg,#0b171b 0,#0b171b00 6%,#0b171b00 94%,#0b171b 100%),linear-gradient(180deg,#0b171bcc 0,#0b171b00 28%,#0b171b00 62%,#0b171bee 100%)}
 .weather .cap{position:absolute;left:0;right:0;bottom:0;padding:0 24px 34px;color:#fff;text-align:center;pointer-events:none}
 .weather h1{margin:0 0 6px;font-size:clamp(28px,5vw,54px);line-height:1.15;font-weight:800;text-shadow:0 2px 20px #000a}
 .weather p{margin:0 auto;max-width:640px;color:#cfe3e8;text-shadow:0 1px 10px #000}
@@ -73,7 +74,7 @@ a{color:inherit}
 .feat span{font-size:14px;color:var(--mute)}
 
 /* ---------- 4. các cây trồng ---------- */
-.crop{padding:70px 24px;overflow:hidden;scroll-margin-top:50px}
+.crop{padding:70px 24px;overflow:hidden;scroll-margin-top:50px;content-visibility:auto;contain-intrinsic-size:auto 900px}
 .crop:nth-of-type(even){background:var(--sand)}
 .wrap{max-width:1120px;margin:0 auto}
 .crop h2{font-size:clamp(28px,4.2vw,44px);margin:6px 0 4px;font-weight:800;line-height:1.15}
@@ -94,7 +95,7 @@ a{color:inherit}
 .stat{display:inline-block;margin:10px 8px 0 0;padding:4px 12px;border-radius:999px;background:#e3f4ea;color:var(--gd);font-weight:700;font-size:13px}
 
 /* hiệu ứng trượt vào */
-.rv{opacity:0;transition:opacity .9s ease,transform 1.05s cubic-bezier(.16,.84,.24,1),box-shadow .35s ease,border-color .35s ease;will-change:opacity,transform}
+.rv{opacity:0;transition:opacity .9s ease,transform 1.05s cubic-bezier(.16,.84,.24,1),box-shadow .35s ease,border-color .35s ease}
 .rv.l{transform:translateX(-70px) scale(.98)}.rv.r{transform:translateX(70px) scale(.98)}.rv.u{transform:translateY(50px) scale(.98)}
 .rv.in{opacity:1;transform:none}
 .rv.d1{transition-delay:.12s}.rv.d2{transition-delay:.26s}.rv.d3{transition-delay:.4s}
@@ -107,7 +108,7 @@ a{color:inherit}
 .blk.rv.in li{opacity:1;transform:none}
 .blk.rv.in li:nth-child(1){transition-delay:.45s}.blk.rv.in li:nth-child(2){transition-delay:.58s}.blk.rv.in li:nth-child(3){transition-delay:.71s}.blk.rv.in li:nth-child(4){transition-delay:.84s}
 /* ảnh: phóng nhẹ khi hiện + trôi chậm khi cuộn (parallax) */
-.ph>img{z-index:1;transform:scale(1.28);translate:0 var(--py,0px);opacity:0;transition:transform 1.8s cubic-bezier(.16,.84,.24,1),opacity 1s ease;will-change:transform,translate}
+.ph>img{z-index:1;transform:scale(1.28);translate:0 var(--py,0px);opacity:0;transition:transform 1.8s cubic-bezier(.16,.84,.24,1),opacity 1s ease}
 .ph>img.ld{opacity:1}
 .ph.in>img{transform:scale(1.12)}
 .ph .lab{opacity:0;transform:translateY(12px);transition:opacity .6s ease .8s,transform .7s cubic-bezier(.16,.84,.24,1) .8s}
@@ -127,6 +128,77 @@ a{color:inherit}
 .cta p{margin:0 auto 24px;max-width:560px;color:#cfe3e8}
 .cta .enter{margin:0;font-size:17px;padding:14px 30px}
 footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
+
+/* =====================================================
+   HIỆU ỨNG ANIMATION BỔ SUNG (phong cách landing page hiện đại)
+   ===================================================== */
+/* nền aurora + đom đóm ở ảnh đầu trang */
+.aurora{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.aurora i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.55;mix-blend-mode:screen;animation:blob 18s ease-in-out infinite alternate;will-change:transform}
+.aurora i:nth-child(1){width:46vw;height:46vw;left:-8vw;top:8%;background:#2f9e5a}
+.aurora i:nth-child(2){width:40vw;height:40vw;right:-6vw;top:-6%;background:#2a9fe0;animation-duration:22s;animation-delay:-6s}
+.aurora i:nth-child(3){width:34vw;height:34vw;left:30vw;bottom:-12%;background:#7be0b0;opacity:.35;animation-duration:26s;animation-delay:-12s}
+@keyframes blob{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(6vw,-5vh,0) scale(1.18)}100%{transform:translate3d(-5vw,6vh,0) scale(.92)}}
+.ffs{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.ffs i{position:absolute;bottom:-12px;width:var(--s);height:var(--s);border-radius:50%;background:#bff5d6;box-shadow:0 0 10px 2px #7be0b0aa;opacity:0;animation:ff var(--d) linear var(--dl) infinite}
+@keyframes ff{0%{transform:translate(0,0);opacity:0}10%{opacity:.9}90%{opacity:.7}100%{transform:translate(var(--x),-105vh);opacity:0}}
+
+/* tiêu đề hiện từng từ, hai từ cuối có màu chuyển động */
+.weather .cap h1.split{animation:none;opacity:1;perspective:600px}
+.split .w{display:inline-block;opacity:0;transform:translateY(42px) rotateX(-45deg);filter:blur(8px);animation:wordIn .9s cubic-bezier(.2,.7,.2,1) forwards;animation-delay:calc(.3s + var(--i)*.1s)}
+.split .w.hl{background:linear-gradient(90deg,#7be0b0,#7cc8f5,#7be0b0);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;text-shadow:none;animation:wordIn .9s cubic-bezier(.2,.7,.2,1) forwards,shine 5s linear 1.6s infinite;animation-delay:calc(.3s + var(--i)*.1s),1.6s}
+@keyframes wordIn{to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes shine{to{background-position:200% center}}
+
+/* băng chữ chạy ngang */
+.marq{background:#02070b;border-top:1px solid #ffffff14;border-bottom:1px solid #ffffff14;overflow:hidden;padding:18px 0;-webkit-mask:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent);mask:linear-gradient(90deg,transparent,#000 10%,#000 90%,transparent)}
+.marq-t{display:flex;width:max-content;animation:marq 40s linear infinite}
+.marq:hover .marq-t{animation-play-state:paused}
+.marq-t span{display:flex;align-items:center;gap:28px;padding-right:28px;font-weight:800;font-size:clamp(18px,2.6vw,28px);color:#cfe3e8;white-space:nowrap}
+.marq-t em{flex:none;width:8px;height:8px;border-radius:50%;background:linear-gradient(var(--g),var(--b))}
+.marq-t b{background:linear-gradient(90deg,#7be0b0,#7cc8f5);-webkit-background-clip:text;background-clip:text;color:transparent}
+@keyframes marq{to{transform:translateX(-50%)}}
+
+/* các con số đếm lên */
+.nums{max-width:1000px;margin:0 auto;padding:10px 24px 70px}
+.numg{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.num{text-align:center;padding:22px 12px;border-radius:18px;background:#fff;border:1px solid var(--line)}
+.num b{display:block;font-size:clamp(34px,5vw,52px);line-height:1.1;font-weight:800;background:linear-gradient(90deg,var(--g),var(--b));-webkit-background-clip:text;background-clip:text;color:transparent}
+.num span{font-size:14px;color:var(--mute)}
+
+/* ánh sáng chạy theo con trỏ trên thẻ */
+.blk,.feat,.num{position:relative;overflow:hidden}
+.blk::after,.feat::after,.num::after{content:"";position:absolute;inset:0;pointer-events:none;opacity:0;transition:opacity .35s;background:radial-gradient(260px circle at var(--mx,50%) var(--my,50%),#2f9e5a26,transparent 70%)}
+.blk:hover::after,.feat:hover::after,.num:hover::after{opacity:1}
+
+/* ảnh nghiêng 3D nhẹ khi rê chuột (chỉ sau khi đã hiện xong) */
+.ph.done{transform:perspective(900px) rotateX(var(--rx,0deg)) rotateY(var(--ry,0deg));transition:transform .25s ease-out,box-shadow .35s ease}
+
+/* chữ mờ dần rõ nét khi hiện */
+.eyebrow.rv,.intro h2.rv,.crop h2.rv{filter:blur(8px);transition:opacity .9s ease,transform 1.05s cubic-bezier(.16,.84,.24,1),filter .9s ease}
+.eyebrow.rv.in,.intro h2.rv.in,.crop h2.rv.in{filter:blur(0)}
+.eyebrow::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--g);margin-right:8px;vertical-align:1px;animation:pulse 2s ease-out infinite}
+@keyframes pulse{0%{box-shadow:0 0 0 0 #2f9e5a88}80%,100%{box-shadow:0 0 0 9px #2f9e5a00}}
+
+/* nút có vệt sáng quét + nút hút nam châm */
+.enter{position:relative;overflow:hidden;translate:var(--tx,0) var(--ty,0);transition:transform .15s,box-shadow .15s,translate .2s ease-out}
+.enter::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,#ffffff66,transparent);transform:skewX(-20deg);animation:sweep 3.4s ease-in-out infinite;pointer-events:none}
+@keyframes sweep{0%,55%{left:-60%}100%{left:130%}}
+
+/* khối kêu gọi: nền chuyển động + quầng sáng + tiêu đề lấp lánh */
+.cta{position:relative;overflow:hidden;background-size:200% 200%;animation:ctaBg 14s ease-in-out infinite alternate}
+.cta>*{position:relative;z-index:1}
+.cta::before,.cta::after{content:"";position:absolute;border-radius:50%;pointer-events:none;animation:blob 16s ease-in-out infinite alternate}
+.cta::before{width:440px;height:440px;left:-140px;top:-170px;background:radial-gradient(circle,#2f9e5a66,transparent 65%)}
+.cta::after{width:480px;height:480px;right:-160px;bottom:-200px;background:radial-gradient(circle,#2a9fe066,transparent 65%);animation-delay:-8s}
+@keyframes ctaBg{from{background-position:0 50%}to{background-position:100% 50%}}
+.cta h2.rv.in{background:linear-gradient(90deg,#fff,#9be7bd,#7cc8f5,#fff);background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:shine 6s linear infinite}
+
+@media(prefers-reduced-motion:reduce){
+  .aurora i,.ffs i,.marq-t,.enter::after,.cta,.cta::before,.cta::after,.eyebrow::before,.cta h2.rv.in,.split .w.hl{animation:none!important}
+  .split .w{opacity:1!important;transform:none!important;filter:none!important;animation:none!important}
+  .eyebrow.rv,.intro h2.rv,.crop h2.rv{filter:none!important}
+}
 </style>
 </head>
 <body>
@@ -138,7 +210,7 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 
 <!-- 1. ẢNH ĐẦU TRANG (static/img/begin.png) -->
 <section class="weather" id="top">
-  <img class="bgb" src="/static/img/begin.png" alt="" aria-hidden="true" decoding="async" onload="this.classList.add('ok')" onerror="this.remove()">
+  <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
   <img class="bg" src="/static/img/begin.png" alt="Toàn cảnh Tây Nguyên" fetchpriority="high" decoding="async" onload="this.classList.add('ok')" onerror="this.remove()">
   <div class="shade"></div>
   <div class="cap">
@@ -158,6 +230,14 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
   </div>
 </section>
 
+<!-- BĂNG CHỮ CHẠY NGANG -->
+<div class="marq" aria-hidden="true">
+  <div class="marq-t">
+    <span><b>Cà phê</b><em></em>Sầu riêng<em></em><b>Cao su</b><em></em>Radar NISAR<em></em><b>Độ ẩm đất</b><em></em>Tây Nguyên<em></em><b>Bình Phước</b><em></em>NASA × ISRO<em></em></span>
+    <span><b>Cà phê</b><em></em>Sầu riêng<em></em><b>Cao su</b><em></em>Radar NISAR<em></em><b>Độ ẩm đất</b><em></em>Tây Nguyên<em></em><b>Bình Phước</b><em></em>NASA × ISRO<em></em></span>
+  </div>
+</div>
+
 <!-- 3. GIỚI THIỆU NGẮN -->
 <section class="intro" id="gioi-thieu">
   <span class="eyebrow rv u">EcoPulse là gì</span>
@@ -169,6 +249,16 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
     <div class="feat rv u d3"><b>Thông báo &amp; hợp tác xã</b><span>Cảnh báo khô hạn, trao đổi với hợp tác xã.</span></div>
   </div>
 </section>
+
+<!-- CÁC CON SỐ (đếm lên khi cuộn tới) -->
+<div class="nums">
+  <div class="numg">
+    <div class="num rv u"><b data-to="5">0</b><span>tỉnh Tây Nguyên</span></div>
+    <div class="num rv u d1"><b data-to="5">0</b><span>mức độ ẩm đất dễ đọc</span></div>
+    <div class="num rv u d2"><b data-to="3">0</b><span>cây trồng chủ lực</span></div>
+    <div class="num rv u d3"><b data-to="12">0</b><span>ngày vệ tinh quan sát lại một lần</span></div>
+  </div>
+</div>
 
 <!-- 4a. CÀ PHÊ: ảnh trái, nội dung phải -->
 <section class="crop" id="ca-phe">
@@ -277,7 +367,6 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 </section>
 <footer>EcoPulse · Dữ liệu NISAR đang hiệu chuẩn, thông tin chỉ mang tính tham khảo.</footer>
 
-<script src="https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js"></script>
 <script>
 /* ===== hiệu ứng trượt vào khi cuộn ===== */
 (function () {
@@ -297,7 +386,7 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
   const imgs = [...document.querySelectorAll(".ph>img")];
   const links = [...document.querySelectorAll(".top nav a")];
   const secs = links.map(a => document.querySelector(a.getAttribute("href")));
-  const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
+  const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches || matchMedia("(pointer:coarse)").matches;
   let lastY = scrollY, tick = false;
   function frame() {
     tick = false;
@@ -327,6 +416,15 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 /* ===== quả địa cầu thật: ảnh vệ tinh Esri, không tự quay; cuộn trang để bay về Tây Nguyên ===== */
 (function () {
   const sec = document.getElementById("globe-sec"), nogl = document.getElementById("nogl");
+  // chỉ tải MapLibre (~800KB) + khởi tạo khi người dùng sắp cuộn tới, để không tranh băng thông với ảnh đầu trang
+  function loadML(cb) {
+    const l = document.createElement("link"); l.rel = "stylesheet";
+    l.href = "https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.css"; document.head.appendChild(l);
+    const s = document.createElement("script"); s.src = "https://unpkg.com/maplibre-gl@5.6.0/dist/maplibre-gl.js";
+    s.onload = cb; s.onerror = () => { nogl.style.display = "grid"; };
+    document.head.appendChild(s);
+  }
+  function init() {
   if (typeof maplibregl === "undefined") { nogl.style.display = "grid"; return; }
   let map;
   try {
@@ -351,7 +449,8 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
       },
       center: [45, 15], zoom: 0.7, pitch: 0, bearing: 0,
       interactive: false, attributionControl: {compact: true},
-      pixelRatio: Math.min(window.devicePixelRatio || 1, 1.25), fadeDuration: 0, maxTileCacheSize: 80
+      pixelRatio: Math.min(window.devicePixelRatio || 1, (navigator.hardwareConcurrency || 4) > 4 ? 1.25 : 1),
+      fadeDuration: 0, maxTileCacheSize: 150, refreshExpiredTiles: false
     });
   } catch (e) { nogl.style.display = "grid"; return; }
 
@@ -393,14 +492,24 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
   }
   gh.style.transition = gp.style.transition = "opacity .35s ease";
   // đọc vị trí cuộn, rồi tiến dần tới đó (quán tính) để bay mượt, không giật
-  function frame() {
+  // tự giảm độ phân giải canvas nếu máy yếu (khung hình > ~28ms kéo dài)
+  let last = 0, slow = 0, lowRes = false;
+  function frame(now) {
     raf = 0;
-    cur += (target - cur) * (reduce ? 1 : 0.085);
-    if (Math.abs(target - cur) < 0.0004) cur = target;
+    if (last && !lowRes) {
+      slow = (now - last) > 28 ? slow + 1 : Math.max(0, slow - 1);
+      if (slow > 25 && map.setPixelRatio) { map.setPixelRatio(1); lowRes = true; }
+    }
+    last = now;
+    cur += (target - cur) * (reduce ? 1 : 0.12);
+    if (Math.abs(target - cur) < 0.0008) cur = target;
     render(cur);
-    if (cur !== target) raf = requestAnimationFrame(frame);
+    if (cur !== target) raf = requestAnimationFrame(frame); else last = 0;
   }
+  let visible = true;
+  new IntersectionObserver(es => { visible = es[0].isIntersecting; if (visible) update(); }, {rootMargin: "100% 0px"}).observe(sec);
   function update() {
+    if (!visible) return;
     const r = sec.getBoundingClientRect(), max = sec.offsetHeight - innerHeight;
     target = Math.min(1, Math.max(0, -r.top / max));
     if (!raf) raf = requestAnimationFrame(frame);
@@ -409,6 +518,83 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
   addEventListener("resize", () => { map.resize(); update(); });
   map.on("load", () => { cur = target = 0; update(); });
   map.on("error", () => {});
+  }
+  // khởi tạo khi section địa cầu còn cách ~1.5 màn hình (hoặc sau khi trang rảnh)
+  let started = false;
+  function go() { if (started) return; started = true; loadML(init); }
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => { if (es[0].isIntersecting) { io.disconnect(); go(); } }, {rootMargin: "150% 0px"});
+    io.observe(sec);
+  } else go();
+})();
+
+/* ===== hiệu ứng bổ sung: chữ từng từ, đom đóm, đếm số, ánh sáng theo chuột, nghiêng ảnh, nút nam châm ===== */
+(function () {
+  const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches, fine = matchMedia("(pointer:fine)").matches;
+
+  // 1. tiêu đề đầu trang hiện từng từ
+  const h1 = document.querySelector(".weather .cap h1");
+  if (h1 && !reduce) {
+    const txt = h1.textContent.trim(), words = txt.split(/\s+/);
+    h1.setAttribute("aria-label", txt);
+    h1.classList.add("split");
+    h1.innerHTML = words.map((w, i) => `<span class="w${i >= words.length - 2 ? " hl" : ""}" style="--i:${i}" aria-hidden="true">${w}</span>`).join(" ");
+  }
+
+  // 2. đom đóm bay lên ở ảnh đầu trang
+  const hero = document.querySelector(".weather");
+  if (hero && !reduce) {
+    const f = document.createElement("div"); f.className = "ffs"; f.setAttribute("aria-hidden", "true");
+    let h = "";
+    for (let i = 0; i < 26; i++) h += `<i style="left:${(Math.random() * 100).toFixed(1)}%;--s:${(2 + Math.random() * 4).toFixed(1)}px;--d:${(9 + Math.random() * 10).toFixed(1)}s;--dl:${(-Math.random() * 14).toFixed(1)}s;--x:${((Math.random() - .5) * 160).toFixed(0)}px"></i>`;
+    f.innerHTML = h;
+    hero.insertBefore(f, hero.querySelector(".shade"));
+  }
+
+  // 3. đếm số khi cuộn tới
+  const nums = [...document.querySelectorAll(".num b[data-to]")];
+  const count = el => {
+    const to = +el.dataset.to;
+    if (reduce) { el.textContent = to; return; }
+    const t0 = performance.now(), D = 1300 + to * 40;
+    (function step(t) { const p = Math.min(1, (t - t0) / D); el.textContent = Math.round(to * (1 - Math.pow(1 - p, 3))); if (p < 1) requestAnimationFrame(step); })(t0);
+  };
+  if ("IntersectionObserver" in window) {
+    const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { count(e.target); io.unobserve(e.target); } }), {threshold: .6});
+    nums.forEach(n => io.observe(n));
+  } else nums.forEach(n => n.textContent = n.dataset.to);
+
+  if (!fine || reduce) return;
+
+  // 4. ánh sáng chạy theo con trỏ trên các thẻ
+  document.addEventListener("pointermove", e => {
+    const c = e.target.closest && e.target.closest(".blk,.feat,.num");
+    if (!c) return;
+    const r = c.getBoundingClientRect();
+    c.style.setProperty("--mx", (e.clientX - r.left) + "px");
+    c.style.setProperty("--my", (e.clientY - r.top) + "px");
+  }, {passive: true});
+
+  // 5. ảnh nghiêng 3D nhẹ
+  document.querySelectorAll(".ph").forEach(el => {
+    el.addEventListener("pointermove", e => {
+      if (!el.classList.contains("done")) return;
+      const r = el.getBoundingClientRect(), x = (e.clientX - r.left) / r.width - .5, y = (e.clientY - r.top) / r.height - .5;
+      el.style.setProperty("--rx", (-y * 8).toFixed(2) + "deg");
+      el.style.setProperty("--ry", (x * 8).toFixed(2) + "deg");
+    });
+    el.addEventListener("pointerleave", () => { el.style.setProperty("--rx", "0deg"); el.style.setProperty("--ry", "0deg"); });
+  });
+
+  // 6. nút "Vào trang web" hút nhẹ về phía con trỏ
+  document.querySelectorAll(".enter").forEach(b => {
+    b.addEventListener("pointermove", e => {
+      const r = b.getBoundingClientRect();
+      b.style.setProperty("--tx", ((e.clientX - r.left - r.width / 2) * .18).toFixed(1) + "px");
+      b.style.setProperty("--ty", ((e.clientY - r.top - r.height / 2) * .25).toFixed(1) + "px");
+    });
+    b.addEventListener("pointerleave", () => { b.style.setProperty("--tx", "0px"); b.style.setProperty("--ty", "0px"); });
+  });
 })();
 </script>
 </body>

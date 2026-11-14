@@ -5,7 +5,6 @@
 
 # Dữ liệu chạy thật khi deploy
 data/
-cache/
 *.db
 *.db-journal
 *.h5

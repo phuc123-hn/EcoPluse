@@ -137,6 +137,67 @@ body.has-bac #botb{display:none}
 #bac{position:fixed;bottom:10px;left:0;width:170px;height:220px;z-index:49;pointer-events:none;transform:translateX(-220px)}#bach{position:fixed;bottom:12px;left:0;width:90px;height:150px;z-index:49;cursor:pointer;transform:translateX(-220px)}
 #bacb{position:fixed;bottom:205px;width:200px;display:none;z-index:49;background:#fff;color:#222;border-radius:14px;padding:8px 12px;font-size:13px;font-weight:600;line-height:1.35;box-shadow:0 4px 14px rgba(0,0,0,.3);cursor:pointer}
 #bacb.on{display:block}#bacb small{font-weight:400;color:#666}#bacb:after{content:"";position:absolute;bottom:-8px;left:50%;margin-left:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
+
+/* ===== hiệu ứng animation ===== */
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+@keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+@keyframes slideR{from{opacity:0;transform:translateX(-18px)}to{opacity:1;transform:none}}
+@keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+@keyframes pulseDot{0%{box-shadow:0 0 0 0 rgba(192,57,43,.55)}70%,100%{box-shadow:0 0 0 7px rgba(192,57,43,0)}}
+@keyframes livePulse{0%{box-shadow:0 0 0 0 rgba(46,204,113,.55)}70%,100%{box-shadow:0 0 0 8px rgba(46,204,113,0)}}
+@keyframes ringBot{0%{box-shadow:0 4px 14px rgba(0,0,0,.35),0 0 0 0 rgba(47,158,90,.55)}70%,100%{box-shadow:0 4px 14px rgba(0,0,0,.35),0 0 0 14px rgba(47,158,90,0)}}
+@keyframes drawLine{from{stroke-dashoffset:2000}to{stroke-dashoffset:0}}
+@keyframes barUp{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes dotPop{from{opacity:0;transform:scale(0)}to{opacity:1;transform:scale(1)}}
+@keyframes shake{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+/* đổi giao diện sáng/tối mượt */
+html,body,header,nav,.card,.stat{transition:background-color .3s,color .3s,border-color .3s}
+/* đầu trang, logo, đăng nhập */
+header{animation:fadeDown .5s ease backwards}
+.logo img{transition:transform .6s cubic-bezier(.3,.7,.2,1)}.logo:hover img{transform:rotate(360deg)}
+.auth .card{animation:popIn .5s cubic-bezier(.2,.8,.3,1.1) backwards}
+#box>*{animation:fadeUp .4s ease backwards}
+#box>*:nth-child(2){animation-delay:.06s}#box>*:nth-child(3){animation-delay:.12s}#box>*:nth-child(4){animation-delay:.18s}#box>*:nth-child(5){animation-delay:.24s}
+#aerr:not(:empty),#lerr:not(:empty),#limerr:not(:empty),#nh:not(:empty){animation:shake .35s ease}
+input,select,textarea{transition:border-color .2s,box-shadow .25s,background-color .3s,color .3s}
+input:focus,select:focus,textarea:focus{border-color:var(--b);box-shadow:0 0 0 3px rgba(42,159,224,.2)}
+/* nút bấm */
+button{transition:transform .15s,filter .2s,background-color .2s,box-shadow .2s,color .2s}
+button:hover:not(:disabled){filter:brightness(1.08)}
+button:active:not(:disabled):not(.eye){transform:scale(.97)}
+.tabs button{transition:background-color .25s,color .25s,transform .15s,filter .2s}
+/* thanh điều hướng trượt vào lần lượt */
+nav:not(.hide) button{animation:slideR .45s ease backwards}
+nav button:nth-child(2){animation-delay:.05s}nav button:nth-child(3){animation-delay:.1s}nav button:nth-child(4){animation-delay:.15s}nav button:nth-child(5){animation-delay:.2s}nav button:nth-child(6){animation-delay:.25s}nav button:nth-child(n+7){animation-delay:.3s}
+nav button{transition:transform .2s,background-color .2s,color .2s,filter .2s}
+nav button:hover:not(.on){transform:translateX(4px)}
+/* nội dung mỗi trang hiện lần lượt (chỉ khi đổi trang, không lặp lại lúc tự làm mới) */
+#view.fx>*:not(iframe){animation:fadeUp .45s cubic-bezier(.2,.7,.2,1) backwards;animation-delay:calc(var(--i,0)*70ms)}
+#view.fx :is(.stats,.plg,.nwg,#clist,.tiles)>*{animation:fadeUp .5s ease backwards;animation-delay:calc(var(--i,0)*60ms + 120ms)}
+#view.full iframe{animation:fadeIn .6s ease}
+/* thẻ nhấc lên khi rê chuột */
+.plc,.contact,.tile,.nwc,.stat{transition:transform .25s ease,box-shadow .25s ease,border-color .25s,background-color .3s,color .3s}
+.plc:hover,.contact:hover,.tile:hover,.nwc:hover,.stat:hover{transform:translateY(-3px);box-shadow:0 10px 22px -12px rgba(10,42,47,.45)}
+.nwc .nwf img{transition:transform .6s cubic-bezier(.2,.7,.2,1)}
+.nwc:hover .nwf img{transform:scale(1.06)}
+.plus{display:inline-block;transition:transform .3s}
+.plph.empty:hover .plus{transform:scale(1.15) rotate(90deg)}
+/* tin nhắn, chấm trạng thái, huy hiệu */
+.cbox .thread .bub:last-child,#botm .bub:last-child{animation:popIn .3s cubic-bezier(.2,.8,.3,1.2) backwards}
+.bub.me{transform-origin:bottom right}.bub:not(.me){transform-origin:bottom left}
+.sp{transition:transform .15s}.sp:hover{transform:scale(1.25)}
+.on-dot{animation:livePulse 2s ease-out infinite}
+.dot:not(.hide){animation:pulseDot 1.8s ease-out infinite}
+/* biểu đồ tự vẽ */
+.hc polyline{stroke-dasharray:2000;animation:drawLine 1.3s ease-out backwards}
+.hc rect{transform-box:fill-box;transform-origin:50% 100%;animation:barUp .7s cubic-bezier(.2,.7,.2,1) backwards}
+.hc rect:nth-of-type(2){animation-delay:.06s}.hc rect:nth-of-type(3){animation-delay:.12s}.hc rect:nth-of-type(4){animation-delay:.18s}.hc rect:nth-of-type(5){animation-delay:.24s}.hc rect:nth-of-type(6){animation-delay:.3s}.hc rect:nth-of-type(7){animation-delay:.36s}
+.hc circle{transform-box:fill-box;transform-origin:center;animation:dotPop .35s ease .9s backwards}
+/* Bác Nông */
+#botp.on{animation:popIn .28s cubic-bezier(.2,.8,.3,1.2)}
+#botb{animation:ringBot 2.8s ease-out 1s 4}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
 </head><body>
 <header><div class="logo" style="cursor:pointer" title="Trang giới thiệu" onclick="location.href='/'"><img src="/static/img/logo.png" alt="EcoPulse" width="38" height="38" style="flex:none;width:38px;height:38px;object-fit:cover;clip-path:circle(46.5%)"><span>Eco<b>Pulse</b></span></div><span id="who"></span><button class="s g" id="lng" title="Đổi ngôn ngữ"></button><button class="s" id="thm" title="Đổi giao diện sáng/tối"></button><button class="s r hide" id="out">Thoát</button></header>
@@ -213,8 +274,10 @@ const stopPoll=()=>{clearInterval(poll);poll=null};
 async function show(k){tab=k;stopPoll();[...$("nav").children].forEach(b=>b.classList.toggle("on",b.dataset.k===k));const v=$("view"),pane=v.parentElement;
   v.classList.toggle("full",k==="map");v.classList.remove("chat-layout","wide","wide2");pane.classList.remove("chat-pane");
   if(k==="map"){v.innerHTML='<iframe src="/map" title="Bản đồ độ ẩm đất"></iframe>';return}
-  v.innerHTML='<p class="mute">Đang tải…</p>';try{v.innerHTML=await V[k]();if(k==="chat"&&chatPeer){v.classList.add("chat-layout");pane.classList.add("chat-pane")}bind(k)}catch(e){v.innerHTML=`<p class="err">${esc(e.message)}</p>`}}
-const re=async()=>{me=await api("/me");badges();return show(tab)};
+  v.classList.remove("fx");v.innerHTML='<p class="mute">Đang tải…</p>';try{const html=await V[k]();v.classList.toggle("fx",!window.__quiet);window.__quiet=0;v.innerHTML=html;
+  [...v.children].forEach((el,i)=>el.style.setProperty("--i",Math.min(i,5)));
+  v.querySelectorAll(".stats,.plg,.nwg,#clist,.tiles").forEach(c=>[...c.children].forEach((el,i)=>el.style.setProperty("--i",Math.min(i,9))));if(k==="chat"&&chatPeer){v.classList.add("chat-layout");pane.classList.add("chat-pane")}bind(k)}catch(e){v.innerHTML=`<p class="err">${esc(e.message)}</p>`}}
+const re=async()=>{me=await api("/me");badges();window.__quiet=1;return show(tab)};
 
 /* ---------- giao diện từng trang ---------- */
 const card=(t,v,s)=>`<div class="stat"><span class="mute">${t}</span><b>${v}</b><span class="mute">${s||"&nbsp;"}</span></div>`;
@@ -564,7 +627,7 @@ function bind(k){if(!LIM())mkBot();const v=$("view"),on=(id,f)=>$(id)&&($(id).on
     on("bgbtn",()=>$("bgrow").classList.toggle("hide"));
     v.querySelectorAll("[data-bg]").forEach(b=>b.onclick=()=>{const n=b.dataset.bg;st.set("hn_chatbg",n);$("thr").style.cssText=bgCss(n);v.querySelectorAll("[data-bg]").forEach(x=>x.classList.toggle("on",x===b))});$("mtext").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();send()}};
     poll=setInterval(async()=>{try{const r=await api("/chat/"+chatPeer);if(r.messages.length!==curMsgs.length)redraw(r)}catch{}},5000)}
-  else if(k==="chat")poll=setInterval(()=>{if(tab==="chat"&&!chatPeer&&!($("cfind")&&$("cfind").value)&&document.activeElement?.tagName!=="INPUT")show("chat")},10000);
+  else if(k==="chat")poll=setInterval(()=>{if(tab==="chat"&&!chatPeer&&!($("cfind")&&$("cfind").value)&&document.activeElement?.tagName!=="INPUT"){window.__quiet=1;show("chat")}},10000);
   /* thông báo */
   v.querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{annTab=b.dataset.at;show("inbox")});
   on("annsend",()=>act(async()=>{const r=await api("/admin/announce","POST",{title:$("at").value,body:$("ab").value,ward_key:$("aw")?$("aw").value:""});alert("Đã gửi tới "+r.sent+" người")}));

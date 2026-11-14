@@ -110,6 +110,62 @@
   #bndmsg{display:none;max-width:300px;background:#fff;border-radius:6px;padding:6px 10px;font-size:12.5px;box-shadow:0 1px 4px #0004}
   #bndmsg.err{color:var(--bad)}
   @media (max-width:760px){#app{grid-template-columns:1fr;grid-template-rows:50vh 1fr;transition:grid-template-rows .25s ease}#app.collapsed{grid-template-columns:1fr;grid-template-rows:1fr 0}#asideToggle{left:50%;top:auto;bottom:0;transform:translateX(-50%) rotate(-90deg)}aside{order:2}.wrap{order:1}#info{max-height:34vh}}
+
+  /* ===== hiệu ứng animation ===== */
+  @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes fadeDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:none}}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+  @keyframes slideL{from{opacity:0;transform:translateX(-24px)}to{opacity:1;transform:none}}
+  @keyframes popIn{from{opacity:0;transform:translateY(8px) scale(.94)}to{opacity:1;transform:none}}
+  @keyframes busy{from{transform:translateX(-100%)}to{transform:translateX(260%)}}
+  @keyframes barGrow{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+  @keyframes nudge{0%,100%{translate:0 0}50%{translate:4px 0}}
+  /* vào trang */
+  aside{animation:slideL .55s cubic-bezier(.2,.7,.2,1) backwards}
+  aside>header{animation:fadeDown .5s .1s ease backwards}
+  .mode{animation:fadeUp .5s .2s ease backwards}
+  .srch{animation:fadeUp .5s .28s ease backwards}
+  #map{animation:fadeIn .9s ease}
+  .togs .tog{animation:fadeDown .5s ease backwards}
+  .togs .row .tog:nth-child(1){animation-delay:.4s}.togs .row .tog:nth-child(2){animation-delay:.5s}.togs .row .tog:nth-child(3){animation-delay:.6s}
+  #bndmsg{animation:fadeDown .3s ease}
+  #asideToggle{animation:nudge 2.2s ease-in-out 1s 3}
+  /* nút và ô nhập */
+  button{transition:transform .15s,filter .2s,background-color .2s,color .2s,border-color .2s,box-shadow .2s}
+  button:hover:not(:disabled){filter:brightness(1.08)}
+  button:active:not(:disabled):not(#asideToggle){transform:scale(.96)}
+  .tog:hover:not(:disabled){transform:translateY(-1px);box-shadow:0 3px 8px #0004}
+  .srch input{transition:box-shadow .25s,border-color .25s}
+  .srch input:focus{border-color:var(--asc);box-shadow:0 0 0 3px #0e8a7d26}
+  select{transition:border-color .2s}
+  select:hover:not(:disabled){border-color:var(--asc)}
+  /* danh sách cảnh hiện lần lượt */
+  #list li{transition:background-color .2s,padding-left .2s;animation:fadeUp .4s ease backwards}
+  #list li:nth-child(2){animation-delay:.05s}#list li:nth-child(3){animation-delay:.1s}#list li:nth-child(4){animation-delay:.15s}#list li:nth-child(5){animation-delay:.2s}
+  #list li:nth-child(6){animation-delay:.25s}#list li:nth-child(7){animation-delay:.3s}#list li:nth-child(8){animation-delay:.35s}#list li:nth-child(n+9){animation-delay:.4s}
+  #list li:hover{padding-left:21px}
+  #sug{animation:fadeDown .2s ease}
+  #sug li{transition:background-color .15s}
+  #sug li:hover{background:var(--paper)}
+  /* bảng thông tin, chú thích, bảng nhỏ trên bản đồ */
+  #info{animation:fadeIn .5s ease}
+  #bar,#wxLegBar{transform-origin:left center;animation:barGrow .7s cubic-bezier(.2,.7,.2,1)}
+  #cls details{transition:background-color .2s}
+  #cls details:hover{background:#f6f9f8}
+  #cls details[open]>p{animation:fadeUp .3s ease backwards}
+  .warn,.sum{animation:fadeUp .35s ease}
+  .maplibregl-popup-content{animation:popIn .24s cubic-bezier(.2,.8,.3,1.2) backwards}
+  /* chuyển giữa Vệ tinh NISAR và Thời tiết */
+  #nisarPane,#wxPane{animation:fadeUp .35s ease backwards}
+  .wxbody{animation:fadeIn .5s ease}
+  .wxv button{transition:background-color .2s,color .2s,transform .15s}
+  .wxv button:hover:not(.on){transform:translateY(-2px)}
+  .wxv button svg{transition:transform .3s}
+  .wxv button:hover svg{transform:scale(1.15) rotate(-6deg)}
+  /* thanh trạng thái có vạch chạy khi đang tải */
+  #status.busy,#wxStatus.busy{position:relative;overflow:hidden}
+  #status.busy::after,#wxStatus.busy::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:40%;background:linear-gradient(90deg,transparent,var(--asc),transparent);animation:busy 1.1s ease-in-out infinite}
+  @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
 </head>
 <body>
@@ -182,6 +238,7 @@
             <option value="rh">Độ ẩm không khí (%)</option>
           </select>
         </label>
+        <button id="wxSea" type="button" class="tog" aria-pressed="false" style="width:100%">Hiện hải lưu</button>
         <label id="wxDayL">Ngày
           <select id="wxDay"><option value="0">Hôm qua</option><option value="1" selected>Hôm nay</option><option value="2">Ngày mai</option></select>
         </label>
@@ -196,8 +253,9 @@
           <span><svg viewBox="0 0 24 24"><path d="M12 2c1.2 4.2 5.6 6.3 5.6 11.3a5.6 5.6 0 01-11.2 0c0-2.2 1-3.8 2.2-5.3.4 1.6 1.1 2.4 2.2 2.8C10.5 8.6 10.7 5 12 2z" fill="#f08c00"/><path d="M12 22a3 3 0 01-3-3c0-1.6 1.4-2.4 2-3.8.9.8 1.4 1.4 1.4 2.4.6-.3.9-.7 1.1-1.2.5 1.8-.1 3.9-1.5 5.6z" fill="#e03131" transform="translate(0 -1.2)"/></svg>Nắng nóng: từ 35 °C</span>
         </div>
         <p>Biểu tượng mờ rải trong ranh giới tỉnh chỉ để minh họa lớp đang chọn (đậm hơn là giá trị cao hơn); bấm vào để xem số liệu. Biểu tượng phát sáng đỏ là điểm vượt ngưỡng; ngưỡng lấy theo cách gọi thông thường (mưa to, nắng nóng), chưa phải ngưỡng riêng cho từng loại cây.</p>
-        <p>Bấm lên bản đồ để xem mưa, nhiệt độ, độ ẩm tại điểm đó. Màu được nội suy từ lưới điểm cách nhau khoảng 40 km, nên chỉ mang tính tham khảo vùng, không thay cho số đo tại vườn.</p>
-        <p>Nhiệt độ và độ ẩm là giá trị hiện tại. Lượng mưa là tổng cả ngày (hôm nay và ngày mai là dự báo). Nguồn: Open-Meteo.com, giấy phép CC BY 4.0. Đây là dữ liệu mô hình số, không phải số đo từ trạm khí tượng.</p>
+        <p id="wxSeaInfo" style="display:none"></p>
+        <p>Bấm lên bản đồ để xem mưa, nhiệt độ, độ ẩm tại điểm đó. Màu được nội suy từ lưới điểm cách nhau khoảng 28 km, nên chỉ mang tính tham khảo vùng, không thay cho số đo tại vườn.</p>
+        <p>Nhiệt độ và độ ẩm là giá trị hiện tại. Lượng mưa là tổng cả ngày (hôm nay và ngày mai là dự báo). Nguồn: Open-Meteo.com (thời tiết và hải lưu), giấy phép CC BY 4.0. Đây là dữ liệu mô hình số, không phải số đo từ trạm khí tượng.</p>
       </div>
     </div>
   </aside>
@@ -273,6 +331,7 @@ function setBase() {
     map.setPaintProperty(id, "raster-saturation", gray ? -1 : 0);
     map.setPaintProperty(id, "raster-brightness-min", gray ? 0.2 : 0);
     map.setPaintProperty(id, "raster-contrast", gray ? -0.15 : 0);
+    map.setPaintProperty(id, "raster-brightness-max", 1);
   });
 }
 
@@ -764,13 +823,13 @@ $("rvr").onclick = async () => {
 (function () {
   const VARS = {
     rain: {title: "Lượng mưa (mm/ngày)", unit: "mm", min: 0, max: 100, fix: 1, day: true,
-      stops: [[0, [255,255,255,0]], [0.3, [200,230,252,120]], [1, [150,205,250,170]], [5, [70,150,235,185]], [15, [40,190,110,195]], [30, [245,215,60,200]], [60, [240,130,40,205]], [100, [200,40,60,215]], [150, [140,40,160,220]]],
+      stops: [[0, [255,255,255,0]], [0.3, [70,90,180,120]], [1, [70,115,215,155]], [5, [60,165,225,180]], [15, [95,215,205,195]], [30, [240,240,150,205]], [60, [250,150,60,212]], [100, [220,50,70,220]], [150, [190,60,200,225]]],   // xanh tím như mây bão
       ticks: [0, 1, 5, 15, 30, 60, 100], get: (p, d) => p.r && p.r[d]},
     temp: {title: "Nhiệt độ không khí hiện tại (°C)", unit: "°C", min: 10, max: 40, fix: 1, day: false,
-      stops: [[10, [60,100,200,170]], [18, [80,170,220,170]], [24, [110,200,120,170]], [28, [245,220,80,175]], [32, [245,150,50,180]], [36, [215,60,50,185]], [40, [150,20,60,190]]],
+      stops: [[10, [70,60,170,200]], [16, [60,130,210,205]], [21, [90,200,200,208]], [24, [250,235,120,212]], [28, [255,190,50,218]], [31, [245,130,25,222]], [34, [215,60,25,226]], [37, [140,35,35,230]], [40, [75,30,35,235]]],   // kiểu bản đồ nhiệt ECMWF: vàng, cam, đỏ, nâu sẫm
       ticks: [10, 18, 24, 28, 32, 36, 40], get: p => p.t},
     rh: {title: "Độ ẩm không khí hiện tại (%)", unit: "%", min: 30, max: 100, fix: 0, day: false,
-      stops: [[30, [190,140,80,170]], [50, [225,200,120,170]], [70, [150,205,150,170]], [85, [70,170,200,175]], [100, [30,80,170,185]]],
+      stops: [[30, [30,50,200,200]], [45, [30,150,230,205]], [60, [40,210,200,208]], [72, [130,225,90,212]], [82, [250,230,70,216]], [92, [250,140,40,220]], [100, [200,40,40,225]]],   // thang màu jet: xanh, lục, vàng, đỏ
       ticks: [30, 50, 70, 85, 100], get: p => p.rh}
   };
   const ICON = {hum: `<svg viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="none" stroke="#2f9e5a" stroke-width="1.8"/><path d="M8.5 15c1-1 2-1 3.5 0s2.500 1 3.500 0" stroke="#2f9e5a" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`, rain: `<svg viewBox="0 0 24 24"><path d="M12 2C8 8 5 11 5 15a7 7 0 0014 0c0-4-3-7-7-13z" fill="#2a9fe0"/><path d="M9 15a3 3 0 003 3" stroke="#fff" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>`, hot: `<svg viewBox="0 0 24 24"><path d="M12 2c1.2 4.2 5.6 6.3 5.6 11.3a5.6 5.6 0 01-11.2 0c0-2.2 1-3.8 2.2-5.3.4 1.6 1.1 2.4 2.2 2.8C10.5 8.6 10.7 5 12 2z" fill="#f08c00"/><path d="M12 22a3 3 0 01-3-3c0-1.6 1.4-2.4 2-3.8.9.8 1.4 1.4 1.4 2.4.6-.3.9-.7 1.1-1.2.5 1.8-.1 3.9-1.5 5.6z" fill="#e03131" transform="translate(0 -1.2)"/></svg>`};
@@ -824,7 +883,7 @@ $("rvr").onclick = async () => {
     });
     map.getSource("wx-ic").setData({type: "FeatureCollection", features: feats});
   }
-  let mode = "nisar", data = null, wxPop = null, inited = false, provFs = null, bndBefore = false;
+  let mode = "nisar", sea = null, seaOn = false, data = null, wxPop = null, inited = false, provFs = null, bndBefore = false;
   window.hnMode = mode;
 
   function colorAt(V, v) {
@@ -836,19 +895,21 @@ $("rvr").onclick = async () => {
     }
     return S[S.length - 1][1];
   }
-  // nội suy nghịch đảo khoảng cách (IDW) từ 6 điểm lưới gần nhất
-  function idw(getv, lon, lat) {
-    let best = [];
-    for (const p of data.points) {
-      const v = getv(p); if (v == null) continue;
-      const d = (p.lon - lon) ** 2 + (p.lat - lat) ** 2;
-      if (d < 1e-10) return v;
-      if (best.length < 6 || d < best[best.length - 1][0]) { best.push([d, v]); best.sort((x, y) => x[0] - y[0]); if (best.length > 6) best.pop(); }
+  // nội suy song tuyến giữa 4 điểm lưới Open-Meteo gần nhất (chỉ làm mượt giữa các số thật, không thêm số liệu).
+  // strict = true: thiếu một điểm là trả null (dùng cho hải lưu để không lan ra đất liền)
+  function bilin(pts, bb, NX, NY, getv, lon, lat, strict) {
+    const [w, s, e, n] = bb, fx = (lon - w) / (e - w) * (NX - 1), fy = (lat - s) / (n - s) * (NY - 1);
+    if (!(fx >= 0 && fy >= 0 && fx <= NX - 1 && fy <= NY - 1)) return null;
+    const i0 = Math.min(NX - 2, Math.floor(fx)), j0 = Math.min(NY - 2, Math.floor(fy)), tx = fx - i0, ty = fy - j0;
+    let sw = 0, sv = 0;
+    for (const [di, dj, wt] of [[0, 0, (1 - tx) * (1 - ty)], [1, 0, tx * (1 - ty)], [0, 1, (1 - tx) * ty], [1, 1, tx * ty]]) {
+      const v = getv(pts[(j0 + dj) * NX + i0 + di]);
+      if (v == null) { if (strict) return null; continue; }
+      sw += wt; sv += wt * v;
     }
-    if (!best.length) return null;
-    let sw = 0, sv = 0; for (const [d, v] of best) { const w = 1 / d; sw += w; sv += w * v; }
-    return sv / sw;
+    return sw > 0 ? sv / sw : null;
   }
+  const idw = (getv, lon, lat) => bilin(data.points, data.bbox, data.nx, data.ny, getv, lon, lat, false);
   const mercY = la => Math.log(Math.tan(Math.PI / 4 + la * Math.PI / 360));
   const invY = y => (2 * Math.atan(Math.exp(y)) - Math.PI / 2) * 180 / Math.PI;
 
@@ -901,7 +962,7 @@ $("rvr").onclick = async () => {
     const grad = V.stops.filter(x => x[0] >= V.min && x[0] <= V.max).map(([v, c]) => `rgba(${c[0]},${c[1]},${c[2]},${key === "rain" && v === 0 ? 0.15 : 1}) ${pos(v)}%`).join(",");
     $("wxLegBar").style.background = `linear-gradient(90deg,${grad})`;
     document.querySelectorAll(".wxv button").forEach(b => b.classList.toggle("on", b.dataset.v === key));
-    drawMarks();
+    drawMarks(); FX.start();
     $("wxLegTicks").innerHTML = V.ticks.map((t, i) => `<span style="left:${pos(t)}%">${t}${i === V.ticks.length - 1 && key === "rain" ? "+" : ""}</span>`).join("");
   }
 
@@ -920,6 +981,7 @@ $("rvr").onclick = async () => {
       const r = await fetch("/api/weather/grid" + (refresh ? "?refresh=1" : ""));
       const j = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "Lỗi " + r.status);
+      if (!j.nx) { j.nx = new Set(j.points.map(p => p.lon)).size; j.ny = j.points.length / j.nx; }
       data = j; draw();
       st.textContent = (j.obs_time ? "Dữ liệu mô hình lúc " + j.obs_time.replace("T", " ") + " (giờ VN) · " : "") + "tải về lúc " + fmt(j.updated * 1000) + " · Open-Meteo.com (CC BY 4.0), không phải số đo trạm" + (j.stale ? " (đang dùng dữ liệu cũ, nguồn tạm lỗi)" : "") + (provFs ? "" : " · chưa có ranh giới tỉnh, đang hiện cả khung");
     } catch (e) { st.className = "err"; st.textContent = e.message; }
@@ -927,17 +989,245 @@ $("rvr").onclick = async () => {
 
   function onClick(ev) {
     if (mode !== "wx" || !data) return;
-    const {lng, lat} = ev.lngLat, [w, s, e, n] = data.bbox;
-    if (lng < w || lng > e || lat < s || lat > n) return;
-    const day = +$("wxDay").value, f = (v, d) => v == null ? "—" : v.toFixed(d);
+    const {lng, lat} = ev.lngLat, day = +$("wxDay").value, f = (v, d) => v == null ? "—" : v.toFixed(d);
     const rain = idw(p => p.r && p.r[day], lng, lat), t = idw(p => p.t, lng, lat), rh = idw(p => p.rh, lng, lat);
+    const sa = seaOn ? seaAt(lng, lat) : null;
+    if (rain == null && t == null && rh == null && !sa) return;
     if (wxPop) wxPop.remove();
     wxPop = new maplibregl.Popup({maxWidth: "260px", offset: 18}).setLngLat(ev.lngLat).setHTML(`
       <b>Thời tiết tại điểm này</b>
-      <dl><dt>Nhiệt độ</dt><dd>${f(t, 1)} °C</dd><dt>Độ ẩm KK</dt><dd>${f(rh, 0)} %</dd>
-      <dt>Mưa ${esc($("wxDay").selectedOptions[0].text.toLowerCase())}</dt><dd>${f(rain, 1)} mm</dd>
+      <dl>${t == null && rh == null && rain == null ? "" : `<dt>Nhiệt độ</dt><dd>${f(t, 1)} °C</dd><dt>Độ ẩm KK</dt><dd>${f(rh, 0)} %</dd>
+      <dt>Mưa ${esc($("wxDay").selectedOptions[0].text.toLowerCase())}</dt><dd>${f(rain, 1)} mm</dd>`}
+      ${sa ? `<dt>Hải lưu</dt><dd>${sa.sp.toFixed(1)} km/h, chảy về ${esc(sa.name)}</dd>` : ""}
       <dt>Tọa độ</dt><dd>${lat.toFixed(3)}, ${lng.toFixed(3)}</dd></dl>`).addTo(map);
   }
+
+  // ---- hoạt ảnh thời tiết vẽ bằng canvas, hai lớp: "av" (hơi nóng, sương, ánh chớp, xóa sạch mỗi khung) và "cv" (vệt gió, hải lưu, hạt mưa, có đuôi mờ dần) ----
+  const FX = (() => {
+    const mkc = () => { const c = document.createElement("canvas"); c.style.cssText = "position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:1;display:none"; return c; };
+    const av = mkc(), cv = mkc(), actx = av.getContext("2d"), ctx = cv.getContext("2d"), C = 22, reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // màu vệt gió theo 3 mức tốc độ (nhẹ, vừa, mạnh) cho từng lớp
+    const STYLE = {
+      rain: {c: ["rgba(200,215,255,.30)", "rgba(215,228,255,.50)", "rgba(240,245,255,.75)"], w: [1, 1.2, 1.5]},
+      temp: {c: ["rgba(255,244,220,.40)", "rgba(255,236,190,.62)", "rgba(255,255,255,.85)"], w: [1, 1.3, 1.6]},
+      rh:   {c: ["rgba(255,255,255,.35)", "rgba(255,255,255,.55)", "rgba(255,255,255,.80)"], w: [1, 1.2, 1.5]}
+    };
+    const SEA_C = ["rgba(110,225,255,.80)", "rgba(150,245,205,.88)", "rgba(255,232,140,.95)"];   // hải lưu: chậm (xanh lam), vừa (xanh ngọc), nhanh (vàng)
+    let raf = 0, last = 0, G = null, P = [], D = [], B = [], A = [], Q = [], cw = 0, ch = 0, gx = 0, gy = 0, kind = "rain";
+    const idx = (x, y) => { const i = Math.floor(x / C), j = Math.floor(y / C); return i < 0 || j < 0 || i >= gx || j >= gy ? -1 : j * gx + i; };
+
+    function tone() {   // lớp mưa: nền xám tối phủ màu xanh tím như bầu trời bão; lớp khác: trả lại nền thường
+      if (!map || !baseRasters.length) return;
+      setBase();
+      const rain = mode === "wx" && $("wxVar").value === "rain";
+      if (rain) baseRasters.forEach(id => {
+        map.setPaintProperty(id, "raster-saturation", -1);
+        map.setPaintProperty(id, "raster-brightness-max", 0.45);
+        map.setPaintProperty(id, "raster-contrast", -0.1);
+      });
+      if (!map.getLayer("wx-tint")) map.addLayer({id: "wx-tint", type: "background", paint: {"background-color": "#141a4e", "background-opacity": 0}}, map.getLayer("wx-img") ? "wx-img" : undefined);
+      map.setPaintProperty("wx-tint", "background-opacity", rain ? 0.34 : 0);
+    }
+
+    function mkBolt(x, y) {   // tia sét gấp khúc có nhánh, hình dạng cố định cho mỗi tia (chỉ độ sáng nhấp nháy)
+      const h = 38 + Math.random() * 34, pts = [[x, y - h]], n = 7;
+      let cx = x;
+      for (let i = 1; i <= n; i++) { cx += (Math.random() - .5) * 14; pts.push([cx, y - h + h * i / n]); }
+      const br = [];
+      for (let b = 0; b < 2; b++) {
+        const s = pts[2 + Math.floor(Math.random() * 4)], dir = Math.random() < .5 ? -1 : 1, q = [s];
+        let bx = s[0], by = s[1];
+        for (let i = 0; i < 3; i++) { bx += dir * (6 + Math.random() * 8); by += 7 + Math.random() * 7; q.push([bx, by]); }
+        br.push(q);
+      }
+      return {x, y, ph: Math.random() * 6.28, pts, br};
+    }
+
+    function field() {   // lưới gió, mưa, nhiệt, ẩm, hải lưu theo ô màn hình (tính lại sau mỗi lần kéo, thu phóng)
+      const pts = data && data.points; G = null;
+      if (!pts || !pts.length || pts[0].ws == null) return;
+      const [w, s, e, n] = data.bbox, NX = new Set(pts.map(p => p.lon)).size, NY = Math.round(pts.length / NX);
+      const key = $("wxVar").value, day = +$("wxDay").value, rad = Math.PI / 180;
+      const U = p => p.ws == null ? 0 : -p.ws * Math.sin(p.wd * rad), Vv = p => p.ws == null ? 0 : -p.ws * Math.cos(p.wd * rad), R = p => (p.r && p.r[day]) || 0;
+      const useSea = seaOn && sea && sea.points && sea.points.length;
+      const sb = useSea ? sea.bbox : null, SX = useSea ? sea.nx : 0, SY = useSea ? sea.ny : 0;
+      gx = Math.ceil(cw / C); gy = Math.ceil(ch / C);
+      const N = gx * gy, u = new Float32Array(N).fill(NaN), v = new Float32Array(N), rn = new Float32Array(N), tp = new Float32Array(N), rh = new Float32Array(N),
+        su = new Float32Array(N).fill(NaN), sv = new Float32Array(N), bolts = [];
+      let nsea = 0;
+      for (let j = 0; j < gy; j++) for (let i = 0; i < gx; i++) {
+        const ll = map.unproject([(i + .5) * C, (j + .5) * C]), k = j * gx + i;
+        const fx = (ll.lng - w) / (e - w) * (NX - 1), fy = (ll.lat - s) / (n - s) * (NY - 1);
+        if (fx >= 0 && fy >= 0 && fx < NX - 1 && fy < NY - 1) {
+          const i0 = Math.floor(fx), j0 = Math.floor(fy), tx = fx - i0, ty = fy - j0, a = pts[j0 * NX + i0], b = pts[j0 * NX + i0 + 1], c = pts[(j0 + 1) * NX + i0], d = pts[(j0 + 1) * NX + i0 + 1];
+          const mx = f => (f(a) * (1 - tx) + f(b) * tx) * (1 - ty) + (f(c) * (1 - tx) + f(d) * tx) * ty;
+          u[k] = mx(U); v[k] = mx(Vv);
+          if (key === "temp") tp[k] = mx(p => p.t == null ? 0 : p.t);
+          if (key === "rh") rh[k] = mx(p => p.rh == null ? 0 : p.rh);
+          if (key === "rain") { rn[k] = mx(R); if (rn[k] >= 15 || (day === 1 && mx(p => p.wc >= 95 ? 1 : 0) > .5)) bolts.push(mkBolt((i + .5) * C, (j + .5) * C)); }
+        }
+        if (useSea) {   // hải lưu thật từ Open-Meteo Marine: chỉ lấy ô mà cả 4 điểm lưới đều có giá trị (không suy ra thêm trên đất liền)
+          const bu = bilin(sea.points, sb, SX, SY, p => p.u, ll.lng, ll.lat, true), bv = bilin(sea.points, sb, SX, SY, p => p.v, ll.lng, ll.lat, true);
+          if (bu != null && bv != null) { su[k] = bu; sv[k] = bv; nsea++; }
+        }
+      }
+      G = {u, v, rn, tp, rh, su, sv, nsea}; B = bolts.sort(() => Math.random() - .5).slice(0, 16); kind = key;
+    }
+
+    const spawn = p => {
+      for (let t = 0; t < 10; t++) { const x = Math.random() * cw, y = Math.random() * ch, k = idx(x, y); if (k >= 0 && !isNaN(G.u[k])) { p.x = p.px = x; p.y = p.py = y; p.age = 0; p.life = 30 + Math.random() * 50; return; } }
+      p.x = p.px = p.y = p.py = -9; p.age = 0; p.life = 0;
+    };
+    const spawnQ = p => {
+      for (let t = 0; t < 14; t++) { const x = Math.random() * cw, y = Math.random() * ch, k = idx(x, y); if (k >= 0 && !isNaN(G.su[k])) { p.x = p.px = x; p.y = p.py = y; p.age = 0; p.life = 50 + Math.random() * 90; return; } }
+      p.x = p.px = p.y = p.py = -9; p.age = 0; p.life = 0;
+    };
+    // hạt "khí quyển": nhiệt thì là các đám hơi nóng bốc lên ở nơi nóng; ẩm thì là sương trôi theo gió ở nơi ẩm
+    const spawnA = a => {
+      for (let t = 0; t < 14; t++) {
+        const x = Math.random() * cw, y = Math.random() * ch, k = idx(x, y);
+        if (k < 0 || isNaN(G.u[k])) continue;
+        if (kind === "temp" ? G.tp[k] < 27 : G.rh[k] < 60) continue;
+        a.x = x; a.y = y; a.age = 0; a.life = 110 + Math.random() * 130; a.ph = Math.random() * 6.28;
+        a.r = kind === "temp" ? 14 + Math.random() * 18 : 34 + Math.random() * 40; return;
+      }
+      a.x = a.y = -99; a.age = 0; a.life = 1; a.r = 0; a.ph = 0;
+    };
+    function drawAmbient(t) {
+      for (const a of A) {
+        if (a.age++ > a.life) spawnA(a);
+        if (a.r <= 0) { spawnA(a); continue; }
+        const k = idx(a.x, a.y);
+        if (k < 0 || isNaN(G.u[k])) { spawnA(a); continue; }
+        const f = Math.sin(Math.PI * a.age / a.life);   // hiện dần rồi tan dần
+        let r, col, al;
+        if (kind === "temp") {
+          const hot = Math.min(1, Math.max(0, (G.tp[k] - 27) / 11));
+          a.y -= 0.35 + hot * 0.5; a.x += Math.sin(t / 700 + a.ph) * 0.35 + G.u[k] * 0.012;   // bốc lên và lắc lư như hơi nóng
+          r = a.r * (1 + a.age / a.life * 0.6); al = (0.06 + hot * 0.14) * f;
+          col = hot > .6 ? "255,110,50" : "255,200,120";
+        } else {
+          const wet = Math.min(1, Math.max(0, (G.rh[k] - 60) / 40));
+          a.x += G.u[k] * 0.05; a.y -= G.v[k] * 0.05;                                        // sương trôi chậm theo gió
+          r = a.r * (1 + a.age / a.life * 0.4); al = (0.05 + wet * 0.12) * f;
+          col = "235,248,255";
+        }
+        const g = actx.createRadialGradient(a.x, a.y, 0, a.x, a.y, r);
+        g.addColorStop(0, `rgba(${col},${al})`); g.addColorStop(1, `rgba(${col},0)`);
+        actx.fillStyle = g; actx.fillRect(a.x - r, a.y - r, r * 2, r * 2);
+      }
+    }
+
+    function frame(t) {
+      raf = requestAnimationFrame(frame);
+      if (t - last < 33) return; last = t;               // khoảng 30 khung hình mỗi giây cho nhẹ máy
+      actx.clearRect(0, 0, cw, ch);
+      if (kind !== "rain") drawAmbient(t);
+      // vệt gió: đuôi mờ dần nhờ xóa nhẹ lớp cv mỗi khung; chia 3 mức tốc độ để vệt mạnh sáng và dày hơn
+      ctx.globalCompositeOperation = "destination-out"; ctx.fillStyle = "rgba(0,0,0,.16)"; ctx.fillRect(0, 0, cw, ch);
+      ctx.globalCompositeOperation = "source-over";
+      const seg = [[], [], []];
+      for (const p of P) {
+        if (p.age++ > p.life) spawn(p);
+        const k = idx(p.x, p.y);
+        if (k < 0 || isNaN(G.u[k])) { spawn(p); continue; }
+        const sp = Math.hypot(G.u[k], G.v[k]);
+        p.px = p.x; p.py = p.y; p.x += G.u[k] * .11; p.y -= G.v[k] * .11;
+        seg[sp < 12 ? 0 : sp < 25 ? 1 : 2].push(p.px, p.py, p.x, p.y);
+      }
+      const st = STYLE[kind] || STYLE.rain;
+      for (let b = 0; b < 3; b++) {
+        ctx.strokeStyle = st.c[b]; ctx.lineWidth = st.w[b]; ctx.beginPath();
+        for (let i = 0; i < seg[b].length; i += 4) { ctx.moveTo(seg[b][i], seg[b][i + 1]); ctx.lineTo(seg[b][i + 2], seg[b][i + 3]); }
+        ctx.stroke();
+      }
+      if (Q.length) {   // hải lưu: hạt trôi theo vận tốc dòng chảy thật (km/h), phóng đại để nhìn thấy được
+        const sg = [[], [], []];
+        for (const p of Q) {
+          if (p.age++ > p.life) spawnQ(p);
+          const k = idx(p.x, p.y);
+          if (k < 0 || isNaN(G.su[k])) { spawnQ(p); continue; }
+          const sp = Math.hypot(G.su[k], G.sv[k]) || 1e-6, m = Math.min(3, sp * 0.9) / sp;
+          p.px = p.x; p.py = p.y; p.x += G.su[k] * m; p.y -= G.sv[k] * m;
+          sg[sp < 0.8 ? 0 : sp < 2 ? 1 : 2].push(p.px, p.py, p.x, p.y);
+        }
+        for (let b = 0; b < 3; b++) {
+          ctx.strokeStyle = SEA_C[b]; ctx.lineWidth = 1.8; ctx.beginPath();
+          for (let i = 0; i < sg[b].length; i += 4) { ctx.moveTo(sg[b][i], sg[b][i + 1]); ctx.lineTo(sg[b][i + 2], sg[b][i + 3]); }
+          ctx.stroke();
+        }
+      }
+      if (kind !== "rain") return;
+      // mưa rơi xiên theo gió, vệt dài mảnh như ảnh bão; nơi mưa nhiều thì dày hơn
+      for (let a = 0; a < 22; a++) {
+        const x = Math.random() * cw, y = Math.random() * ch, k = idx(x, y);
+        if (k >= 0 && G.rn[k] > .4 && Math.random() < Math.min(1, G.rn[k] / 6) && D.length < 700) D.push({x, y, l: 8 + (Math.random() * 6 | 0), vx: -1.4 + G.u[k] * .04});
+      }
+      ctx.strokeStyle = "rgba(205,225,255,.8)"; ctx.lineWidth = 1.1; ctx.beginPath();
+      for (let i = D.length - 1; i >= 0; i--) { const d = D[i]; ctx.moveTo(d.x, d.y); ctx.lineTo(d.x + d.vx * 1.5, d.y + 12); d.x += d.vx; d.y += 9; if (--d.l <= 0) D.splice(i, 1); }
+      ctx.stroke();
+      // sét phân nhánh, lõi trắng, quầng xanh, kèm ánh chớp lan ra xung quanh; nhấp nháy ở nơi mưa lớn hoặc có dông
+      const path = q => { actx.beginPath(); q.forEach(([x, y], i) => i ? actx.lineTo(x, y) : actx.moveTo(x, y)); actx.stroke(); };
+      actx.lineJoin = "round";
+      for (const b of B) {
+        const a = Math.min(1, Math.max(0, Math.sin(t / 240 + b.ph) - .55) * 2.2); if (a < .05) continue;
+        const g = actx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 70);
+        g.addColorStop(0, `rgba(170,200,255,${.35 * a})`); g.addColorStop(1, "rgba(170,200,255,0)");
+        actx.fillStyle = g; actx.fillRect(b.x - 70, b.y - 70, 140, 140);
+        actx.shadowColor = "#9ec5ff"; actx.shadowBlur = 12; actx.strokeStyle = `rgba(170,205,255,${a * .8})`; actx.lineWidth = 4; path(b.pts);
+        actx.shadowBlur = 0; actx.strokeStyle = `rgba(255,255,255,${a})`; actx.lineWidth = 1.8; path(b.pts);
+        actx.lineWidth = 1; b.br.forEach(path);
+      }
+    }
+    function stop() { if (raf) cancelAnimationFrame(raf); raf = 0; av.style.display = cv.style.display = "none"; ctx.clearRect(0, 0, cv.width, cv.height); actx.clearRect(0, 0, av.width, av.height); }
+    function start() {
+      stop(); init(); tone();
+      if (reduce || mode !== "wx" || !data || document.hidden) return;
+      const c = map.getContainer(), dpr = Math.min(devicePixelRatio || 1, 2); cw = c.clientWidth; ch = c.clientHeight;
+      for (const [el, x] of [[av, actx], [cv, ctx]]) { el.width = cw * dpr; el.height = ch * dpr; x.setTransform(dpr, 0, 0, dpr, 0, 0); }
+      field(); if (!G) return;
+      P = Array.from({length: Math.min(1400, Math.round(cw * ch / 1100))}, () => { const p = {}; spawn(p); p.age = Math.random() * p.life; return p; });
+      A = kind === "rain" ? [] : Array.from({length: Math.min(kind === "temp" ? 160 : 80, Math.round(cw * ch / (kind === "temp" ? 6000 : 12000)))}, () => { const a = {}; spawnA(a); a.age = Math.random() * a.life; return a; });
+      Q = G.nsea > 3 ? Array.from({length: Math.min(700, Math.round(G.nsea * 0.8))}, () => { const p = {}; spawnQ(p); p.age = Math.random() * p.life; return p; }) : [];
+      D = []; last = 0; av.style.display = cv.style.display = ""; raf = requestAnimationFrame(frame);
+    }
+    let inited = false;
+    function init() {   // biến map chỉ có sau khi tải cấu hình, nên gắn canvas và sự kiện ở lần chạy đầu tiên
+      if (inited) return; inited = true; const box = map.getContainer(); box.appendChild(av); box.appendChild(cv);
+      map.on("movestart", () => { if (raf) { cancelAnimationFrame(raf); raf = 0; av.style.display = cv.style.display = "none"; } });   // đang kéo hay thu phóng thì tạm dừng cho mượt
+      map.on("moveend", () => { if (mode === "wx") start(); });
+    }
+    document.addEventListener("visibilitychange", () => document.hidden ? stop() : mode === "wx" && start());
+    addEventListener("resize", () => mode === "wx" && start());
+    return {start, stop, tone};
+  })();
+
+  // ---- hải lưu thật từ Open-Meteo Marine (backend /api/weather/sea); nút "Hiện hải lưu" ----
+  const COMPASS = ["Bắc", "Đông Bắc", "Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc"];
+  function seaAt(lng, lat) {   // vận tốc (km/h) và hướng chảy tới tại điểm bấm; null nếu không có dữ liệu (đất liền hoặc ngoài vùng)
+    if (!sea) return null;
+    const u = bilin(sea.points, sea.bbox, sea.nx, sea.ny, p => p.u, lng, lat, true), v = bilin(sea.points, sea.bbox, sea.nx, sea.ny, p => p.v, lng, lat, true);
+    if (u == null || v == null) return null;
+    const dir = (Math.atan2(u, v) * 180 / Math.PI + 360) % 360;
+    return {sp: Math.hypot(u, v), dir, name: COMPASS[Math.round(dir / 45) % 8]};
+  }
+  async function loadSea(refresh) {
+    const st = $("wxStatus"), b = $("wxSea");
+    b.disabled = true; b.textContent = "Đang tải hải lưu…";
+    try {
+      const r = await fetch("/api/weather/sea" + (refresh ? "?refresh=1" : ""));
+      const j = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "Lỗi " + r.status);
+      sea = j; seaOn = true;
+      $("wxSeaInfo").textContent = "Hải lưu: Open-Meteo Marine (mô hình SMOC của Météo-France, khoảng 8 km, cập nhật mỗi ngày" + (j.obs_time ? ", dữ liệu lúc " + j.obs_time.replace("T", " ") + " giờ VN" : "") + (j.stale ? ", đang dùng dữ liệu cũ" : "") + "). Hạt trôi theo vận tốc dòng chảy thật; xanh lam là chậm, vàng là nhanh. Chỉ hiện nơi có số liệu, không dùng để dẫn đường ven bờ. Bấm lên biển để xem vận tốc và hướng.";
+    } catch (e) { seaOn = false; st.className = "err"; st.textContent = "Hải lưu: " + e.message; }
+    b.disabled = false; syncSea(); FX.start();
+  }
+  function syncSea() {
+    $("wxSea").setAttribute("aria-pressed", String(seaOn)); $("wxSea").textContent = seaOn ? "Ẩn hải lưu" : "Hiện hải lưu";
+    $("wxSeaInfo").style.display = seaOn ? "" : "none";
+  }
+  $("wxSea").onclick = () => { if (seaOn) { seaOn = false; syncSea(); FX.start(); } else if (sea) { seaOn = true; syncSea(); FX.start(); } else loadSea(false); };
 
   function setMode(m) {
     mode = m; window.hnMode = m;
@@ -947,7 +1237,7 @@ $("rvr").onclick = async () => {
     $("mNisar").classList.toggle("on", !wxOn); $("mWx").classList.toggle("on", wxOn);
     $("mNisar").setAttribute("aria-pressed", String(!wxOn)); $("mWx").setAttribute("aria-pressed", String(wxOn));
     $("scn").style.display = wxOn ? "none" : "";
-    popup && popup.remove(); wxPop && wxPop.remove(); if (!wxOn) clearMarks();
+    popup && popup.remove(); wxPop && wxPop.remove(); if (!wxOn) { clearMarks(); FX.stop(); FX.tone(); }
     const vis = (id, on) => map.getLayer(id) && map.setLayoutProperty(id, "visibility", on ? "visible" : "none");
     if (wxOn) {
       bndBefore = bndOn;
@@ -984,6 +1274,18 @@ $("rvr").onclick = async () => {
   }
   btn.onclick = () => apply(!app.classList.contains("collapsed"), true);
   apply(saved, false);
+})();
+(function () {  // thanh trạng thái: hiện vạch chạy khi chữ bắt đầu bằng "Đang"
+  ["status", "wxStatus"].forEach(id => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const sync = () => {
+      const want = /^Đang/.test(el.textContent.trim()) && !el.classList.contains("err");
+      if (el.classList.contains("busy") !== want) el.classList.toggle("busy", want);
+    };
+    new MutationObserver(sync).observe(el, {childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["class"]});
+    sync();
+  });
 })();
 init();
 </script>
