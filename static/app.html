@@ -224,7 +224,7 @@ function googleTranslateElementInit(){new google.translate.TranslateElement({pag
 <script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-let me,tab,plotSel=null,chatPeer=null,chatFarmPlot=null,prefill="",annTab="in",usrQ="",poll=null,curMsgs=[],am="login",pend=null;
+let me,tab,plotSel=null,chatPeer=null,chatFarmPlot=null,prefill="",annTab="in",usrQ="",poll=null,curMsgs=[],am="login",pend=null,loginLaunch=false;
 const LIM=()=>!!(me&&me.limited);   // phiên "Quên mật khẩu": chỉ xem Thửa của tôi
 const api=async(p,m="GET",b)=>{const r=await fetch(p,{method:m,headers:b?{"Content-Type":"application/json"}:{},body:b?JSON.stringify(b):undefined});
   const j=await r.json().catch(()=>({}));if(r.status===401&&me&&!p.startsWith("/auth/")){location.reload();return new Promise(()=>{})}
@@ -256,7 +256,7 @@ function bindAuth(){const b=$("box");
   if($("rn"))$("rn").onblur=async()=>{const v=$("rn").value.trim();$("nh").textContent="";if(v.length<2)return;try{const r=await api("/auth/name-free?name="+encodeURIComponent(v));if(!r.free)$("nh").textContent="Tên này đã có người dùng. Hãy thêm số hoặc tên thôn/ấp để phân biệt."}catch{}};
   if($("go"))$("go").onclick=submitAuth}
 async function submitAuth(){const bt=$("go"),er=$("aerr");er.textContent="";bt.disabled=true;
-  try{if(am==="login")await api("/auth/login","POST",{ident:$("id").value,password:$("pw").value});
+  try{if(am==="login"){await api("/auth/login","POST",{ident:$("id").value,password:$("pw").value});loginLaunch=true}
     else if(am==="forgot")await api("/auth/forgot","POST",{name:$("fn").value});
     else if(am==="reg")await api("/auth/register","POST",{full_name:$("rn").value,password:$("pw").value,province:$("rp").value,ward:$("rw").value});
     else if(am==="regA"){const body={full_name:$("an").value,phone:$("aph").value.trim(),email:$("aem").value.trim(),province:$("ap").value,ward:$("aw").value,password:$("pw").value};
@@ -529,36 +529,34 @@ const V={
   const L=ALL.filter(a=>!kTopic||a.topic===kTopic),card=(a,big)=>`<div class="nwc${big?" big":""}" data-art="${a.id}">${cov(a)}<div class="b">${big?'<span class="nwtag">BÀI VIẾT NỔI BẬT</span>':""}<h3>${esc(a.title)}</h3><div class="mute">${esc(a.tag)} · ${a.min} phút đọc</div><p>${esc(a.lead)}</p></div></div>`;
   return `<h2>Kiến thức nhà nông</h2>${kTabs()}<div class="nwt">${["",...new Set(ALL.map(a=>a.topic).filter(Boolean))].map(t=>`<button class="s ${(kTopic||"")===t?"g":""}" data-topic="${esc(t)}">${esc(t||"Tất cả")}</button>`).join("")}</div><div class="nwg">${L.map((a,i)=>card(a,i===0&&!kTopic)).join("")}</div>`}};
 function mascot(){
+ const launch=loginLaunch;loginLaunch=false;
  if(innerWidth<700)return;
- const hidP=!!localStorage.getItem("bacHide"),quiet=hidP||(!!sessionStorage.getItem("bacDone")&&!/[?&]bac/.test(location.search));
+ const hidP=!!localStorage.getItem("bacHide"),quiet=hidP||(!launch&&!!sessionStorage.getItem("bacDone")&&!/[?&]bac/.test(location.search));
  let n=0;const iv=setInterval(()=>{if(window.THREE){clearInterval(iv);try{go()}catch(e){console.error("Bác Nông không tải được:",e);document.body.classList.remove("has-bac");["bac","bach","bacb","bacx"].forEach(i=>{const el=$(i);el&&el.remove()})}}else if(++n>60)clearInterval(iv)},200);
  function go(){
-  const W=105,H=136,cv=document.createElement("canvas"),bub=document.createElement("div"),hit=document.createElement("div"),bx=document.createElement("div");cv.id="bac";bub.id="bacb";hit.id="bach";bx.id="bacx";bx.textContent="Ẩn";bx.title="Ẩn bác Nông";cv.width=W*2;cv.height=H*2;Object.assign(cv.style,{width:W+"px",height:H+"px"});Object.assign(hit.style,{width:"58px",height:"96px"});document.body.append(cv,hit,bub,bx);hit.title="Bấm để hỏi bác Nông, kéo để đổi chỗ";
+  const W=105,H=136,cv=document.createElement("canvas"),bub=document.createElement("div"),hit=document.createElement("div"),bx=document.createElement("div");cv.id="bac";bub.id="bacb";hit.id="bach";bx.id="bacx";bx.textContent="Ẩn";bx.title="Ẩn bác Nông";cv.width=W*2;cv.height=H*2;Object.assign(cv.style,{width:W+"px",height:H+"px"});Object.assign(hit.style,{width:"58px",height:"110px"});document.body.append(cv,hit,bub,bx);hit.title="Bấm để hỏi bác Nông, kéo để đổi chỗ";hit.setAttribute("role","button");hit.setAttribute("aria-label",hit.title);hit.tabIndex=0;
   const R=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});R.setSize(W*2,H*2,false);
   const S=new THREE.Scene(),C=new THREE.PerspectiveCamera(30,W/H,.1,50);C.position.set(0,2,10.5);C.lookAt(0,1.9,0);
   S.add(new THREE.AmbientLight(0xffffff,.8));const Lg=new THREE.DirectionalLight(0xffffff,.7);Lg.position.set(3,6,6);S.add(Lg);
-  const mt=c=>new THREE.MeshLambertMaterial({color:c}),ol=new THREE.MeshBasicMaterial({color:0x2b1d12,side:THREE.BackSide}),
-   part=(geo,c,x=0,y=0,z=0,o=1.05)=>{const g=new THREE.Group(),b=new THREE.Mesh(geo,ol);b.scale.setScalar(o);g.add(b,new THREE.Mesh(geo,mt(c)));g.position.set(x,y,z);return g},
-   mesh=(geo,c,x,y,z)=>{const m=new THREE.Mesh(geo,c.isMaterial?c:mt(c));m.position.set(x,y,z);return m},SK=0xf1c7a0,bac=new THREE.Group();S.add(bac);
-  const shadow=mesh(new THREE.CircleGeometry(.9,24),new THREE.MeshBasicMaterial({color:0,transparent:true,opacity:.22}),0,.01,0);shadow.rotation.x=-Math.PI/2;shadow.scale.y=.5;bac.add(shadow);
-  const body=part(new THREE.SphereGeometry(.6,24,16),0x8a5a2b,0,1,0);body.scale.set(1,1.15,.85);bac.add(body);
-  const scarf=mesh(new THREE.TorusGeometry(.42,.12,10,24),0xc0392b,0,1.62,0);scarf.rotation.x=Math.PI/2;bac.add(scarf);
-  const head=new THREE.Group();head.position.y=2.15;bac.add(head);head.add(part(new THREE.SphereGeometry(.85,32,24),SK));
-  const eg=new THREE.SphereGeometry(.1,12,10),eL=mesh(eg,0x1b1b1b,-.3,.05,.78),eR=mesh(eg,0x1b1b1b,.3,.05,.78);head.add(eL,eR);
-  [-1,1].forEach(s=>{head.add(mesh(new THREE.SphereGeometry(.035,8,8),0xffffff,.3*s+.03,.09,.86));
-   const bl=mesh(new THREE.CircleGeometry(.14,16),new THREE.MeshBasicMaterial({color:0xf29b9b,transparent:true,opacity:.7}),.5*s,-.12,.7);bl.rotation.y=.6*s;head.add(bl);
-   const eb=mesh(new THREE.BoxGeometry(.22,.05,.05),0xcfcfcf,.3*s,.27,.8);eb.rotation.z=-.2*s;head.add(eb);
-   const mu=mesh(new THREE.SphereGeometry(.13,12,8),0xdedede,.15*s,-.14,.83);mu.scale.set(1.6,.55,.7);mu.rotation.z=.3*s;head.add(mu);
-   head.add(mesh(new THREE.SphereGeometry(.16,12,10),SK,.84*s,0,0))});
-  head.add(mesh(new THREE.SphereGeometry(.07,10,8),0xe0a98a,0,-.03,.85));
-  const sm=mesh(new THREE.TorusGeometry(.18,.028,8,20,Math.PI),0x7a2e2e,0,-.28,.81);sm.rotation.z=Math.PI;head.add(sm);
-  const hat=part(new THREE.ConeGeometry(1.35,.85,32),0xe6cf86,0,.78,0,1.03);hat.rotation.z=.08;head.add(hat);
-  const arm=s=>{const g=new THREE.Group();g.position.set(.68*s,1.5,0);g.add(part(new THREE.CylinderGeometry(.14,.14,.75,12),0x8a5a2b,0,-.375,0),part(new THREE.SphereGeometry(.16,12,10),SK,0,-.82,0));bac.add(g);return g},
-   leg=s=>{const g=new THREE.Group();g.position.set(.27*s,.74,0);const ft=part(new THREE.SphereGeometry(.2,12,10),0x5a3a1e,0,-.6,.1);ft.scale.set(1,.7,1.4);g.add(part(new THREE.CylinderGeometry(.17,.17,.55,12),0x4a3a2a,0,-.27,0),ft);bac.add(g);return g},
-   aR=arm(1),aL=arm(-1),lR=leg(1),lL=leg(-1);
+  const mt=c=>new THREE.MeshLambertMaterial({color:c}),
+   mesh=(geo,c,x,y,z)=>{const m=new THREE.Mesh(geo,c.isMaterial?c:mt(c));m.position.set(x,y,z);return m},bac=new THREE.Group();S.add(bac);
+  const rocket=new THREE.Group();bac.add(rocket);
+  rocket.add(mesh(new THREE.CylinderGeometry(.48,.55,1.65,32),0xe9f7fb,0,1.9,0));
+  rocket.add(mesh(new THREE.ConeGeometry(.49,.85,32),0x2f9e5a,0,3.15,0));
+  rocket.add(mesh(new THREE.CylinderGeometry(.54,.44,.2,32),0x287a85,0,1.02,0));
+  const finShape=new THREE.Shape();finShape.moveTo(.4,1.65);finShape.lineTo(.9,1.18);finShape.lineTo(.9,.78);finShape.lineTo(.4,1.05);finShape.closePath();
+  [-1,1].forEach(s=>{const fin=mesh(new THREE.ExtrudeGeometry(finShape,{depth:.15,bevelEnabled:false}),0x2f9e5a,0,0,-.075);fin.scale.x=s;rocket.add(fin)});
+  rocket.add(mesh(new THREE.CircleGeometry(.35,32),0x165578,0,2.1,.55));
+  rocket.add(mesh(new THREE.TorusGeometry(.35,.07,10,32),0x96dce5,0,2.1,.57));
+  const shine=mesh(new THREE.CircleGeometry(.09,20),0xffffff,-.11,2.22,.56);rocket.add(shine);
+  const flame=new THREE.Group();flame.position.y=.95;rocket.add(flame);
+  const outer=mesh(new THREE.ConeGeometry(.32,.85,24),0xff8b38,0,-.38,0);outer.rotation.z=Math.PI;flame.add(outer);
+  const inner=mesh(new THREE.ConeGeometry(.17,.6,24),0xffe48a,0,-.27,.1);inner.rotation.z=Math.PI;flame.add(inner);
+  const sparks=[-1,1].map(s=>{const spark=mesh(new THREE.OctahedronGeometry(.08),0xffc653,.7*s,.6,.1);bac.add(spark);return spark});
   const sv=(()=>{try{return JSON.parse(localStorage.getItem("bacpos")||"null")}catch{return null}})(),pw=()=>innerWidth-W;
-  let hid=hidP,run=0,y=sv?Math.max(0,Math.min(innerHeight-H,sv.y)):10,x=-W-20,st="walk",face=Math.PI/2,tx=sv?Math.max(0,Math.min(pw(),pw()-sv.r)):Math.max(16,pw()-20),spd=Math.max(130,Math.min(260,(tx+W+20)/4.5)),arr=0,asked=0,h1=0,dead=0,raf,mx=0,last=performance.now();
-  if(quiet){x=tx;st="idle";face=0;arr=last/1000-100;asked=1;h1=1}
+  const reduced=matchMedia("(prefers-reduced-motion: reduce)");
+  let hid=hidP,run=0,y=sv?Math.max(0,Math.min(innerHeight-H,sv.y)):10,x=-W-20,st="walk",tx=sv?Math.max(0,Math.min(pw(),pw()-sv.r)):Math.max(16,pw()-20),spd=Math.max(180,(tx+W+20)/2.5),arr=0,asked=0,h1=0,dead=0,raf,last=performance.now();
+  if(quiet||reduced.matches){x=tx;st="idle";arr=last/1000-100;asked=1;h1=1}
   const pOn=()=>$("botp").classList.contains("on"),say=h=>{bub.innerHTML=h;if(!hid&&!pOn())bub.classList.add("on")};
   function die(){if(dead)return;dead=1;document.body.classList.remove("has-bac");cancelAnimationFrame(raf);cv.remove();hit.remove();bx.remove();bub.remove();R.dispose()}
   const open=()=>{if(!dead&&!pOn())$("botb").click()},
@@ -566,21 +564,18 @@ function mascot(){
   bub.onclick=open;new MutationObserver(sync).observe($("botp"),{attributes:true,attributeFilter:["class"]});
   let dg=0,mv=0,gx=0,gy=0,ox=0,oy=0;
   hit.onpointerdown=e=>{hit.setPointerCapture(e.pointerId);dg=1;mv=0;gx=e.clientX;gy=e.clientY;ox=x;oy=y};
-  hit.onpointermove=e=>{if(!dg)return;const dx=e.clientX-gx,dy=e.clientY-gy;if(!mv&&Math.hypot(dx,dy)<5)return;if(!mv&&(st==="walk"||st==="turn")){st="idle";face=0;arr=performance.now()/1000-100;asked=1;h1=1;bub.classList.remove("on")}mv=1;x=Math.max(0,Math.min(pw(),ox+dx));y=Math.max(0,Math.min(innerHeight-H,oy-dy))};
+  hit.onpointermove=e=>{if(!dg)return;const dx=e.clientX-gx,dy=e.clientY-gy;if(!mv&&Math.hypot(dx,dy)<5)return;if(!mv&&st==="walk"){st="idle";arr=performance.now()/1000-100;asked=1;h1=1;bub.classList.remove("on")}mv=1;x=Math.max(0,Math.min(pw(),ox+dx));y=Math.max(0,Math.min(innerHeight-H,oy-dy))};
   hit.onpointerup=()=>{if(!dg)return;dg=0;if(mv){try{localStorage.setItem("bacpos",JSON.stringify({r:Math.round(pw()-x),y:Math.round(y)}))}catch{}}else open()};
+  hit.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open()}};
   bx.onclick=()=>window.bacSet(true);
-  addEventListener("mousemove",e=>mx=(e.clientX/innerWidth-.5)*2);
   addEventListener("resize",()=>{x=Math.max(0,Math.min(x,pw()));y=Math.max(0,Math.min(y,innerHeight-H))});
   const frame=now=>{if(dead||!run)return;raf=requestAnimationFrame(frame);const dt=Math.min(.05,(now-last)/1000),T=now/1000;last=now;
-   if(st==="walk"){x+=spd*dt;const p=T*9;lL.rotation.x=Math.sin(p)*.7;lR.rotation.x=-Math.sin(p)*.7;aL.rotation.x=-Math.sin(p)*.6;aR.rotation.x=Math.sin(p)*.6;bac.position.y=Math.abs(Math.sin(p))*.12;if(x>=tx){x=tx;st="turn"}}
-   else{lL.rotation.x*=.85;lR.rotation.x*=.85;aL.rotation.x*=.85;bac.position.y*=.8;
-    if(st==="turn"){aR.rotation.x*=.85;face+=(0-face)*Math.min(1,dt*7);if(Math.abs(face)<.03){face=0;st="idle";arr=T;say(`Xin chào, ${esc(me.name||"bà con")}! Bác Nông đây.`)}}
-    else{const ta=T-arr,w=ta<3.2?2.5+Math.sin(T*11)*.3:0;aR.rotation.x*=.85;aR.rotation.z+=(w-aR.rotation.z)*Math.min(1,dt*10);head.rotation.x=ta<3.2?Math.sin(T*8)*.05:0;
-     if(ta>6&&!h1){bub.classList.remove("on");h1=1}
-     if(ta>15&&!asked){asked=1;say("Bạn muốn gì?<br><small>Bấm vào bác để hỏi nhé</small>")}
-     if(ta>15&&ta<15.7)bac.position.y=Math.abs(Math.sin((ta-15)*Math.PI/.7))*.5;
-     body.scale.y=1.15+Math.sin(T*2)*.02;head.position.y=2.15+Math.sin(T*2)*.02;eL.scale.y=eR.scale.y=(T%3.4)<.12?.1:1;head.rotation.y+=(mx*.5-head.rotation.y)*.08}}
-   bac.rotation.y=face;cv.style.transform=`translateX(${x}px)`;hit.style.transform=`translateX(${x+24}px)`;cv.style.bottom=y+"px";hit.style.bottom=(y+2)+"px";bx.style.transform=`translateX(${x+W-34}px)`;bx.style.bottom=(y+H-20)+"px";bub.style.bottom=(y+H-8)+"px";bub.style.left=Math.min(innerWidth-216,Math.max(8,x+W/2-100))+"px";R.render(S,C)};
+   if(st==="walk"){if(reduced.matches)x=tx;else x+=spd*dt;if(x>=tx){x=tx;st="idle";arr=T;say(`Xin chào, ${esc(me.name||"bà con")}! Bác Nông đây.`)}}
+   else{const ta=T-arr;if(ta>6&&!h1){bub.classList.remove("on");h1=1}if(ta>15&&!asked){asked=1;say("Bạn muốn gì?<br><small>Bấm vào tên lửa để hỏi nhé</small>")}}
+   const flight=st==="walk"?(x+W+20)/(tx+W+20):1,lift=st==="walk"?Math.min(Math.max(0,innerHeight-H-y),Math.sin(flight*Math.PI)*45):0;
+   rocket.position.y=reduced.matches?0:Math.sin(T*2.4)*.1;rocket.rotation.z=reduced.matches?0:(st==="walk"?-.4*Math.sin(flight*Math.PI):0)+Math.sin(T*1.6)*.045;flame.scale.y=reduced.matches?1:(st==="walk"?1.25:.85)+Math.sin(T*15)*.15;
+   sparks.forEach((s,i)=>{s.position.y=reduced.matches ? .6 : .6+Math.sin(T*3+i*2)*.18;s.rotation.y=reduced.matches?0:T*2});
+   cv.style.transform=`translateX(${x}px)`;hit.style.transform=`translateX(${x+24}px)`;cv.style.bottom=(y+lift)+"px";hit.style.bottom=(y+lift+2)+"px";bx.style.transform=`translateX(${x+W-34}px)`;bx.style.bottom=(y+lift+H-20)+"px";bub.style.bottom=(y+lift+H-8)+"px";bub.style.left=Math.min(innerWidth-216,Math.max(8,x+W/2-100))+"px";R.render(S,C)};
   sync();sessionStorage.setItem("bacDone","1");window.bacSet=v=>{hid=v;try{v?localStorage.setItem("bacHide","1"):localStorage.removeItem("bacHide")}catch{}sync()};const bv=$("botv");if(bv)bv.style.display=""}}
 const BOT=[];let botBusy=false;
 const fmtB=t=>esc(t).replace(/\*\*(.+?)\*\*/g,"<b>$1</b>").replace(/\n/g,"<br>");
