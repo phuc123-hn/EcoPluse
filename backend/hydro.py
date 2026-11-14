@@ -24,6 +24,15 @@ load_dotenv()   # phải nạp .env TRƯỚC khi đọc HN_DB, HN_ADMIN_*, SMTP_
 
 DB = Path(os.getenv("HN_DB") or Path(__file__).resolve().parent.parent / "data" / "hydronisar.db")   # giữ tên file cũ để không mất dữ liệu
 DB.parent.mkdir(parents=True, exist_ok=True)
+DATABASE_URL = (os.getenv("DATABASE_URL") or "").strip()          # postgresql://... (Neon, Supabase, Render Postgres). Bỏ trống = dùng file SQLite như trước
+PG = DATABASE_URL.lower().startswith(("postgres://", "postgresql://"))
+DB_INTEGRITY = (sqlite3.IntegrityError,)
+if PG:
+    try:
+        import psycopg2, psycopg2.extras, psycopg2.pool
+    except ImportError:
+        raise RuntimeError("Có DATABASE_URL nhưng chưa cài psycopg2: thêm dòng psycopg2-binary vào requirements.txt")
+    DB_INTEGRITY += (psycopg2.IntegrityError,)
 SESSION_DAYS, MAX_FAILS, LOCK_SEC = 14, 10, 15 * 60     # MAX_FAILS: số lần sai mật khẩu trước khi khóa tài khoản 15 phút (đã có thêm giới hạn theo IP nên nâng lên 10 để người lạ khó khóa tài khoản người khác)
 LIMITED_DAYS = int(os.getenv("LIMITED_DAYS") or 7)      # phiên "chế độ hạn chế" (vào bằng Quên mật khẩu) sống bao lâu
 # Tự nhận biết môi trường chạy thật (Railway) để bật cookie Secure và tắt /docs ngay cả khi quên đặt biến môi trường
@@ -86,7 +95,67 @@ def clean(s):
 
 
 # ---------- cơ sở dữ liệu ----------
+_TS = "(to_char((now() AT TIME ZONE 'UTC'), 'YYYY-MM-DD HH24:MI:SS'))"      # giống định dạng CURRENT_TIMESTAMP của SQLite
+_NAMED = re.compile(r"(?<![:\w]):([A-Za-z_]\w*)")
+_pgs = {"pool": None, "lock": threading.Lock(), "sem": threading.BoundedSemaphore(10)}
+
+
+def _pg_pool():
+    with _pgs["lock"]:
+        if _pgs["pool"] is None:
+            _pgs["pool"] = psycopg2.pool.ThreadedConnectionPool(
+                1, 10, DATABASE_URL, cursor_factory=psycopg2.extras.RealDictCursor, connect_timeout=15,
+                keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3)
+        return _pgs["pool"]
+
+
+def _pg_sql(sql, a):
+    """Đổi câu SQL viết theo kiểu SQLite sang Postgres: ? -> %s, :tên -> %(tên)s, CURRENT_TIMESTAMP, kiểu cột khi tạo bảng."""
+    s = sql.replace("%", "%%") if a else sql
+    s = _NAMED.sub(r"%(\1)s", s) if isinstance(a, dict) else s.replace("?", "%s")
+    if re.match(r"\s*(CREATE|ALTER)\b", s, re.I):
+        s = re.sub(r"\bINTEGER PRIMARY KEY\b", "SERIAL PRIMARY KEY", s)
+        s = re.sub(r"\bREAL\b", "DOUBLE PRECISION", s)
+    return s.replace("CURRENT_TIMESTAMP", _TS)
+
+
+def _q_pg(sql, a, one, write):
+    s = _pg_sql(sql, a)
+    ins = bool(write and re.match(r"\s*INSERT\b", s, re.I) and "RETURNING" not in s.upper())
+    if ins:
+        s += " RETURNING id"
+    pool = _pg_pool()
+    with _pgs["sem"]:
+        for attempt in (0, 1):
+            conn = pool.getconn()
+            try:
+                with conn.cursor() as cur:
+                    cur.execute(s, a or None)
+                    rows = cur.fetchall() if cur.description else []
+                conn.commit()
+            except (psycopg2.OperationalError, psycopg2.InterfaceError):      # kết nối bị đóng (database ngủ / mạng đứt): bỏ kết nối cũ, thử lại một lần
+                pool.putconn(conn, close=True)
+                if attempt:
+                    raise
+                continue
+            except BaseException:
+                try:
+                    conn.rollback()
+                except Exception:
+                    pass
+                pool.putconn(conn)
+                raise
+            pool.putconn(conn)
+            break
+    if write:
+        return rows[0]["id"] if ins and rows else None
+    rows = [dict(r) for r in rows]
+    return (rows[0] if rows else None) if one else rows
+
+
 def q(sql, a=(), one=False, write=False):
+    if PG:
+        return _q_pg(sql, a, one, write)
     c = sqlite3.connect(DB); c.row_factory = sqlite3.Row; c.execute("PRAGMA foreign_keys=ON")
     try:
         with c:
@@ -186,11 +255,38 @@ def migrate():
         c.close()
 
 
-migrate()
+def pg_init():
+    ddl = re.sub(r"\bINTEGER PRIMARY KEY\b", "SERIAL PRIMARY KEY", SCHEMA_V2)
+    ddl = re.sub(r"\bREAL\b", "DOUBLE PRECISION", ddl).replace("CURRENT_TIMESTAMP", _TS)
+    ddl += """
+ALTER TABLE users ADD COLUMN IF NOT EXISTS pending INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE sessions ADD COLUMN IF NOT EXISTS level TEXT NOT NULL DEFAULT 'full';
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS province_key TEXT;
+ALTER TABLE audit_log ADD COLUMN IF NOT EXISTS ward_key TEXT;
+ALTER TABLE dm ADD COLUMN IF NOT EXISTS bot INTEGER NOT NULL DEFAULT 0;
+"""
+    pool = _pg_pool()
+    conn = pool.getconn()
+    try:
+        with conn.cursor() as cur:
+            cur.execute(ddl)
+        conn.commit()
+    except BaseException:
+        conn.rollback()
+        raise
+    finally:
+        pool.putconn(conn)
+
+
+pg_init() if PG else migrate()
 if os.getenv("HN_ADMIN_PASSWORD") and (os.getenv("HN_ADMIN_EMAIL") or os.getenv("HN_ADMIN_PHONE")) \
         and not q("SELECT 1 FROM users WHERE role='admin_province'", one=True):
     q("INSERT INTO users(full_name,name_key,phone,email,pw_hash,role) VALUES(?,?,?,?,?,'admin_province')",
       ("Quản trị", "quan tri", os.getenv("HN_ADMIN_PHONE"), os.getenv("HN_ADMIN_EMAIL"), hash_pw(os.environ["HN_ADMIN_PASSWORD"])), write=True)
+elif os.getenv("HN_ADMIN_RESET") == "1" and os.getenv("HN_ADMIN_PASSWORD") and (os.getenv("HN_ADMIN_EMAIL") or os.getenv("HN_ADMIN_PHONE")):
+    # Đặt HN_ADMIN_RESET=1 trên Render để ép đặt lại mật khẩu admin tỉnh theo HN_ADMIN_PASSWORD (xong nhớ xóa biến này đi)
+    q("UPDATE users SET pw_hash=?, fails=0, locked_until=NULL, status='active' WHERE role='admin_province' AND (phone=? OR lower(email)=lower(?))",
+      (hash_pw(os.environ["HN_ADMIN_PASSWORD"]), os.getenv("HN_ADMIN_PHONE"), os.getenv("HN_ADMIN_EMAIL")), write=True)
 
 
 def area_for(level, province, ward=None):
@@ -203,7 +299,7 @@ def area_for(level, province, ward=None):
         try:
             q("INSERT INTO areas(level,province,province_key,ward,ward_key,code) VALUES(?,?,?,?,?,?)",
               (level, prov_name(province), pk, clean(ward) if level == "ward" else None, wk, ("X-" if level == "ward" else "T-") + secrets.token_hex(3).upper()), write=True)
-        except sqlite3.IntegrityError:
+        except DB_INTEGRITY:
             pass
     raise HTTPException(500, "Không tạo được mã khu vực")
 
@@ -216,7 +312,7 @@ def audit(actor, text, about=None):
 
 
 def notify(uid, title, body, key):
-    q("INSERT OR IGNORE INTO notifications(user_id,title,body,dedupe_key) VALUES(?,?,?,?)", (uid, title, body, key), write=True)
+    q("INSERT INTO notifications(user_id,title,body,dedupe_key) VALUES(?,?,?,?) ON CONFLICT DO NOTHING", (uid, title, body, key), write=True)
 
 
 def place(u):
@@ -334,7 +430,7 @@ def register(b: Reg, req: Request, res: Response):
     try:
         uid = q("INSERT INTO users(full_name,name_key,pw_hash,province,province_key,ward,ward_key) VALUES(?,?,?,?,?,?,?)",
                 (name, k, hash_pw(b.password), prov_name(b.province), province_key(b.province), clean(b.ward), ward_key(b.ward)), write=True)
-    except sqlite3.IntegrityError:
+    except DB_INTEGRITY:
         raise HTTPException(409, "Tên này đã có người dùng")
     me_ = q("SELECT * FROM users WHERE id=?", (uid,), one=True)
     audit(me_, f"{name} đã đăng ký tài khoản nông dân ({place(me_)})")
@@ -562,7 +658,7 @@ def admin_start(b: AdminReg, req: Request):
     try:
         uid = q("INSERT INTO users(full_name,name_key,phone,email,pw_hash,role,province,province_key,ward,ward_key,status,pending) VALUES(?,?,?,?,?,'admin_ward',?,?,?,?,'locked',1)",
                 (name, fold(name), b.phone, email, hash_pw(b.password), prov, province_key(prov), ward, ward_key(ward)), write=True)
-    except sqlite3.IntegrityError:
+    except DB_INTEGRITY:
         raise HTTPException(409, "Email này đã được đăng ký")
     me_ = q("SELECT * FROM users WHERE id=?", (uid,), one=True)
     audit(me_, f"{me_['full_name']} đăng ký tài khoản quản lý {place(me_)} (chờ tỉnh duyệt)")
@@ -801,7 +897,7 @@ def chat_contacts(u=Depends(full)):
     peers = q("SELECT id,full_name,role,phone,province,ward,last_seen FROM users WHERE status='active' AND id<>:me AND (" + REACH[u["role"]] + ") LIMIT 400", reach_args(u))
     agg = {r["peer"]: r for r in q(
         "SELECT peer, MAX(id) mid, SUM(unread) un FROM (SELECT CASE WHEN sender_id=:me THEN receiver_id ELSE sender_id END peer, id, "
-        "(receiver_id=:me AND read=0) unread FROM dm WHERE sender_id=:me OR receiver_id=:me) GROUP BY peer", {"me": u["id"]})}
+        "(CASE WHEN receiver_id=:me AND read=0 THEN 1 ELSE 0 END) unread FROM dm WHERE sender_id=:me OR receiver_id=:me) t GROUP BY peer", {"me": u["id"]})}
     bodies = {r["id"]: r for r in q(f"SELECT id,body,created_at FROM dm WHERE id IN ({','.join(str(a['mid']) for a in agg.values()) or '0'})")}
     out = []
     for p in peers:
@@ -832,7 +928,7 @@ class Msg(BaseModel):
 def chat_thread(pid: int, u=Depends(full)):
     p = peer_of(u, pid)
     q("UPDATE dm SET read=1 WHERE sender_id=? AND receiver_id=? AND read=0", (pid, u["id"]), write=True)
-    rows = q("SELECT (sender_id=?) mine, body, created_at, bot FROM dm WHERE (sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?) ORDER BY id DESC LIMIT 200",
+    rows = q("SELECT (CASE WHEN sender_id=? THEN 1 ELSE 0 END) mine, body, created_at, bot FROM dm WHERE (sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?) ORDER BY id DESC LIMIT 200",
              (u["id"], u["id"], pid, pid, u["id"]))
     return {"peer": peer_view(p), "messages": [{**r, "mine": bool(r["mine"])} for r in rows[::-1]]}
 
@@ -958,7 +1054,7 @@ def admin_user(uid: int, action: str, u=Depends(need(*ADMINS))):
             audit(u, f"{u['full_name']} từ chối đăng ký quản lý của {t['full_name']} ({place(t)})", about=t)
             try:
                 q("DELETE FROM users WHERE id=? AND pending=1", (uid,), write=True)
-            except sqlite3.IntegrityError:
+            except DB_INTEGRITY:
                 raise HTTPException(400, "Không xóa được đăng ký này")
         return {"ok": True}
     if t["pending"]:
@@ -972,7 +1068,7 @@ def admin_user(uid: int, action: str, u=Depends(need(*ADMINS))):
 
 @router.get("/admin/wards")
 def admin_wards(u=Depends(need(*ADMINS))):
-    rows = q("SELECT ward, ward_key, SUM(role='farmer') farmers FROM users WHERE status='active' AND ward_key IS NOT NULL AND ward_key<>'' AND " + managed_where(u) +
+    rows = q("SELECT MIN(ward) ward, ward_key, SUM(CASE WHEN role='farmer' THEN 1 ELSE 0 END) farmers FROM users WHERE status='active' AND ward_key IS NOT NULL AND ward_key<>'' AND " + managed_where(u) +
              " GROUP BY ward_key ORDER BY ward", {"pk": u["province_key"], "wk": u["ward_key"]})
     return [{"ward": r["ward"], "key": r["ward_key"], "farmers": int(r["farmers"] or 0)} for r in rows]
 
@@ -1058,7 +1154,7 @@ def overview(u=Depends(full)):
         base["farmers"] = q(f"SELECT COUNT(*) n FROM users WHERE role='farmer' AND status='active' AND {mw}", args, one=True)["n"]
         if u["role"] == "admin_province":
             base["ward_admins"] = q("SELECT COUNT(*) n FROM users WHERE role='admin_ward' AND status='active' AND (:pk IS NULL OR province_key=:pk)", {"pk": u["province_key"]}, one=True)["n"]
-            base["by_ward"] = q("SELECT ward, SUM(role='farmer') farmers, SUM(role='admin_ward') admins FROM users WHERE status='active' AND ward_key<>'' AND ward_key IS NOT NULL AND "
+            base["by_ward"] = q("SELECT MIN(ward) ward, SUM(CASE WHEN role='farmer' THEN 1 ELSE 0 END) farmers, SUM(CASE WHEN role='admin_ward' THEN 1 ELSE 0 END) admins FROM users WHERE status='active' AND ward_key<>'' AND ward_key IS NOT NULL AND "
                                 "role IN('farmer','admin_ward') AND (:pk IS NULL OR province_key=:pk) GROUP BY province_key, ward_key ORDER BY farmers DESC LIMIT 100", {"pk": u["province_key"]})
         base["scenes"] = len(list(render.CACHE.glob("*__soil.json")))
     base.update(plots=len(rows), dist=dist_of(rows), attention=sum(1 for r in rows if r["status"] and r["status"]["idx"] in ALERT_BANDS))
