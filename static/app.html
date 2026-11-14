@@ -246,8 +246,7 @@ function drawAuth(){const L=am==="login"||am==="forgot";$("t1").classList.toggle
   if(am==="login")h=`<div class="row"><input id="id" placeholder="Tên (nông dân) hoặc email (quản lý)" autocomplete="username">${eye("pw")}</div><div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Đăng nhập</button><p><a href="#" class="lk" data-am="forgot">Quên mật khẩu?</a></p>`;
   else if(am==="forgot")h=`<b>Quên mật khẩu</b><p class="mute">Chỉ dành cho nông dân: nhập tên đã đăng ký để <b>xem thửa của bạn</b> (chế độ chỉ xem). Muốn thêm/sửa thửa, nhắn tin, đọc kiến thức hoặc hỏi Bác Nông thì cần nhập mật khẩu.</p><div class="row"><input id="fn" placeholder="Họ và tên đã đăng ký"></div><div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Xem thửa của tôi</button><p><a href="#" class="lk" data-am="login">← Quay lại đăng nhập</a></p>`;
   else if(am==="reg")h=who+`<div class="row"><input id="rn" placeholder="Họ và tên" autocomplete="name"><div class="err" id="nh"></div>${eye("pw")}</div>${where("r")}<div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Tạo tài khoản</button><p class="mute">Tên đăng nhập là họ tên của bạn nên không được trùng với người khác.</p>`;
-  else if(am==="regA")h=who+`<div class="row"><input id="an" placeholder="Họ và tên" autocomplete="name"><input id="aph" placeholder="Số điện thoại" inputmode="tel" autocomplete="tel"><input id="aem" placeholder="Email" type="email" autocomplete="email">${eye("pw")}</div>${where("a")}<div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Gửi mã OTP về email</button><p class="mute">Mã xác nhận sẽ được gửi về email bạn nhập.</p>`;
-  else if(am==="otp")h=`<b>Nhập mã xác nhận</b><p class="mute">Mã gồm 6 số đã được gửi tới <b>${esc(pend.email)}</b>.${pend.emailed?"":" Máy chủ chưa cấu hình gửi email, mã đang được in ở cửa sổ chạy server (chế độ thử nghiệm)."}</p><div class="row"><input id="oc" placeholder="Mã OTP" inputmode="numeric" maxlength="8" autocomplete="one-time-code"></div><div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Xác nhận</button><p><a href="#" class="lk" id="resend">Gửi lại mã</a> · <a href="#" class="lk" data-am="regA">Sửa thông tin</a></p>`;
+  else if(am==="regA")h=who+`<div class="row"><input id="an" placeholder="Họ và tên" autocomplete="name"><input id="aph" placeholder="Số điện thoại" inputmode="tel" autocomplete="tel"><input id="aem" placeholder="Email" type="email" autocomplete="email">${eye("pw")}</div>${where("a")}<div class="err" id="aerr"></div><button class="g" id="go" style="width:100%">Gửi đăng ký</button><p class="mute">Tài khoản sẽ chờ quản lý tỉnh duyệt trước khi đăng nhập được.</p>`;
   $("box").innerHTML=h;bindAuth()}
 function bindAuth(){const b=$("box");
   b.querySelectorAll("[data-am]").forEach(x=>x.onclick=e=>{e.preventDefault();am=x.dataset.am;drawAuth()});
@@ -255,16 +254,14 @@ function bindAuth(){const b=$("box");
   b.querySelectorAll("[data-gps]").forEach(x=>x.onclick=()=>geoFill(x.dataset.gps));
   b.querySelectorAll("input").forEach(i=>i.onkeydown=e=>{if(e.key==="Enter"&&$("go"))$("go").click()});
   if($("rn"))$("rn").onblur=async()=>{const v=$("rn").value.trim();$("nh").textContent="";if(v.length<2)return;try{const r=await api("/auth/name-free?name="+encodeURIComponent(v));if(!r.free)$("nh").textContent="Tên này đã có người dùng. Hãy thêm số hoặc tên thôn/ấp để phân biệt."}catch{}};
-  if($("resend"))$("resend").onclick=async e=>{e.preventDefault();try{const r=await api("/auth/admin/start","POST",pend.body);pend.emailed=r.emailed;$("aerr").textContent="Đã gửi lại mã."}catch(x){$("aerr").textContent=x.message}};
   if($("go"))$("go").onclick=submitAuth}
 async function submitAuth(){const bt=$("go"),er=$("aerr");er.textContent="";bt.disabled=true;
   try{if(am==="login")await api("/auth/login","POST",{ident:$("id").value,password:$("pw").value});
     else if(am==="forgot")await api("/auth/forgot","POST",{name:$("fn").value});
     else if(am==="reg")await api("/auth/register","POST",{full_name:$("rn").value,password:$("pw").value,province:$("rp").value,ward:$("rw").value});
     else if(am==="regA"){const body={full_name:$("an").value,phone:$("aph").value.trim(),email:$("aem").value.trim(),province:$("ap").value,ward:$("aw").value,password:$("pw").value};
-      const r=await api("/auth/admin/start","POST",body);pend={email:body.email,body,emailed:r.emailed};am="otp";drawAuth();return}
-    else if(am==="otp"){const r=await api("/auth/admin/verify","POST",{email:pend.email,code:$("oc").value});
-      if(r.pending){$("box").innerHTML='<b>Đã gửi đăng ký</b><p class="mute">Email của bạn đã được xác nhận. Tài khoản đang chờ quản lý tỉnh duyệt. Sau khi được duyệt, bạn đăng nhập bằng email và mật khẩu đã đăng ký.</p><button class="g" type="button" data-am="login" style="width:100%">Về trang đăng nhập</button>';bindAuth();return}}
+      await api("/auth/admin/start","POST",body);
+      $("box").innerHTML='<b>Đã gửi đăng ký</b><p class="mute">Tài khoản đang chờ quản lý tỉnh duyệt. Sau khi được duyệt, bạn đăng nhập bằng email và mật khẩu đã đăng ký.</p><button class="g" type="button" data-am="login" style="width:100%">Về trang đăng nhập</button>';bindAuth();return}
     await boot()}catch(e){er.textContent=e.message;bt.disabled=false}}
 $("t1").onclick=()=>{am="login";drawAuth()};$("t2").onclick=()=>{am="reg";drawAuth()};
 api("/geo/provinces").then(L=>$("provs").innerHTML=L.map(x=>`<option value="${esc(x)}">`).join("")).catch(()=>{});
