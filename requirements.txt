@@ -10,3 +10,4 @@ Pillow
 pyproj
 shapely
 edge-tts
+psycopg2-binary
