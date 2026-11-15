@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="vi">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>EcoPulse – Độ ẩm đất từ vệ tinh cho nông dân Tây Nguyên</title>
+<title>EcoPulse – Satellite-Based Soil Moisture for Farmers in the Central Highlands</title>
 <link rel="icon" type="image/png" href="/static/img/logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -211,12 +211,12 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 <!-- 1. ẢNH ĐẦU TRANG (static/img/begin.png) -->
 <section class="weather" id="top">
   <div class="aurora" aria-hidden="true"><i></i><i></i><i></i></div>
-  <img class="bg" src="/static/img/begin.png" alt="Toàn cảnh Tây Nguyên" fetchpriority="high" decoding="async" onload="this.classList.add('ok')" onerror="this.remove()">
+  <img class="bg" src="/static/img/begin.png" alt="Panoramic view of the Central Highlands" fetchpriority="high" decoding="async" onload="this.classList.add('ok')" onerror="this.remove()">
   <div class="shade"></div>
   <div class="cap">
-    <h1>Thời tiết Tây Nguyên, đang chuyển động</h1>
-    <p>Mưa, mây và gió trên vùng cà phê, sầu riêng và cao su, cập nhật trực tiếp.</p>
-    <span class="scroll">Cuộn xuống ↓</span>
+    <h1>The Central Highlands in Motion</h1>
+    <p>Live updates on rain, clouds, and wind across coffee, durian, and rubber-growing regions.</p>
+    <span class="scroll">Scroll down ↓</span>
   </div>
 </section>
 
@@ -224,8 +224,8 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 <section class="globe-sec" id="globe-sec">
   <div class="globe-stick">
     <div id="globe"></div>
-    <div class="nogl" id="nogl"><div>Trình duyệt này chưa hiển thị được quả địa cầu 3D (cần WebGL).<br>Hãy thử Chrome hoặc Edge bản mới.</div></div>
-    <div class="globe-cap"><h2 id="gh">Hành tinh của chúng ta</h2><p id="gp">Nơi sự sống được khơi nguồn một cách kỳ diệu từ những hạt mầm bé nhỏ</p></div>
+    <div class="nogl" id="nogl"><div>This browser cannot display the 3D globe (WebGL is required).<br>Try the latest version of Chrome or Edge.</div></div>
+    <div class="globe-cap"><h2 id="gh">Our Planet</h2><p id="gp">A remarkable place where life begins with the smallest seeds</p></div>
     <div class="prog"><i id="gprog"></i></div>
   </div>
 </section>
@@ -233,30 +233,30 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 <!-- BĂNG CHỮ CHẠY NGANG -->
 <div class="marq" aria-hidden="true">
   <div class="marq-t">
-    <span><b>Cà phê</b><em></em>Sầu riêng<em></em><b>Cao su</b><em></em>Radar NISAR<em></em><b>Độ ẩm đất</b><em></em>Tây Nguyên<em></em><b>Bình Phước</b><em></em>NASA × ISRO<em></em></span>
-    <span><b>Cà phê</b><em></em>Sầu riêng<em></em><b>Cao su</b><em></em>Radar NISAR<em></em><b>Độ ẩm đất</b><em></em>Tây Nguyên<em></em><b>Bình Phước</b><em></em>NASA × ISRO<em></em></span>
+    <span><b>Coffee</b><em></em>Durian<em></em><b>Rubber</b><em></em>NISAR Radar<em></em><b>Soil Moisture</b><em></em>Central Highlands<em></em><b>Binh Phuoc</b><em></em>NASA × ISRO<em></em></span>
+    <span><b>Coffee</b><em></em>Durian<em></em><b>Rubber</b><em></em>NISAR Radar<em></em><b>Soil Moisture</b><em></em>Central Highlands<em></em><b>Binh Phuoc</b><em></em>NASA × ISRO<em></em></span>
   </div>
 </div>
 
 <!-- 3. GIỚI THIỆU NGẮN -->
 <section class="intro" id="gioi-thieu">
-  <span class="eyebrow rv u">EcoPulse là gì</span>
-  <h2 class="rv u d1">Nhìn thấy độ ẩm đất từ vệ tinh, để tưới và chăm đúng lúc</h2>
-  <p class="rv u d2">EcoPulse dùng dữ liệu radar NISAR của NASA và ISRO để cho nông dân và hợp tác xã ở Tây Nguyên, Bình Phước biết đất khô hay quá ẩm, ngay trên bản đồ, không cần đo tại ruộng.</p>
+  <span class="eyebrow rv u">What Is EcoPulse?</span>
+  <h2 class="rv u d1">See Soil Moisture from Space and Care for Your Crops at the Right Time</h2>
+  <p class="rv u d2">EcoPulse dùng dữ liệu radar NISAR của NASA và ISRO để cho nông dân và hợp tác xã ở Central Highlands, Binh Phuoc biết đất khô hay quá ẩm, ngay trên bản đồ, không cần đo tại ruộng.</p>
   <div class="feats">
-    <div class="feat rv u d1"><b>Bản đồ độ ẩm đất</b><span>Radar xuyên mây, có cả mùa mưa.</span></div>
-    <div class="feat rv u d2"><b>Thửa của tôi</b><span>Khai báo vườn, nhận khuyến nghị tưới.</span></div>
-    <div class="feat rv u d3"><b>Thông báo &amp; hợp tác xã</b><span>Cảnh báo khô hạn, trao đổi với hợp tác xã.</span></div>
+    <div class="feat rv u d1"><b>Soil Moisture Map</b><span>Radar observations can penetrate clouds, including during the rainy season.</span></div>
+    <div class="feat rv u d2"><b>My Fields</b><span>Register your farm and receive irrigation recommendations.</span></div>
+    <div class="feat rv u d3"><b>Alerts &amp; Cooperatives</b><span>Receive drought alerts and communicate with your cooperative.</span></div>
   </div>
 </section>
 
 <!-- CÁC CON SỐ (đếm lên khi cuộn tới) -->
 <div class="nums">
   <div class="numg">
-    <div class="num rv u"><b data-to="5">0</b><span>tỉnh Tây Nguyên</span></div>
-    <div class="num rv u d1"><b data-to="5">0</b><span>mức độ ẩm đất dễ đọc</span></div>
-    <div class="num rv u d2"><b data-to="3">0</b><span>cây trồng chủ lực</span></div>
-    <div class="num rv u d3"><b data-to="12">0</b><span>ngày vệ tinh quan sát lại một lần</span></div>
+    <div class="num rv u"><b data-to="5">0</b><span>tỉnh Central Highlands</span></div>
+    <div class="num rv u d1"><b data-to="5">0</b><span>easy-to-understand soil moisture levels</span></div>
+    <div class="num rv u d2"><b data-to="3">0</b><span>major crops</span></div>
+    <div class="num rv u d3"><b data-to="12">0</b><span>days between satellite revisits</span></div>
   </div>
 </div>
 
@@ -264,7 +264,7 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 <section class="crop" id="ca-phe">
   <div class="wrap two">
     <figure class="ph rv l" style="margin:0" data-art="coffee">
-      <img src="/static/img/ca-phe.jpg" alt="Vườn cà phê chín đỏ ở Tây Nguyên" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
+      <img src="/static/img/ca-phe.jpg" alt="Vườn cà phê chín đỏ ở Central Highlands" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
       <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#cfe9d6"/><stop offset="1" stop-color="#4f9a67"/></linearGradient></defs>
         <rect width="400" height="500" fill="url(#cg)"/>
@@ -274,19 +274,19 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
         <g fill="#d6342c"><circle cx="190" cy="268" r="13"/><circle cx="208" cy="282" r="13"/><circle cx="170" cy="285" r="12"/><circle cx="262" cy="190" r="12"/><circle cx="278" cy="205" r="12"/><circle cx="130" cy="338" r="12"/></g>
         <g fill="#ffffff55"><circle cx="186" cy="263" r="4"/><circle cx="204" cy="277" r="4"/><circle cx="258" cy="186" r="4"/></g>
       </svg>
-      <span class="lab">Cà phê · Tây Nguyên</span>
+      <span class="lab">Coffee · Central Highlands</span>
     </figure>
     <div>
-      <span class="eyebrow rv u">Cà phê</span>
-      <h2 class="rv u d1">Hạt cà phê của Tây Nguyên</h2>
-      <p class="tag rv u d2">Việt Nam là một trong những nước xuất khẩu cà phê lớn nhất thế giới, nhiều nhất là cà phê vối (robusta).</p>
-      <div class="blk rv r d1"><h3><i>📍</i>Phân bố</h3><p>Tập trung ở Tây Nguyên: Đắk Lắk (Buôn Ma Thuột), Lâm Đồng, Gia Lai, Đắk Nông, Kon Tum. Vùng này chiếm phần lớn diện tích cà phê cả nước. Cà phê chè (arabica) trồng ở nơi cao, mát như Lâm Đồng.</p></div>
-      <div class="blk val rv r d2"><h3><i>★</i>Giá trị với Việt Nam</h3><p>Là mặt hàng nông sản xuất khẩu chủ lực, mang về hàng tỷ USD mỗi năm và nuôi sống hàng trăm nghìn hộ nông dân, đặc biệt là đồng bào các dân tộc Tây Nguyên.</p></div>
-      <div class="blk hard rv r d2"><h3><i>!</i>Khó khăn về độ ẩm và mưa</h3><ul>
-        <li>Mùa khô (khoảng tháng 12 đến tháng 4) thiếu nước, nếu không tưới đúng lúc cây rụng hoa, giảm năng suất.</li>
-        <li>Mưa trái mùa khi cây ra hoa làm rụng hoa, kém đậu quả.</li>
-        <li>Mưa kéo dài lúc thu hoạch làm quả dễ rụng, khó phơi sấy, hạt dễ mốc.</li>
-        <li>Đất quá ẩm kéo dài gây thối rễ, nấm bệnh.</li></ul></div>
+      <span class="eyebrow rv u">Coffee</span>
+      <h2 class="rv u d1">Hạt cà phê của Central Highlands</h2>
+      <p class="tag rv u d2">Vietnam is one of the world’s largest coffee exporters, with Robusta accounting for the largest share.</p>
+      <div class="blk rv r d1"><h3><i>📍</i>Distribution</h3><p>Tập trung ở Central Highlands: Đắk Lắk (Buôn Ma Thuột), Lâm Đồng, Gia Lai, Đắk Nông, Kon Tum. Vùng này chiếm phần lớn diện tích cà phê cả nước. Coffee chè (arabica) trồng ở nơi cao, mát như Lâm Đồng.</p></div>
+      <div class="blk val rv r d2"><h3><i>★</i>Value to Vietnam</h3><p>Là mặt hàng nông sản xuất khẩu chủ lực, mang về hàng tỷ USD mỗi năm và nuôi sống hàng trăm nghìn hộ nông dân, đặc biệt là đồng bào các dân tộc Central Highlands.</p></div>
+      <div class="blk hard rv r d2"><h3><i>!</i>Challenges Related to Soil Moisture and Rainfall</h3><ul>
+        <li>During the dry season (approximately December to April), water shortages can cause flowers to drop and reduce yields if irrigation is not provided at the right time.</li>
+        <li>Unseasonal rain during flowering can cause flower drop and poor fruit set.</li>
+        <li>Prolonged rain during harvest can cause cherries to fall, make drying difficult, and increase the risk of mold.</li>
+        <li>Prolonged waterlogged soil can cause root rot and fungal diseases.</li></ul></div>
     </div>
   </div>
 </section>
@@ -295,19 +295,19 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 <section class="crop" id="sau-rieng">
   <div class="wrap two flip">
     <div>
-      <span class="eyebrow rv u">Sầu riêng</span>
-      <h2 class="rv u d1">Vua của các loại trái cây</h2>
-      <p class="tag rv u d2">Trong vài năm gần đây sầu riêng trở thành mặt hàng xuất khẩu tăng nhanh, nhất là sang Trung Quốc.</p>
-      <div class="blk rv l d1"><h3><i>📍</i>Phân bố</h3><p>Phát triển mạnh ở Đắk Lắk, Đắk Nông, Lâm Đồng, Gia Lai (đất đỏ bazan Tây Nguyên) và vùng Đông Nam Bộ, cùng các tỉnh miền Tây Nam Bộ như Tiền Giang, Bến Tre.</p></div>
-      <div class="blk val rv l d2"><h3><i>★</i>Giá trị với Việt Nam</h3><p>Giá bán cao, mang lại thu nhập lớn trên mỗi héc-ta và đưa sầu riêng vào nhóm rau quả xuất khẩu hàng tỷ USD. Nhiều hộ chuyển từ cây khác sang sầu riêng vì lợi nhuận.</p></div>
-      <div class="blk hard rv l d2"><h3><i>!</i>Khó khăn về độ ẩm và mưa</h3><ul>
-        <li>Rất sợ úng: đất ngập nước hoặc quá ẩm gây thối rễ, nấm Phytophthora, chết cây.</li>
-        <li>Cần một thời gian khô ráo để phân hóa mầm hoa; mưa trái mùa làm cây không ra hoa đồng loạt.</li>
-        <li>Mưa lúc nở hoa làm rụng hoa, kém đậu trái.</li>
-        <li>Khô hạn kéo dài làm rụng trái non, trái nhỏ, chất lượng giảm.</li></ul></div>
+      <span class="eyebrow rv u">Durian</span>
+      <h2 class="rv u d1">The King of Fruits</h2>
+      <p class="tag rv u d2">In recent years, durian has become a rapidly growing export commodity, particularly to China.</p>
+      <div class="blk rv l d1"><h3><i>📍</i>Distribution</h3><p>Phát triển mạnh ở Đắk Lắk, Đắk Nông, Lâm Đồng, Gia Lai (đất đỏ bazan Central Highlands) và vùng Đông Nam Bộ, cùng các tỉnh miền Tây Nam Bộ như Tiền Giang, Bến Tre.</p></div>
+      <div class="blk val rv l d2"><h3><i>★</i>Value to Vietnam</h3><p>High market prices can generate substantial income per hectare, making durian a billion-dollar fruit and vegetable export. Many farming households have switched from other crops to durian in pursuit of higher returns.</p></div>
+      <div class="blk hard rv l d2"><h3><i>!</i>Challenges Related to Soil Moisture and Rainfall</h3><ul>
+        <li>Durian is highly sensitive to waterlogging: flooded or excessively wet soil can cause root rot, Phytophthora infection, and tree death.</li>
+        <li>A period of dry weather is needed for flower-bud differentiation; unseasonal rain can lead to uneven flowering.</li>
+        <li>Rain during flowering can cause flower drop and poor fruit set.</li>
+        <li>Prolonged drought can cause young fruit to drop, limit fruit growth, and reduce quality.</li></ul></div>
     </div>
     <figure class="ph rv r" style="margin:0" data-art="durian">
-      <img src="/static/img/sau-rieng.jpg" alt="Trái sầu riêng trên cây" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
+      <img src="/static/img/sau-rieng.jpg" alt="Durian fruit growing on a tree" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
       <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
         <defs><linearGradient id="dg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e5f3d2"/><stop offset="1" stop-color="#6fae55"/></linearGradient>
         <radialGradient id="dd" cx=".4" cy=".35"><stop offset="0" stop-color="#d8e07a"/><stop offset="1" stop-color="#8aa43a"/></radialGradient></defs>
@@ -317,7 +317,7 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
         <ellipse cx="200" cy="300" rx="120" ry="150" fill="url(#dd)"/>
         <g fill="#6d8a2a"><path d="M130 200l10 -26 14 24z"/><path d="M180 160l8 -28 14 28z"/><path d="M235 170l12 -26 10 28z"/><path d="M95 270l-22 -12 24 -8z"/><path d="M305 260l24 -10 -8 22z"/><path d="M110 340l-24 0 22 -14z"/><path d="M295 345l26 -4 -16 18z"/><path d="M150 250l10 -24 14 22z"/><path d="M210 240l10 -24 12 24z"/><path d="M255 285l22 -14 4 24z"/><path d="M165 330l-8 24 24 -6z"/><path d="M225 350l10 24 14 -18z"/><path d="M135 415l14 22 14 -22z"/><path d="M200 435l12 22 12 -22z"/><path d="M255 410l16 18 6 -22z"/></g>
       </svg>
-      <span class="lab">Sầu riêng</span>
+      <span class="lab">Durian</span>
     </figure>
   </div>
 </section>
@@ -326,16 +326,16 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 <section class="crop" id="cao-su">
   <div class="wrap">
     <div style="text-align:center;margin-bottom:26px">
-      <span class="eyebrow rv u">Cao su</span>
-      <h2 class="rv u d1">Vàng trắng của đất đỏ bazan</h2>
+      <span class="eyebrow rv u">Rubber</span>
+      <h2 class="rv u d1">White Gold of the Basalt Highlands</h2>
     </div>
     <div class="three">
       <div>
-        <div class="blk rv l d1"><h3><i>📍</i>Phân bố</h3><p>Chủ yếu ở Đông Nam Bộ (Bình Phước, Tây Ninh, Bình Dương, Đồng Nai) và Tây Nguyên (Gia Lai, Kon Tum, Đắk Lắk). Bình Phước là một trong những tỉnh có diện tích cao su lớn nhất cả nước.</p></div>
-        <div class="blk val rv l d2"><h3><i>★</i>Giá trị với Việt Nam</h3><p>Việt Nam thuộc nhóm các nước sản xuất và xuất khẩu cao su thiên nhiên hàng đầu thế giới. Cao su cho thu nhập quanh năm, tạo việc làm ở nông trường và hộ gia đình, đồng thời cung cấp nguyên liệu cho ngành lốp xe, găng tay, gỗ cao su.</p></div>
+        <div class="blk rv l d1"><h3><i>📍</i>Distribution</h3><p>Chủ yếu ở Đông Nam Bộ (Binh Phuoc, Tây Ninh, Bình Dương, Đồng Nai) và Central Highlands (Gia Lai, Kon Tum, Đắk Lắk). Binh Phuoc là một trong những tỉnh có diện tích cao su lớn nhất cả nước.</p></div>
+        <div class="blk val rv l d2"><h3><i>★</i>Value to Vietnam</h3><p>Việt Nam thuộc nhóm các nước sản xuất và xuất khẩu cao su thiên nhiên hàng đầu thế giới. Rubber cho thu nhập quanh năm, tạo việc làm ở nông trường và hộ gia đình, đồng thời cung cấp nguyên liệu cho ngành lốp xe, găng tay, gỗ cao su.</p></div>
       </div>
       <figure class="ph rv u" style="margin:0" data-art="rubber">
-        <img src="/static/img/cao-su.jpg" alt="Rừng cao su và công nhân cạo mủ" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
+        <img src="/static/img/cao-su.jpg" alt="Rubber plantation and a worker tapping rubber trees" loading="lazy" onload="this.classList.add('ld')" onerror="this.remove()">
         <svg viewBox="0 0 400 500" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
           <defs><linearGradient id="rg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e9f3dc"/><stop offset="1" stop-color="#7aa65a"/></linearGradient></defs>
           <rect width="400" height="500" fill="url(#rg)"/>
@@ -345,15 +345,15 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
           <path d="M160 250 q-10 40 6 70" stroke="#fff" stroke-width="5" fill="none"/>
           <path d="M150 322h28l-4 22h-20z" fill="#f2f2f2"/>
         </svg>
-        <span class="lab">Cao su · Đông Nam Bộ &amp; Tây Nguyên</span>
+        <span class="lab">Rubber · Đông Nam Bộ &amp; Central Highlands</span>
       </figure>
       <div>
-        <div class="blk hard rv r d1"><h3><i>!</i>Khó khăn về độ ẩm và mưa</h3><ul>
-          <li>Mưa nhiều làm cây ướt, không cạo mủ được; mủ bị rửa trôi, mất nhiều ngày thu hoạch.</li>
-          <li>Ẩm độ cao và mưa kéo dài tạo điều kiện cho bệnh nấm: phấn trắng, rụng lá, nấm hồng, làm giảm sản lượng.</li>
-          <li>Mùa khô thiếu nước, cây giảm mủ, dễ bị cháy cây và cháy vườn.</li>
-          <li>Bão, gió lớn trong mùa mưa làm cây gãy đổ.</li></ul></div>
-        <p class="mute rv r d2" style="font-size:14px;color:var(--mute);margin:0 4px">EcoPulse giúp nhìn trước đất đang khô hay ẩm để cân nhắc lịch cạo mủ, phòng bệnh, chống hạn.</p>
+        <div class="blk hard rv r d1"><h3><i>!</i>Challenges Related to Soil Moisture and Rainfall</h3><ul>
+          <li>Heavy rain leaves trees too wet for tapping, washes away latex, and can lead to several lost harvesting days.</li>
+          <li>High humidity and prolonged rainfall encourage fungal diseases such as powdery mildew, leaf fall, and pink disease, reducing production.</li>
+          <li>Water shortages during the dry season reduce latex production and increase the risk of tree and plantation fires.</li>
+          <li>Storms and strong winds during the rainy season can break or uproot trees.</li></ul></div>
+        <p class="mute rv r d2" style="font-size:14px;color:var(--mute);margin:0 4px">EcoPulse helps users monitor whether the soil is dry or wet so they can plan tapping schedules, prevent disease, and prepare for drought.</p>
       </div>
     </div>
   </div>
@@ -361,11 +361,11 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 
 <!-- 5. KÊU GỌI -->
 <section class="cta">
-  <h2 class="rv u">Sẵn sàng xem vườn của bạn từ vệ tinh?</h2>
-  <p class="rv u d1">Nông dân đăng ký là dùng ngay. Hợp tác xã cần quản trị viên duyệt hồ sơ.</p>
-  <a class="enter rv u d2" href="/app">Vào trang web · Đăng nhập / Đăng ký ›</a>
+  <h2 class="rv u">Ready to View Your Farm from Space?</h2>
+  <p class="rv u d1">Farmers can start using the platform after registering. Cooperative accounts require administrator approval.</p>
+  <a class="enter rv u d2" href="/app">Open the Platform · Log In / Sign Up ›</a>
 </section>
-<footer>EcoPulse · Dữ liệu NISAR đang hiệu chuẩn, thông tin chỉ mang tính tham khảo.</footer>
+<footer>EcoPulse · NISAR data are still being calibrated; the information is for reference only.</footer>
 
 <script>
 /* ===== hiệu ứng trượt vào khi cuộn ===== */
@@ -413,7 +413,7 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
   addEventListener("resize", () => { hh(); frame(); }); hh(); frame();
 })();
 
-/* ===== quả địa cầu thật: ảnh vệ tinh Esri, không tự quay; cuộn trang để bay về Tây Nguyên ===== */
+/* ===== quả địa cầu thật: ảnh vệ tinh Esri, không tự quay; cuộn trang để bay về Central Highlands ===== */
 (function () {
   const sec = document.getElementById("globe-sec"), nogl = document.getElementById("nogl");
   // chỉ tải MapLibre (~800KB) + khởi tạo khi người dùng sắp cuộn tới, để không tranh băng thông với ảnh đầu trang
@@ -456,9 +456,9 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
 
   // vị trí các vùng trồng (điểm đại diện)
   const pins = [
-    {t: "Cà phê · Buôn Ma Thuột", c: "#d6342c", ll: [108.04, 12.67]},
-    {t: "Sầu riêng · Lâm Đồng, Đắk Nông", c: "#c9d34a", ll: [107.75, 11.75]},
-    {t: "Cao su · Bình Phước", c: "#ffffff", ll: [106.9, 11.55]}
+    {t: "Coffee · Buôn Ma Thuột", c: "#d6342c", ll: [108.04, 12.67]},
+    {t: "Durian · Lâm Đồng, Đắk Nông", c: "#c9d34a", ll: [107.75, 11.75]},
+    {t: "Rubber · Binh Phuoc", c: "#ffffff", ll: [106.9, 11.55]}
   ];
   const pinEls = pins.map(p => {
     const el = document.createElement("div"); el.className = "pin"; el.style.opacity = 0; el.style.transition = "opacity .5s";
@@ -471,10 +471,10 @@ footer{padding:20px;text-align:center;font-size:13px;color:var(--mute)}
   const ease = t => t * t * (3 - 2 * t), lerp = (a, b, t) => a + (b - a) * t;
   const gh = document.getElementById("gh"), gp = document.getElementById("gp"), bar = document.getElementById("gprog");
   const STAGE = [
-    [0.00, "Hành tinh của chúng ta", "Nơi sự sống được khơi nguồn một cách kỳ diệu từ những hạt mầm bé nhỏ"],
-    [0.30, "Châu Á – Thái Bình Dương", "Việt Nam nằm ở rìa Biển Đông, khí hậu nhiệt đới gió mùa."],
-    [0.62, "Tây Nguyên và Đông Nam Bộ", "Đất đỏ bazan, mùa mưa và mùa khô rõ rệt."],
-    [0.88, "Vùng cà phê, sầu riêng, cao su", "Nơi độ ẩm đất quyết định mùa vụ."]
+    [0.00, "Our Planet", "A remarkable place where life begins with the smallest seeds"],
+    [0.30, "Asia–Pacific", "Vietnam lies along the edge of the East Sea and has a tropical monsoon climate."],
+    [0.62, "The Central Highlands and Southeast Vietnam", "Basalt-rich soils, with distinct rainy and dry seasons."],
+    [0.88, "Coffee, Durian, and Rubber-Growing Regions", "Where soil moisture shapes the growing season."]
   ];
   const reduce = matchMedia("(prefers-reduced-motion:reduce)").matches;
   let target = 0, cur = 0, raf = 0;
