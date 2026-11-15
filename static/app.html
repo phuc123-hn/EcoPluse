@@ -282,9 +282,9 @@ api("/geo/provinces").then(L=>$("provs").innerHTML=L.map(x=>`<option value="${es
 $("out").onclick=async()=>{await api("/auth/logout","POST");location.reload()};
 
 /* ---------- khung chính ---------- */
-const NAV={farmer:[["home","Tổng quan"],["map","Bản đồ"],["plots","Thửa của tôi"],["inbox","Thông báo"],["chat","Hộp thoại"],["know","Kiến thức"]],
-  admin_ward:[["home","Tổng quan"],["map","Bản đồ"],["users","Nông dân"],["inbox","Thông báo"],["chat","Hộp thoại"],["audit","Nhật ký"],["know","Kiến thức"]],
-  admin_province:[["home","Tổng quan"],["map","Bản đồ"],["users","Người dùng"],["inbox","Thông báo"],["chat","Hộp thoại"],["know","Xét duyệt bài"],["audit","Nhật ký"]]};
+const NAV={farmer:[["home","Tổng quan"],["map","Bản đồ"],["land","Thích nghi đất"],["plots","Thửa của tôi"],["inbox","Thông báo"],["chat","Hộp thoại"],["know","Kiến thức"]],
+  admin_ward:[["home","Tổng quan"],["map","Bản đồ"],["land","Thích nghi đất"],["users","Nông dân"],["inbox","Thông báo"],["chat","Hộp thoại"],["audit","Nhật ký"],["know","Kiến thức"]],
+  admin_province:[["home","Tổng quan"],["map","Bản đồ"],["land","Thích nghi đất"],["users","Người dùng"],["inbox","Thông báo"],["chat","Hộp thoại"],["know","Xét duyệt bài"],["audit","Nhật ký"]]};
 const LIMNAV=[["plots","Thửa của tôi"]];
 function limBar(){const b=$("lim");if(!me.limited){b.classList.add("hide");return}
   b.classList.remove("hide");
@@ -300,8 +300,9 @@ async function boot(){try{me=await api("/me")}catch{return}
 setInterval(async()=>{if(me&&!document.hidden){try{me=await api("/me");badges()}catch{}}},45000);
 const stopPoll=()=>{clearInterval(poll);poll=null};
 async function show(k){tab=k;stopPoll();[...$("nav").children].forEach(b=>b.classList.toggle("on",b.dataset.k===k));const v=$("view"),pane=v.parentElement;
-  v.classList.toggle("full",k==="map");v.classList.remove("chat-layout","wide","wide2");pane.classList.remove("chat-pane");
+  v.classList.toggle("full",k==="map"||k==="land");v.classList.remove("chat-layout","wide","wide2");pane.classList.remove("chat-pane");
   if(k==="map"){v.innerHTML='<iframe src="/map" title="Bản đồ độ ẩm đất"></iframe>';return}
+  if(k==="land"){v.innerHTML='<iframe src="/dat" title="Thích nghi đất đai"></iframe>';return}
   v.classList.remove("fx");v.innerHTML='<p class="mute">Đang tải…</p>';try{const html=await V[k]();v.classList.toggle("fx",!window.__quiet);window.__quiet=0;v.innerHTML=html;
   [...v.children].forEach((el,i)=>el.style.setProperty("--i",Math.min(i,5)));
   v.querySelectorAll(".stats,.plg,.nwg,#clist,.tiles").forEach(c=>[...c.children].forEach((el,i)=>el.style.setProperty("--i",Math.min(i,9))));if(k==="chat"&&chatPeer){v.classList.add("chat-layout");pane.classList.add("chat-pane")}bind(k)}catch(e){v.innerHTML=`<p class="err">${esc(e.message)}</p>`}}
