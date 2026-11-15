@@ -1,0 +1,1213 @@
+{
+ "ten": "Thích nghi đất đai: cà phê vối, cao su, sầu riêng",
+ "phuong_phap": "Si = Σ Wi·Xi (GIS + AHP, thang 3–9). Phân hạng: 7–9 S1, 6–7 S2, 5–6 S3, dưới 5 N",
+ "cay": {
+  "ca_phe_voi": "Cà phê vối",
+  "cao_su": "Cao su",
+  "sau_rieng": "Sầu riêng"
+ },
+ "phan_hang": [
+  {
+   "ma": "S1",
+   "ten": "Rất thích hợp",
+   "tu": 7,
+   "mau": "#1a9850"
+  },
+  {
+   "ma": "S2",
+   "ten": "Thích hợp trung bình",
+   "tu": 6,
+   "mau": "#91cf60"
+  },
+  {
+   "ma": "S3",
+   "ten": "Ít thích hợp",
+   "tu": 5,
+   "mau": "#fee08b"
+  },
+  {
+   "ma": "N",
+   "ten": "Không thích hợp",
+   "tu": null,
+   "mau": "#d73027"
+  }
+ ],
+ "trong_so": {},
+ "trong_so_ghi_chu": "Chưa có ma trận AHP: để trống thì các tiêu chí dùng trọng số bằng nhau (tạm). Điền dạng {\"ca_phe_voi\":{\"swi\":0.2,...}} khi có AHP.",
+ "lop_nhom": {
+  "tuoi": [
+   {
+    "code": 1,
+    "label": "Chủ động",
+    "color": "#2c7fb8"
+   },
+   {
+    "code": 2,
+    "label": "Bán chủ động",
+    "color": "#7fcdbb"
+   },
+   {
+    "code": 3,
+    "label": "Khó khăn / không tưới",
+    "color": "#edf8b1"
+   }
+  ],
+  "ngap": [
+   {
+    "code": 0,
+    "label": "Không ngập",
+    "color": "#e5f5e0"
+   },
+   {
+    "code": 1,
+    "label": "Có ngập",
+    "color": "#3182bd"
+   }
+  ]
+ },
+ "tieu_chi": {
+  "kho_han": {
+   "name": "Số tháng khô hạn trong năm",
+   "layer": "kho_han",
+   "type": "numeric",
+   "unit": "tháng",
+   "note": "Cà phê vối, cao su: TCVN 8409:2010 (trích trong khóa luận ĐH Nông Lâm TP.HCM 2016). Sầu riêng: NHÁP; cây ra hoa vào mùa khô nên chịu khô ngắn, nhưng chưa có ngưỡng chuẩn.",
+   "classes": [
+    {
+     "label": "< 2 tháng",
+     "min": null,
+     "max": 2,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nguon_thu_cap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "2 – 3 tháng",
+     "min": 2,
+     "max": 3,
+     "min_incl": 1,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nguon_thu_cap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "> 3 – 4 tháng",
+     "min": 3,
+     "max": 4,
+     "min_incl": 0,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nguon_thu_cap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "> 4 tháng",
+     "min": 4,
+     "max": null,
+     "min_incl": 0,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "N",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "N",
+       "status": "nguon_thu_cap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "tuoi": {
+   "name": "Khả năng tưới",
+   "layer": "tuoi",
+   "type": "category",
+   "unit": "",
+   "note": "Cà phê vối: TCVN 8409:2010 Bảng 2 (bán chủ động ghi ở cả S2 và S3, ở đây lấy S2). Cao su: TCVN không có tiêu chí tưới. Sầu riêng: NHÁP; QĐ 34/2025 Tiền Giang nêu cần tưới mùa khô.",
+   "classes": [
+    {
+     "label": "Chủ động",
+     "code": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": null,
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "Bán chủ động",
+     "code": 2,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": null,
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "Khó khăn / không tưới",
+     "code": 3,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "N",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": null,
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "ngap": {
+   "name": "Ngập úng",
+   "layer": "ngap",
+   "type": "category",
+   "unit": "",
+   "note": "Cà phê vối, cao su: TCVN 8409:2010 (không ngập = S1–S3, mọi mức ngập khác = N). Sầu riêng: NHÁP; QĐ 34/2025 Tiền Giang yêu cầu thoát nước tốt, không ngập úng.",
+   "classes": [
+    {
+     "label": "Không ngập",
+     "code": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nguon_thu_cap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "Có ngập (mọi mức)",
+     "code": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "N",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "N",
+       "status": "nguon_thu_cap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "do_am_kk": {
+   "name": "Độ ẩm không khí trung bình năm",
+   "layer": "do_am_kk",
+   "type": "numeric",
+   "unit": "%",
+   "note": "75–85%: Kon Tum Bảng 3.11 xếp S1 cho cà phê và cao su. Các khoảng còn lại NHÁP dựa mô tả cà phê 70–85% và cao su >75% (Nguyễn Minh Tuệ & Lê Thông 2013, trích trong khóa luận). Sầu riêng: NHÁP.",
+   "classes": [
+    {
+     "label": "< 70 %",
+     "min": null,
+     "max": 70,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "70 – 75 %",
+     "min": 70,
+     "max": 75,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "75 – 85 %",
+     "min": 75,
+     "max": 85,
+     "min_incl": 1,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nguon_thu_cap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nguon_thu_cap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "> 85 %",
+     "min": 85,
+     "max": null,
+     "min_incl": 0,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "swi": {
+   "name": "Độ ẩm đất vùng rễ (SWI, NISAR)",
+   "layer": "swi",
+   "type": "numeric",
+   "unit": "m³/m³",
+   "note": "Điểm NHÁP: chưa có thang chuẩn theo từng cây, chuyên gia phải xác nhận. Mức theo 5 mức độ ẩm của hệ thống.",
+   "classes": [
+    {
+     "label": "Rất khô",
+     "min": null,
+     "max": 0.1,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "Khô vừa",
+     "min": 0.1,
+     "max": 0.2,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "Lý tưởng",
+     "min": 0.2,
+     "max": 0.35,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "Ẩm ướt",
+     "min": 0.35,
+     "max": 0.4,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "Quá ẩm / thừa nước",
+     "min": 0.4,
+     "max": null,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "loai_dat": {
+   "name": "Loại đất",
+   "layer": "loai_dat",
+   "type": "category",
+   "unit": "",
+   "note": "Chờ bảng điểm Xi và ma trận AHP (8 tiêu chí chính).",
+   "classes": []
+  },
+  "do_day": {
+   "name": "Độ dày tầng đất (độ cắm rễ)",
+   "layer": "do_day",
+   "type": "numeric",
+   "unit": "cm",
+   "note": "Chờ bảng điểm Xi và ma trận AHP (8 tiêu chí chính).",
+   "classes": []
+  },
+  "co_gioi": {
+   "name": "Thành phần cơ giới",
+   "layer": "co_gioi",
+   "type": "category",
+   "unit": "",
+   "note": "Chờ bảng điểm Xi và ma trận AHP (8 tiêu chí chính).",
+   "classes": []
+  },
+  "ph": {
+   "name": "Độ pH đất",
+   "layer": "ph",
+   "type": "numeric",
+   "unit": "",
+   "note": "Điểm NHÁP (ngưỡng tham khảo chung), chuyên gia cần xác nhận / đối chiếu TCVN.",
+   "classes": [
+    {
+     "label": "< 4,0",
+     "min": null,
+     "max": 4.0,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "4,0 – 4,5",
+     "min": 4.0,
+     "max": 4.5,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "4,5 – 5,0",
+     "min": 4.5,
+     "max": 5.0,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "5,0 – 6,5",
+     "min": 5.0,
+     "max": 6.5,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "6,5 – 7,5",
+     "min": 6.5,
+     "max": 7.5,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "> 7,5",
+     "min": 7.5,
+     "max": null,
+     "min_incl": 1,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "do_cao": {
+   "name": "Độ cao",
+   "layer": "do_cao",
+   "type": "numeric",
+   "unit": "m",
+   "note": "Điểm NHÁP (ngưỡng tham khảo chung), chuyên gia cần xác nhận / đối chiếu TCVN.",
+   "classes": [
+    {
+     "label": "< 300 m",
+     "min": null,
+     "max": 300,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "300 – 600 m",
+     "min": 300,
+     "max": 600,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "600 – 800 m",
+     "min": 600,
+     "max": 800,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "800 – 1000 m",
+     "min": 800,
+     "max": 1000,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "1000 – 1500 m",
+     "min": 1000,
+     "max": 1500,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "> 1500 m",
+     "min": 1500,
+     "max": null,
+     "min_incl": 1,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "do_doc": {
+   "name": "Độ dốc",
+   "layer": "do_doc",
+   "type": "numeric",
+   "unit": "độ",
+   "note": "Điểm NHÁP (ngưỡng tham khảo chung), chuyên gia cần xác nhận / đối chiếu TCVN.",
+   "classes": [
+    {
+     "label": "< 8°",
+     "min": null,
+     "max": 8,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "8 – 15°",
+     "min": 8,
+     "max": 15,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "15 – 25°",
+     "min": 15,
+     "max": 25,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "> 25°",
+     "min": 25,
+     "max": null,
+     "min_incl": 1,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "carbon": {
+   "name": "Carbon hữu cơ",
+   "layer": "carbon",
+   "type": "numeric",
+   "unit": "g/kg",
+   "note": "Điểm NHÁP (ngưỡng tham khảo chung), chuyên gia cần xác nhận / đối chiếu TCVN.",
+   "classes": [
+    {
+     "label": "< 10 g/kg",
+     "min": null,
+     "max": 10,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "10 – 15 g/kg",
+     "min": 10,
+     "max": 15,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "15 – 25 g/kg",
+     "min": 15,
+     "max": 25,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "> 25 g/kg",
+     "min": 25,
+     "max": null,
+     "min_incl": 1,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  },
+  "mua": {
+   "name": "Lượng mưa năm",
+   "layer": "mua",
+   "type": "numeric",
+   "unit": "mm",
+   "note": "Điểm NHÁP (ngưỡng tham khảo chung), chuyên gia cần xác nhận / đối chiếu TCVN.",
+   "classes": [
+    {
+     "label": "< 1000 mm",
+     "min": null,
+     "max": 1000,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 3,
+       "level": "N",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "1000 – 1500 mm",
+     "min": 1000,
+     "max": 1500,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "1500 – 2000 mm",
+     "min": 1500,
+     "max": 2000,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "2000 – 2500 mm",
+     "min": 2000,
+     "max": 2500,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "2500 – 3500 mm",
+     "min": 2500,
+     "max": 3500,
+     "min_incl": 1,
+     "max_incl": 0,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 9,
+       "level": "S1",
+       "status": "nhap"
+      }
+     }
+    },
+    {
+     "label": "> 3500 mm",
+     "min": 3500,
+     "max": null,
+     "min_incl": 1,
+     "max_incl": 1,
+     "scores": {
+      "ca_phe_voi": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "cao_su": {
+       "score": 5,
+       "level": "S3",
+       "status": "nhap"
+      },
+      "sau_rieng": {
+       "score": 7,
+       "level": "S2",
+       "status": "nhap"
+      }
+     }
+    }
+   ]
+  }
+ }
+}
