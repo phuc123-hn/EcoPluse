@@ -13,6 +13,41 @@ CACHE.mkdir(exist_ok=True)
 AOI = (106.0, 11.0, 109.0, 15.6)
 RES = 0.0015  # độ/pixel (~165 m)
 
+_SC_T = re.compile(r"_(\d{8}T\d{6})_\d{8}T")
+_scn = {"t": 0.0, "v": []}
+_bnd = {}
+
+
+def soil_scenes():
+    """[(stem, "YYYYmmddTHHMMSS")] các cảnh độ ẩm đất đã xử lý, MỚI NHẤT TRƯỚC.
+    Nhớ 30 giây để mỗi thửa / mỗi lượt gọi không phải quét lại thư mục cache (trước đây tổng quan 600 thửa quét 600 lần)."""
+    now = time.time()
+    if now - _scn["t"] > 30:
+        out = []
+        for j in CACHE.glob("*__soil.json"):
+            m = _SC_T.search(j.name)
+            if m:
+                out.append((j.stem, m.group(1)))
+        out.sort(key=lambda x: x[1], reverse=True)
+        _scn.update(t=now, v=out)
+    return _scn["v"]
+
+
+def _bounds(key):
+    """Khung bản đồ của một cảnh, nhớ theo thời điểm sửa file để khỏi đọc lại JSON ở mỗi lần hỏi giá trị."""
+    j = CACHE / f"{key}.json"
+    try:
+        mt = j.stat().st_mtime_ns
+    except OSError:
+        return None
+    hit = _bnd.get(key)
+    if hit and hit[0] == mt:
+        return hit[1]
+    b = json.loads(j.read_text())["bounds"]
+    _bnd[key] = (mt, b)
+    return b
+
+
 VERSION = 3  # tăng số này khi đổi cách tô màu/phân loại để cảnh cũ trong cache được xử lý lại
 
 # Phân loại độ ẩm đất theo ngưỡng của nhóm (m³/m³). MỌI ngưỡng, màu và lời khuyên nằm ở đây, sửa 1 chỗ.
@@ -143,6 +178,7 @@ def process(h5path, key, layer):
             "png": f"/tiles/{key}.png", "hist": hist, "v": VERSION,
             "legend": {k: v for k, v in L.items() if k != "level"}}
     (CACHE / f"{key}.json").write_text(json.dumps(meta))
+    _scn["t"] = 0.0          # cảnh mới xong: lần hỏi sau thấy ngay
     return meta
 
 
@@ -274,11 +310,10 @@ def _run(key, fid, url, layer):
 def value(key, lng, lat):
     if not SAFE_KEY.fullmatch(key or ""):
         return None
-    j = CACHE / f"{key}.json"
-    if not j.exists():
+    b = _bounds(key)
+    if b is None:
         return None
-    m = json.loads(j.read_text())
-    w, s, e, n = m["bounds"]
+    w, s, e, n = b
     arr = np.load(CACHE / f"{key}.npy", mmap_mode="r")
     c, r = int((lng - w) / RES), int((n - lat) / RES)
     if not (0 <= r < arr.shape[0] and 0 <= c < arr.shape[1]) or not np.isfinite(arr[r, c]):

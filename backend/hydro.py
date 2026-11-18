@@ -18,7 +18,7 @@ from dotenv import load_dotenv
 from fastapi import APIRouter, Depends, HTTPException, Request, Response
 from pydantic import BaseModel, Field
 
-from . import render
+from . import openmeteo, render
 
 load_dotenv()   # phải nạp .env TRƯỚC khi đọc HN_DB, HN_ADMIN_*, SMTP_* bên dưới
 
@@ -716,9 +716,9 @@ SCENE_T = re.compile(r"_(\d{8}T\d{6})_\d{8}T")
 
 
 def status_of(lon, lat):
-    for j in sorted(render.CACHE.glob("*__soil.json"), key=lambda p: SCENE_T.search(p.name).group(1) if SCENE_T.search(p.name) else "", reverse=True):
+    for stem, t in render.soil_scenes():          # đã sắp mới nhất trước, nhớ 30 giây
         try:
-            v = render.value(j.stem, lon, lat)
+            v = render.value(stem, lon, lat)
         except Exception:
             continue
         if v is not None:
@@ -726,7 +726,6 @@ def status_of(lon, lat):
             cidx = lambda x: next((k for k, c in enumerate(cls) if c["max"] is None or x < c["max"]), len(cls) - 1)
             i, lo_i, hi_i = cidx(v), cidx(v - unc), cidx(v + unc)
             c = cls[i]
-            t = SCENE_T.search(j.name).group(1)
             return {"value": v, "idx": i, "name": c["name"], "act": c["action"], "state": c["state"], "do": [c["todo"], c["tip"]], "color": c["color"],
                     "unc": unc, "near": [cls[lo_i]["name"], cls[hi_i]["name"]] if lo_i != hi_i else None,
                     "scene_time": datetime.strptime(t, "%Y%m%dT%H%M%S").replace(tzinfo=timezone.utc).isoformat()}
@@ -742,22 +741,22 @@ _wx = {}
 
 
 def weather_at(lat, lon):
-    key = (round(lat, 2), round(lon, 2))
-    hit = _wx.get(key)
-    if hit and time.time() - hit[0] < 30 * 60:
-        return hit[1]
-    r = httpx.get("https://api.open-meteo.com/v1/forecast", timeout=15, params={
-        "latitude": key[0], "longitude": key[1], "timezone": "Asia/Bangkok", "forecast_days": 3,
-        "current": "temperature_2m,relative_humidity_2m",
-        "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max"})
-    r.raise_for_status()
-    js = r.json()
-    d, cur = js.get("daily") or {}, js.get("current") or {}
-    days = [{"date": d["time"][i], "tmax": d["temperature_2m_max"][i], "tmin": d["temperature_2m_min"][i],
-             "rain": d["precipitation_sum"][i] or 0, "prob": (d.get("precipitation_probability_max") or [None] * 9)[i]} for i in range(len(d.get("time") or []))]
-    out = {"now": cur.get("temperature_2m"), "rh": cur.get("relative_humidity_2m"), "days": days}
-    _wx[key] = (time.time(), out)
-    return out
+    """Thời tiết 3 ngày tại một điểm. Lưới mô hình khoảng 10 km nên làm tròn 0,1° là đủ: nhiều thửa gần nhau dùng chung một lần gọi.
+    Có bản đã lưu (kể cả cũ) thì trả ngay và làm mới ở nền; lần đầu chỉ chờ tối đa vài giây rồi báo lỗi (nơi gọi đã bắt lỗi)."""
+    key = (round(lat, 1), round(lon, 1))
+
+    def fetch():
+        with httpx.Client(timeout=15) as cl:
+            js = openmeteo.get(cl, "https://api.open-meteo.com/v1/forecast", {
+                "latitude": key[0], "longitude": key[1], "timezone": "Asia/Bangkok", "forecast_days": 3,
+                "current": "temperature_2m,relative_humidity_2m",
+                "daily": "temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max"}, max_wait=5)
+        d, cur = js.get("daily") or {}, js.get("current") or {}
+        days = [{"date": d["time"][i], "tmax": d["temperature_2m_max"][i], "tmin": d["temperature_2m_min"][i],
+                 "rain": d["precipitation_sum"][i] or 0, "prob": (d.get("precipitation_probability_max") or [None] * 9)[i]} for i in range(len(d.get("time") or []))]
+        return {"now": cur.get("temperature_2m"), "rh": cur.get("relative_humidity_2m"), "days": days}
+
+    return openmeteo.swr(f"at:{key[0]}:{key[1]}", 60 * 60, fetch, wait_first=12)[0]
 
 
 def crop_of(crop):
@@ -1252,24 +1251,22 @@ _hist = {}
 def plot_history(pid: int, u=Depends(user)):
     """7 ngày gần nhất: nhiệt độ + mưa (Open-Meteo, dữ liệu mô hình) và độ ẩm đất từ các ảnh NISAR đã xử lý."""
     p = own_plot(pid, u)
-    key = (round(p["lat"], 2), round(p["lon"], 2))
-    hit = _hist.get(key)
-    if not hit or time.time() - hit[0] > 30 * 60:
-        days = []
-        try:
-            r = httpx.get("https://api.open-meteo.com/v1/forecast", timeout=15, params={
+    key = (round(p["lat"], 1), round(p["lon"], 1))
+
+    def fetch():
+        with httpx.Client(timeout=15) as cl:
+            js = openmeteo.get(cl, "https://api.open-meteo.com/v1/forecast", {
                 "latitude": key[0], "longitude": key[1], "timezone": "Asia/Bangkok", "past_days": 7, "forecast_days": 1,
-                "daily": "temperature_2m_mean,temperature_2m_max,temperature_2m_min,precipitation_sum"})
-            r.raise_for_status()
-            d = r.json().get("daily") or {}
-            days = [{"date": d["time"][i], "tmean": d["temperature_2m_mean"][i], "tmax": d["temperature_2m_max"][i],
-                     "tmin": d["temperature_2m_min"][i], "rain": d["precipitation_sum"][i] or 0}
-                    for i in range(len(d.get("time") or []))][:7]       # bỏ hôm nay (chưa trọn ngày)
-            _hist[key] = (time.time(), days)
-        except Exception:
-            days = hit[1] if hit else []
-    else:
-        days = hit[1]
+                "daily": "temperature_2m_mean,temperature_2m_max,temperature_2m_min,precipitation_sum"}, max_wait=5)
+        d = js.get("daily") or {}
+        return [{"date": d["time"][i], "tmean": d["temperature_2m_mean"][i], "tmax": d["temperature_2m_max"][i],
+                 "tmin": d["temperature_2m_min"][i], "rain": d["precipitation_sum"][i] or 0}
+                for i in range(len(d.get("time") or []))][:7]       # bỏ hôm nay (chưa trọn ngày)
+
+    try:
+        days = openmeteo.swr(f"hist:{key[0]}:{key[1]}", 60 * 60, fetch, wait_first=12)[0]
+    except Exception:
+        days = []
     soil = []
     for j in render.CACHE.glob("*__soil.json"):
         m = SCENE_T.search(j.name)

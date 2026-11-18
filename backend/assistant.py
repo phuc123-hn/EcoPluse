@@ -121,7 +121,10 @@ def t_soil(lon, lat):
 def t_weather(lon, lat):
     lon, lat = _ll(lon, lat)
     w = hydro.weather_at(lat, lon)
-    return {"now_c": w["now"], "humidity_pct": w["rh"], "rain_3days_mm": w["rain"]["total"], "temp_range_c": w["temp"]["range"],
+    lo = [d["tmin"] for d in w["days"] if d.get("tmin") is not None]
+    hi = [d["tmax"] for d in w["days"] if d.get("tmax") is not None]
+    return {"now_c": w["now"], "humidity_pct": w["rh"], "rain_3days_mm": round(sum(d["rain"] for d in w["days"]), 1),
+            "temp_range_c": [min(lo), max(hi)] if lo and hi else None,
             "days": [{"date": d["date"], "rain_mm": d["rain"], "rain_prob_pct": d.get("prob")} for d in w["days"]]}
 
 

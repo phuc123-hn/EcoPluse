@@ -5,7 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Bản đồ NISAR – Tây Nguyên & Bình Phước</title>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;600;700&display=swap" rel="stylesheet">
-<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
 <style>
   :root{--ink:#16262b;--mute:#5d6f74;--paper:#f2f5f4;--line:#d5dddb;--asc:#0e8a7d;--bad:#b3261e}
   *{box-sizing:border-box}
@@ -166,9 +167,6 @@
   #status.busy,#wxStatus.busy{position:relative;overflow:hidden}
   #status.busy::after,#wxStatus.busy::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:40%;background:linear-gradient(90deg,transparent,var(--asc),transparent);animation:busy 1.1s ease-in-out infinite}
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
-/* google translate: ẩn thanh và tooltip của Google */
-.skiptranslate iframe,.goog-te-banner-frame{display:none!important}body{top:0!important}.goog-tooltip,.goog-te-balloon-frame{display:none!important}.goog-text-highlight{background:none!important;box-shadow:none!important}
-.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,.VIpgJd-ZVi9od-aZ2wEe-OiiCO,.VIpgJd-ZVi9od-aZ2wEe,.VIpgJd-ZVi9od-ORHb-OEVmcd,.VIpgJd-ZVi9od-l4eHX-hSRGPd,#goog-gt-tt,.goog-te-spinner-pos,.goog-te-gadget-icon,body>.skiptranslate{display:none!important;visibility:hidden!important}
 </style>
 </head>
 <body>
@@ -277,12 +275,7 @@
   </div>
 </div>
 
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
-<div id="google_translate_element" style="display:none"></div>
-<script>
-function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'vi',includedLanguages:'en',autoDisplay:false},'google_translate_element')}
-</script>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "—").replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -982,13 +975,65 @@ $("rvr").onclick = async () => {
     } catch (e) { provFs = null; $("wxStatus").className = "err"; $("wxStatus").textContent = "Không tải được ranh giới tỉnh (" + e.message + "), đang hiện cả khung."; }
   }
 
+  // ---- Open-Meteo gọi THẲNG từ trình duyệt ----
+  // Hạn mức của Open-Meteo tính theo IP. Gọi từ máy chủ Render miễn phí thì dùng chung IP với nhiều app khác nên hay bị 429 -> 502.
+  // Gọi từ trình duyệt thì mỗi người dùng có hạn mức riêng. Bản lưu trong localStorage (2 giờ / 6 giờ); lỗi mới nhờ máy chủ.
+  const OW = {grid: {bbox: [105.8, 10.3, 109.6, 15.7], nx: 16, ny: 22, ttl: 2 * 3600e3}, sea: {bbox: [105.0, 8.0, 113.0, 16.4], nx: 21, ny: 22, ttl: 6 * 3600e3}};   // trùng với weather.py
+  const owPts = g => { const [w, s, e, n] = g.bbox, out = []; for (let j = 0; j < g.ny; j++) for (let i = 0; i < g.nx; i++) out.push([+(s + (n - s) * j / (g.ny - 1)).toFixed(3), +(w + (e - w) * i / (g.nx - 1)).toFixed(3)]); return out; };
+  const owGet = k => { try { const o = JSON.parse(localStorage.getItem(k)); return o && o.data ? o : null; } catch { return null; } };
+  const owSet = (k, data) => { try { localStorage.setItem(k, JSON.stringify({t: Date.now(), data})); } catch {} };
+  const owCall = async (url, p) => { const r = await fetch(url + "?" + new URLSearchParams(p)); if (!r.ok) { const e = new Error("Open-Meteo " + r.status); e.status = r.status; throw e; } const j = await r.json(); return Array.isArray(j) ? j : [j]; };
+  const owLL = part => ({latitude: part.map(p => p[0]).join(","), longitude: part.map(p => p[1]).join(",")});
+  async function owGrid() {
+    const g = OW.grid, pts = owPts(g), parts = [], out = [];
+    for (let k = 0; k < pts.length; k += 40) parts.push(pts.slice(k, k + 40));
+    const res = [];
+    for (let k = 0; k < parts.length; k += 3)   // 3 nhóm song song cho nhanh; tổng cộng ~9 lượt gọi, mỗi lượt 40 điểm
+      res.push(...await Promise.all(parts.slice(k, k + 3).map(part => owCall("https://api.open-meteo.com/v1/forecast", {...owLL(part),
+        current: "temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,weather_code", daily: "precipitation_sum", past_days: 1, forecast_days: 2, timezone: "Asia/Bangkok"}))));
+    parts.forEach((part, k) => part.forEach(([la, lo], i) => { const it = res[k][i] || {}, cur = it.current || {}, day = it.daily || {};
+      out.push({lat: la, lon: lo, t: cur.temperature_2m, rh: cur.relative_humidity_2m, ws: cur.wind_speed_10m, wd: cur.wind_direction_10m, wc: cur.weather_code, r: day.precipitation_sum}); }));
+    const f = res[0][0] || {};
+    return {updated: Date.now() / 1000, obs_time: (f.current || {}).time, days: (f.daily || {}).time, bbox: g.bbox, nx: g.nx, ny: g.ny, points: out};
+  }
+  async function owSea() {
+    const g = OW.sea, pts = owPts(g), out = [], url = "https://marine-api.open-meteo.com/v1/marine"; let obs = null, budget = 60;
+    const call = part => owCall(url, {...owLL(part), current: "ocean_current_velocity,ocean_current_direction", timezone: "Asia/Bangkok"});
+    for (let k = 0; k < pts.length; k += 40) {
+      const part = pts.slice(k, k + 40); let js;
+      try { js = await call(part); }
+      catch (e) {   // một điểm trên đất liền có thể làm lỗi cả nhóm: thử từng điểm (có giới hạn số lần)
+        if (e.status === 429) throw e;
+        js = [];
+        for (const p of part) { if (budget-- <= 0) { js.push({}); continue; } try { js.push((await call([p]))[0] || {}); } catch (e2) { if (e2.status === 429) throw e2; js.push({}); } }
+      }
+      part.forEach(([la, lo], i) => { const cur = (js[i] || {}).current || {}, v = cur.ocean_current_velocity, d = cur.ocean_current_direction; obs = obs || cur.time;
+        if (v == null || d == null) out.push({lat: la, lon: lo, u: null, v: null});
+        else { const rad = d * Math.PI / 180; out.push({lat: la, lon: lo, u: +(v * Math.sin(rad)).toFixed(3), v: +(v * Math.cos(rad)).toFixed(3)}); } });
+    }
+    if (!out.some(p => p.u != null)) throw new Error("Marine API không trả giá trị hải lưu nào");
+    return {updated: Date.now() / 1000, obs_time: obs, bbox: g.bbox, nx: g.nx, ny: g.ny, unit: "km/h", points: out};
+  }
+  async function owServer(path, refresh) {   // phương án dự phòng: nhờ máy chủ (máy chủ giờ trả ngay bản đã lưu, không chờ Open-Meteo)
+    const r = await fetch(path + (refresh ? "?refresh=1" : "")), j = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "Lỗi " + r.status);
+    return j;
+  }
+  async function owLoad(kind, refresh, direct, path) {
+    const key = "ow_" + kind + "_v1", c = owGet(key);
+    if (c && Date.now() - c.t < (refresh ? 300e3 : OW[kind].ttl)) return c.data;   // làm mới tay chỉ có hiệu lực nếu bản đã lưu quá 5 phút
+    try { const d = await direct(); owSet(key, d); return d; }
+    catch (e1) {
+      try { return await owServer(path, refresh); }
+      catch (e2) { if (c) return {...c.data, stale: true}; throw e2; }
+    }
+  }
+
   async function load(refresh) {
     const st = $("wxStatus"); st.className = ""; st.textContent = "Đang tải dữ liệu thời tiết…";
     if (!provFs) await prep();
     try {
-      const r = await fetch("/api/weather/grid" + (refresh ? "?refresh=1" : ""));
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "Lỗi " + r.status);
+      const j = await owLoad("grid", refresh, owGrid, "/api/weather/grid");
       if (!j.nx) { j.nx = new Set(j.points.map(p => p.lon)).size; j.ny = j.points.length / j.nx; }
       data = j; draw();
       st.textContent = (j.obs_time ? "Dữ liệu mô hình lúc " + j.obs_time.replace("T", " ") + " (giờ VN) · " : "") + "tải về lúc " + fmt(j.updated * 1000) + " · Open-Meteo.com (CC BY 4.0), không phải số đo trạm" + (j.stale ? " (đang dùng dữ liệu cũ, nguồn tạm lỗi)" : "") + (provFs ? "" : " · chưa có ranh giới tỉnh, đang hiện cả khung");
@@ -1209,6 +1254,12 @@ $("rvr").onclick = async () => {
     addEventListener("resize", () => mode === "wx" && start());
     return {start, stop, tone};
   })();
+  // app.html giữ trang này sống khi người dùng chuyển tab: được báo ẩn/hiện để dừng/chạy lại hoạt ảnh canvas (khỏi tốn CPU lúc đang ở tab khác)
+  addEventListener("message", e => {
+    if (e.origin !== location.origin || !e.data || typeof e.data.hnVisible !== "boolean") return;
+    if (e.data.hnVisible) { if (typeof map !== "undefined" && map && map.resize) map.resize(); if (mode === "wx") FX.start(); }
+    else FX.stop();
+  });
 
   // ---- hải lưu thật từ Open-Meteo Marine (backend /api/weather/sea); nút "Hiện hải lưu" ----
   const COMPASS = ["Bắc", "Đông Bắc", "Đông", "Đông Nam", "Nam", "Tây Nam", "Tây", "Tây Bắc"];
@@ -1223,9 +1274,7 @@ $("rvr").onclick = async () => {
     const st = $("wxStatus"), b = $("wxSea");
     b.disabled = true; b.textContent = "Đang tải hải lưu…";
     try {
-      const r = await fetch("/api/weather/sea" + (refresh ? "?refresh=1" : ""));
-      const j = await r.json().catch(() => ({}));
-      if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "Lỗi " + r.status);
+      const j = await owLoad("sea", refresh, owSea, "/api/weather/sea");
       sea = j; seaOn = true;
       $("wxSeaInfo").textContent = "Hải lưu: Open-Meteo Marine (mô hình SMOC của Météo-France, khoảng 8 km, cập nhật mỗi ngày" + (j.obs_time ? ", dữ liệu lúc " + j.obs_time.replace("T", " ") + " giờ VN" : "") + (j.stale ? ", đang dùng dữ liệu cũ" : "") + "). Hạt trôi theo vận tốc dòng chảy thật; xanh lam là chậm, vàng là nhanh. Chỉ hiện nơi có số liệu, không dùng để dẫn đường ven bờ. Bấm lên biển để xem vận tốc và hướng.";
     } catch (e) { seaOn = false; st.className = "err"; st.textContent = "Hải lưu: " + e.message; }

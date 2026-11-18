@@ -10,6 +10,7 @@ import httpx
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException
 from . import assistant, boundaries, hydro, render, rivers, security, suitability, swi, weather
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -23,8 +24,19 @@ ALLOWED_HOST = "https://nisar.asf.earthdatacloud.nasa.gov/"
 CACHE_TTL = 15 * 60  # giây
 _cache: dict = {}
 
+class SmartGZip(GZipMiddleware):
+    """Nén gzip cho HTML/JS/JSON (app.html 115 KB còn khoảng 25 KB, rất đáng kể trên mạng di động vùng sâu).
+    Bỏ qua ảnh PNG: đã nén sẵn, nén lại chỉ tốn CPU của máy chủ miễn phí."""
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] == "http" and scope["path"].startswith(("/tiles/", "/static/img/")):
+            return await self.app(scope, receive, send)
+        await super().__call__(scope, receive, send)
+
+
 # PRODUCTION=1 thì tắt trang tài liệu API công khai (/docs, /redoc, /openapi.json)
 app = FastAPI(title="EcoPulse", **(dict(docs_url=None, redoc_url=None, openapi_url=None) if os.getenv("PRODUCTION") else {}))
+app.add_middleware(SmartGZip, minimum_size=1024)
 app.include_router(hydro.router)
 app.include_router(boundaries.router)
 app.include_router(rivers.router)

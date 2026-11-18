@@ -35,6 +35,16 @@ async def _security_headers_middleware(request: Any, call_next: Any) -> Any:
     if request.url.path == "/auth/name-free":
         response.headers["Cache-Control"] = "no-store"
 
+    # Cache policy for static map images. Names starting with land_/layer_/swi_ contain a content hash or data
+    # version, so a given name never changes and can be cached for a year; other tiles are re-checked every 5 min.
+    path = request.url.path
+    if "cache-control" not in response.headers:
+        if path.startswith("/tiles/"):
+            hashed = path.rsplit("/", 1)[-1].startswith(("land_", "layer_", "swi_"))
+            response.headers["Cache-Control"] = "public, max-age=31536000, immutable" if hashed else "public, max-age=300"
+        elif path.startswith("/static/img/"):
+            response.headers["Cache-Control"] = "public, max-age=86400"
+
     return response
 
 

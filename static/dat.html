@@ -4,8 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Thích nghi đất đai</title>
-<link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
-<script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+<link href="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
 <style>
 :root{--bg:#fff;--ink:#1d2b24;--mute:#62736a;--line:#dfe6e1;--g:#2e7d4f;--gl:#e8f3ec;--warn:#b26a00;--warnbg:#fff4e0;--bad:#b3261e}
 @media(prefers-color-scheme:dark){:root{--bg:#131c18;--ink:#e6efe9;--mute:#9db0a6;--line:#27342d;--g:#5fb883;--gl:#1d2a23;--warn:#f0b35a;--warnbg:#33290f;--bad:#ff8a80}}
@@ -31,7 +32,7 @@ button{border:1px solid var(--line);background:var(--gl);border-radius:8px;paddi
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"}[c]));
 async function api(u) { const r = await fetch(u), j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(typeof j.detail === "string" ? j.detail : "Lỗi " + r.status); return j; }
-let CFG, map, key = "", crop = "ca_phe_voi", sel = new Set(), open = new Set(), on = {}, RES = null, busy = "", err = "";
+let CFG, map, key = "", crop = "ca_phe_voi", sel = new Set(), open = new Set(), on = {}, RES = null, busy = "", err = "", lbusy = new Set();
 const ready = () => map.isStyleLoaded() ? Promise.resolve() : new Promise(r => map.once("load", r));
 
 async function overlay(id, png, b, op) {
@@ -60,7 +61,7 @@ function crit(c) {
   const ok = c.has_data && c.has_table, tags = (!c.has_table ? '<span class="tag w">chờ bảng điểm</span> ' : "") + (!c.has_data ? '<span class="tag w">chưa có dữ liệu</span> ' : "");
   const lay = on[c.id], isOpen = open.has(c.id);
   return `<div class="crit ${ok ? "" : "off"}"><label><input type="checkbox" data-sel="${c.id}" ${sel.has(c.id) ? "checked" : ""} ${ok ? "" : "disabled"}><span>${esc(c.name)} ${c.unit ? '<span class="mute">(' + esc(c.unit) + ")</span>" : ""}<br>${tags}</span></label>
-  <div class="row" style="margin-top:6px"><button data-lay="${c.id}" ${c.has_data ? "" : "disabled"}>${lay ? "Ẩn lớp" : "Hiện lớp"}</button><button data-det="${c.id}">${isOpen ? "Ẩn mục lục" : "Mục lục"}</button></div>
+  <div class="row" style="margin-top:6px"><button data-lay="${c.id}" ${c.has_data && !lbusy.has(c.id) ? "" : "disabled"}>${lbusy.has(c.id) ? "Đang tạo lớp…" : lay ? "Ẩn lớp" : "Hiện lớp"}</button><button data-det="${c.id}">${isOpen ? "Ẩn mục lục" : "Mục lục"}</button></div>
   ${isOpen ? `<div class="det">${lay ? legend(lay.legend) + (lay.info ? `<p class="mute">${esc(lay.info)}</p>` : "") : ""}<p class="mute"><b>Thang điểm của ${esc(CFG.cay[crop])}</b></p>${groups(c)}${c.note ? `<p class="mute">${esc(c.note)}</p>` : ""}</div>` : ""}</div>`;
 }
 function result() {
@@ -91,7 +92,12 @@ document.addEventListener("click", async e => {
     if (d.all !== undefined) { sel = new Set(d.all === "1" ? usable() : []); view(); return; }
     if (d.det) { open.has(d.det) ? open.delete(d.det) : open.add(d.det); if (open.has(d.det) && !on[d.det] && CFG.tieu_chi.find(c => c.id === d.det).has_data) { /* mục lục hiện chú giải khi bật lớp */ } view(); return; }
     if (d.lay) {
-      if (on[d.lay]) { drop("lay_" + d.lay); delete on[d.lay]; } else { const m = await api(`/api/land/layer?id=${d.lay}&crop=${crop}`); await overlay("lay_" + d.lay, m.png, m.bounds, .8); on[d.lay] = m; open.add(d.lay); }
+      if (on[d.lay]) { drop("lay_" + d.lay); delete on[d.lay]; }
+      else {
+        lbusy.add(d.lay); view();   // báo "Đang tạo lớp…" ngay: lần đầu máy chủ phải vẽ lớp, các lần sau lấy từ bản đã lưu
+        try { const m = await api(`/api/land/layer?id=${d.lay}&crop=${crop}`); await overlay("lay_" + d.lay, m.png, m.bounds, .8); on[d.lay] = m; open.add(d.lay); }
+        finally { lbusy.delete(d.lay); }
+      }
       view(); return;
     }
     if (t.id === "go") {

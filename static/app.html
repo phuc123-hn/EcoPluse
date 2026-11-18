@@ -222,20 +222,16 @@ nav button:hover:not(.on){transform:translateX(4px)}
 #botb{animation:ringBot 2.8s ease-out 1s 4}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 /* google translate: ẩn thanh và tooltip của Google */
-.skiptranslate iframe,.goog-te-banner-frame{display:none!important}body{top:0!important}.goog-tooltip,.goog-te-balloon-frame{display:none!important}.goog-text-highlight{background:none!important;box-shadow:none!important}
-.VIpgJd-ZVi9od-aZ2wEe-wOHMyf,.VIpgJd-ZVi9od-aZ2wEe-OiiCO,.VIpgJd-ZVi9od-aZ2wEe,.VIpgJd-ZVi9od-ORHb-OEVmcd,.VIpgJd-ZVi9od-l4eHX-hSRGPd,#goog-gt-tt,.goog-te-spinner-pos,.goog-te-gadget-icon,body>.skiptranslate{display:none!important;visibility:hidden!important}
-</style><script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" defer></script>
+/* ===== bản vá hiệu năng: bớt hiệu ứng nặng (animation box-shadow lặp vô hạn, so le từng phần tử, vẽ nét biểu đồ) ===== */
+header,nav:not(.hide) button,#box>*,.hc polyline,.hc rect,.hc circle,#view.fx :is(.stats,.plg,.nwg,#clist,.tiles)>*,.on-dot,.dot:not(.hide),#botb{animation:none!important}
+#view.fx>*:not(iframe){animation:fadeIn .15s ease both!important;animation-delay:0s!important}
+</style>
 </head><body>
-<header><div class="logo" style="cursor:pointer" title="Trang giới thiệu" onclick="location.href='/'"><img src="/static/img/logo.png" alt="EcoPulse" width="38" height="38" style="flex:none;width:38px;height:38px;object-fit:cover;clip-path:circle(46.5%)"><span class="notranslate" translate="no">Eco<b>Pulse</b></span></div><div id="who" hidden><span class="who-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/></svg></span><span class="who-details"><span class="who-name" id="whoName"></span><span class="who-role" id="whoRole"></span></span></div><button class="lang-toggle notranslate" id="lng" type="button" title="Đổi ngôn ngữ"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 4 6 4 9s-1 6-4 9c-3-3-4-6-4-9s1-6 4-9Z"/></svg><span id="lngLabel"></span></button><button class="theme-toggle" id="thm" type="button" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối" aria-pressed="false"><span class="theme-track" aria-hidden="true"></span><span class="theme-knob" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#55B9D2"/><path d="M5 8.2 8.2 7l1.2 1.3-.8 2.1 1.6 1.1-.4 2.2-2.2.8-.5 3.1A9 9 0 0 1 5 8.2Zm7.8-6.1 2.4 1.1-.2 2 2.1.8 2.6-.6a9 9 0 0 1 .8 8.1l-2.1-.2-1.6-2.2-2.4-.2-1.5-2.2.8-2.1-1.6-1.3.7-3.2Z" fill="#2F9E5A"/></svg></span></button><button class="s r hide" id="out">Thoát</button></header>
+<header><div class="logo" style="cursor:pointer" title="Trang giới thiệu" onclick="location.href='/'"><img src="/static/img/logo.png" alt="EcoPulse" width="38" height="38" style="flex:none;width:38px;height:38px;object-fit:cover;clip-path:circle(46.5%)"><span class="notranslate" translate="no">Eco<b>Pulse</b></span></div><div id="who" hidden><span class="who-avatar" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="8" r="3.5"/><path d="M5 20c0-4 3-6.5 7-6.5s7 2.5 7 6.5"/></svg></span><span class="who-details"><span class="who-name" id="whoName"></span><span class="who-role" id="whoRole"></span></span></div><button class="theme-toggle" id="thm" type="button" title="Đổi giao diện sáng/tối" aria-label="Đổi giao diện sáng/tối" aria-pressed="false"><span class="theme-track" aria-hidden="true"></span><span class="theme-knob" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="10" fill="#55B9D2"/><path d="M5 8.2 8.2 7l1.2 1.3-.8 2.1 1.6 1.1-.4 2.2-2.2.8-.5 3.1A9 9 0 0 1 5 8.2Zm7.8-6.1 2.4 1.1-.2 2 2.1.8 2.6-.6a9 9 0 0 1 .8 8.1l-2.1-.2-1.6-2.2-2.4-.2-1.5-2.2.8-2.1-1.6-1.3.7-3.2Z" fill="#2F9E5A"/></svg></span></button><button class="s r hide" id="out">Thoát</button></header>
 <div class="shell"><nav id="nav" class="hide"></nav><div class="pane">
 <main id="auth" class="auth"><div class="tabs"><button id="t1" class="on">Đăng nhập</button><button id="t2">Đăng ký</button></div><div class="card" id="box"></div><datalist id="provs"></datalist></main>
 <div id="lim" class="card hide" style="margin:10px 0"></div>
-<main id="view" class="hide"></main></div></div>
-<div id="google_translate_element" style="display:none"></div>
-<script>
-function googleTranslateElementInit(){new google.translate.TranslateElement({pageLanguage:'vi',includedLanguages:'en',autoDisplay:false},'google_translate_element')}
-</script>
-<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+<main id="view" class="hide"></main><main id="frames" class="full hide"></main></div></div>
 <script>
 const $=id=>document.getElementById(id),esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 let me,tab,plotSel=null,chatPeer=null,chatFarmPlot=null,prefill="",annTab="in",usrQ="",poll=null,curMsgs=[],am="login",pend=null,loginLaunch=false;
@@ -299,11 +295,15 @@ async function boot(){try{me=await api("/me")}catch{return}
   $("nav").onclick=e=>{const k=e.target.closest("button")?.dataset.k;if(!k)return;if(k==="plots")plotSel=null;if(k==="chat")chatPeer=null;if(k==="know"){kArt=null;kTopic=null;kPv=null;kF=null;kAi=null;kMode=me.role==="farmer"?"lib":"mng"}show(k)};limBar();show(me.limited?"plots":"home")}
 setInterval(async()=>{if(me&&!document.hidden){try{me=await api("/me");badges()}catch{}}},45000);
 const stopPoll=()=>{clearInterval(poll);poll=null};
+const FRM={map:["/map","Bản đồ độ ẩm đất"],land:["/dat","Thích nghi đất đai"]};
+function showFrame(k){const fr=$("frames");let f=fr.querySelector(`[data-f="${k}"]`);
+  if(!f){f=document.createElement("iframe");f.dataset.f=k;f.src=FRM[k][0];f.title=FRM[k][1];fr.appendChild(f)}
+  $("view").classList.add("hide");fr.classList.remove("hide");
+  fr.querySelectorAll("iframe").forEach(x=>{const on=x===f;x.hidden=!on;try{x.contentWindow.postMessage({hnVisible:on},location.origin)}catch{}})}
 async function show(k){tab=k;stopPoll();[...$("nav").children].forEach(b=>b.classList.toggle("on",b.dataset.k===k));const v=$("view"),pane=v.parentElement;
   v.classList.toggle("full",k==="map"||k==="land");v.classList.remove("chat-layout","wide","wide2");pane.classList.remove("chat-pane");
-  if(k==="map"){v.innerHTML='<iframe src="/map" title="Bản đồ độ ẩm đất"></iframe>';return}
-  if(k==="land"){v.innerHTML='<iframe src="/dat" title="Thích nghi đất đai"></iframe>';return}
-  v.classList.remove("fx");v.innerHTML='<p class="mute">Đang tải…</p>';try{const html=await V[k]();v.classList.toggle("fx",!window.__quiet);window.__quiet=0;v.innerHTML=html;
+  if(k==="map"||k==="land"){showFrame(k);return}
+  $("frames").classList.add("hide");v.classList.remove("hide");v.classList.remove("fx");v.innerHTML='<p class="mute">Đang tải…</p>';try{const html=await V[k]();v.classList.toggle("fx",!window.__quiet);window.__quiet=0;v.innerHTML=html;
   [...v.children].forEach((el,i)=>el.style.setProperty("--i",Math.min(i,5)));
   v.querySelectorAll(".stats,.plg,.nwg,#clist,.tiles").forEach(c=>[...c.children].forEach((el,i)=>el.style.setProperty("--i",Math.min(i,9))));if(k==="chat"&&chatPeer){v.classList.add("chat-layout");pane.classList.add("chat-pane")}bind(k)}catch(e){v.innerHTML=`<p class="err">${esc(e.message)}</p>`}}
 const re=async()=>{me=await api("/me");badges();window.__quiet=1;return show(tab)};
@@ -547,7 +547,11 @@ function mascot(){
  const launch=loginLaunch;loginLaunch=false;
  if(innerWidth<700)return;
  const hidP=!!localStorage.getItem("bacHide"),quiet=hidP||(!launch&&!!sessionStorage.getItem("bacDone")&&!/[?&]bac/.test(location.search));
- let n=0;const iv=setInterval(()=>{if(window.THREE){clearInterval(iv);try{go()}catch(e){console.error("Bác Nông không tải được:",e);document.body.classList.remove("has-bac");["bac","bach","bacb","bacx"].forEach(i=>{const el=$(i);el&&el.remove()})}}else if(++n>60)clearInterval(iv)},200);
+ const fail=e=>{console.error("Bác Nông không tải được:",e);document.body.classList.remove("has-bac");["bac","bach","bacb","bacx"].forEach(i=>{const el=$(i);el&&el.remove()})};
+ const run=()=>{try{go()}catch(e){fail(e)}};
+ /* three.js (~600 KB) chỉ nạp lúc trình duyệt rảnh, sau khi trang đã vẽ xong */
+ const load3=()=>{if(window.THREE)return run();const s=document.createElement("script");s.src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";s.onload=run;s.onerror=()=>fail(new Error("không nạp được three.js"));document.head.appendChild(s)};
+ window.requestIdleCallback?requestIdleCallback(load3,{timeout:5000}):setTimeout(load3,2000);
  function go(){
   const W=105,H=136,cv=document.createElement("canvas"),bub=document.createElement("div"),hit=document.createElement("div"),bx=document.createElement("div");cv.id="bac";bub.id="bacb";hit.id="bach";bx.id="bacx";bx.textContent="Ẩn";bx.title="Ẩn bác Nông";cv.width=W*2;cv.height=H*2;Object.assign(cv.style,{width:W+"px",height:H+"px"});Object.assign(hit.style,{width:"58px",height:"110px"});document.body.append(cv,hit,bub,bx);hit.title="Bấm để hỏi bác Nông, kéo để đổi chỗ";hit.setAttribute("role","button");hit.setAttribute("aria-label",hit.title);hit.tabIndex=0;
   const R=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});R.setSize(W*2,H*2,false);
@@ -650,8 +654,8 @@ function bind(k){if(!LIM())mkBot();const v=$("view"),on=(id,f)=>$(id)&&($(id).on
     on("send",send);$("mtext").focus();
     on("bgbtn",()=>$("bgrow").classList.toggle("hide"));
     v.querySelectorAll("[data-bg]").forEach(b=>b.onclick=()=>{const n=b.dataset.bg;st.set("hn_chatbg",n);$("thr").style.cssText=bgCss(n);v.querySelectorAll("[data-bg]").forEach(x=>x.classList.toggle("on",x===b))});$("mtext").onkeydown=e=>{if(e.key==="Enter"){e.preventDefault();send()}};
-    poll=setInterval(async()=>{try{const r=await api("/chat/"+chatPeer);if(r.messages.length!==curMsgs.length)redraw(r)}catch{}},5000)}
-  else if(k==="chat")poll=setInterval(()=>{if(tab==="chat"&&!chatPeer&&!($("cfind")&&$("cfind").value)&&document.activeElement?.tagName!=="INPUT"){window.__quiet=1;show("chat")}},10000);
+    poll=setInterval(async()=>{if(document.hidden)return;try{const r=await api("/chat/"+chatPeer);if(r.messages.length!==curMsgs.length)redraw(r)}catch{}},8000)}
+  else if(k==="chat")poll=setInterval(()=>{if(!document.hidden&&tab==="chat"&&!chatPeer&&!($("cfind")&&$("cfind").value)&&document.activeElement?.tagName!=="INPUT"){window.__quiet=1;show("chat")}},15000);
   /* thông báo */
   v.querySelectorAll("[data-at]").forEach(b=>b.onclick=()=>{annTab=b.dataset.at;show("inbox")});
   on("annsend",()=>act(async()=>{const r=await api("/admin/announce","POST",{title:$("at").value,body:$("ab").value,ward_key:$("aw")?$("aw").value:""});alert("Đã gửi tới "+r.sent+" người")}));
@@ -666,11 +670,6 @@ const st={get:k=>{try{return localStorage.getItem(k)}catch{return null}},set:(k,
 let theme=st.get("hn_theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light");
 function applyTheme(){document.documentElement.dataset.theme=theme;$("thm").setAttribute("aria-pressed",String(theme==="dark"))}
 $("thm").onclick=()=>{theme=theme==="dark"?"light":"dark";st.set("hn_theme",theme);applyTheme()};
-/* Nút EN/VI: Google Website Translator (cookie googtrans). Tải lại trang để bản đồ trong iframe cũng đổi theo */
-const gtOn=()=>/googtrans=\/vi\/en/.test(document.cookie);
-$("lngLabel").textContent=gtOn()?"VI":"EN";$("lng").setAttribute("aria-label",gtOn()?"Chuyển sang tiếng Việt":"Switch to English");$("thm").classList.add("notranslate");
-$("lng").onclick=()=>{const on=gtOn(),val=on?"":"/vi/en",ex=on?"; expires=Thu, 01 Jan 1970 00:00:00 GMT":"";
-  document.cookie="googtrans="+val+ex+"; path=/";document.cookie="googtrans="+val+ex+"; path=/; domain="+location.hostname;location.reload()};
 applyTheme();drawAuth();
 boot();
 </script></body></html>

@@ -10,6 +10,7 @@ Chỉ đọc lớp bản đồ và cấu hình, không chạm dữ liệu ngư�
 import hashlib
 import json
 import os
+import threading
 from pathlib import Path
 
 import numpy as np
@@ -24,7 +25,10 @@ LAYERS = hydro.DB.parent / "layers"
 LAYERS.mkdir(parents=True, exist_ok=True)
 CFG_FILE = Path(os.getenv("SUIT_CONFIG") or Path(__file__).with_name("suitability_config.json"))
 RAMP = [(0, "#2c7bb6"), (.25, "#abd9e9"), (.5, "#ffffbf"), (.75, "#fdae61"), (1, "#d7191c")]
-_cfg, _swi = {"m": 0, "d": None}, {"k": None, "g": None}
+_cfg = {"m": 0, "d": None}
+STEP = max(1, int(os.getenv("DISPLAY_STEP") or 2))     # ảnh phủ chỉ cần ~330 m/điểm: lấy mỗi 2 ô, nhỏ hơn 4 lần. Đặt DISPLAY_STEP=1 nếu muốn nét tối đa
+BLK = 512                                                # tính theo từng khối 512 hàng thay vì cả 2000x3067 ô cùng lúc (đỉnh RAM giảm từ ~250 MB xuống ~40 MB)
+_gen = threading.RLock()                                 # mỗi lúc chỉ một việc nặng (tính chỉ số, vẽ lớp); người đến sau dùng luôn kết quả của người trước
 
 
 def cfg():
@@ -34,18 +38,39 @@ def cfg():
     return _cfg["d"]
 
 
+def save_palette_png(path, idx, pal):
+    """PNG dạng bảng màu (chỉ số 0 = trong suốt). So với RGBA đầy đủ: nhẹ hơn chục lần, lưu nhanh hơn chục lần.
+    Ghi qua file tạm rồi đổi tên để không ai tải trúng file dở."""
+    from PIL import Image
+    im = Image.fromarray(np.ascontiguousarray(idx))
+    im.putpalette(np.asarray(pal, np.uint8).ravel().tolist())
+    tmp = path.with_name(path.name + ".tmp")
+    im.save(tmp, format="PNG", transparency=0, compress_level=3)
+    os.replace(tmp, path)
+
+
+def layer_exists(lid):
+    """Kiểm tra rẻ lớp có dữ liệu hay chưa (không đọc mảng, không kích hoạt tính SWI)."""
+    return bool(swi_mod.scenes()) if lid == "swi" else (LAYERS / f"{lid}.npy").exists()
+
+
 def swi_grid():
     meta = swi_mod.compute(30.0)
-    if _swi["k"] == meta["key"]:
-        return _swi["g"]
-    a, b = np.load(render.CACHE / f"swi_{meta['key']}.npy", mmap_mode="r"), meta["bounds"]
-    g = np.full((H, W), np.nan, np.float32)
-    r0, c0 = int(round((AOI[3] - b[3]) / RES)), int(round((b[0] - AOI[0]) / RES))
-    rs, cs, re, ce = max(0, r0), max(0, c0), min(H, r0 + a.shape[0]), min(W, c0 + a.shape[1])
-    if re > rs and ce > cs:
-        g[rs:re, cs:ce] = a[rs - r0:re - r0, cs - c0:ce - c0]
-    _swi.update(k=meta["key"], g=g)
-    return g
+    f = render.CACHE / f"swigrid_{meta['key']}.npy"
+    if not f.exists():
+        with _gen:
+            if not f.exists():
+                a, b = np.load(render.CACHE / f"swi_{meta['key']}.npy", mmap_mode="r"), meta["bounds"]
+                g = np.full((H, W), np.nan, np.float32)
+                r0, c0 = int(round((AOI[3] - b[3]) / RES)), int(round((b[0] - AOI[0]) / RES))
+                rs, cs, re, ce = max(0, r0), max(0, c0), min(H, r0 + a.shape[0]), min(W, c0 + a.shape[1])
+                if re > rs and ce > cs:
+                    g[rs:re, cs:ce] = a[rs - r0:re - r0, cs - c0:ce - c0]
+                tmp = f.with_name(f"swigrid_{meta['key']}.tmp.npy")
+                np.save(tmp, g)
+                os.replace(tmp, f)
+                del g
+    return np.load(f, mmap_mode="r")          # đọc trực tiếp từ đĩa, không giữ 24 MB trong RAM
 
 
 def layer_array(lid):
@@ -142,43 +167,53 @@ def hex_rgb(h):
 
 
 def compute(crop, sel=None, min_frac=0.5):
-    from PIL import Image
     C = cfg()
     use, missing, no_table = plan(crop, sel)
     if not use:
         raise HTTPException(404, "Chưa có lớp dữ liệu nào để tính. Thiếu lớp: " + (", ".join(missing) or "-") + "; chưa có bảng điểm: " + (", ".join(no_table) or "-"))
     w, wstat = weights_for(crop, use)
-    key = hashlib.md5(json.dumps([crop, use, w, [layer_version(C["tieu_chi"][i]["layer"]) for i in use], _cfg["m"]]).encode()).hexdigest()[:12]
+    key = hashlib.md5(json.dumps([crop, use, w, [layer_version(C["tieu_chi"][i]["layer"]) for i in use], _cfg["m"], STEP]).encode()).hexdigest()[:12]
     jf = render.CACHE / f"land_{key}.json"
     if jf.exists():
         return json.loads(jf.read_text())
-    num, den = np.zeros((H, W), np.float32), np.zeros((H, W), np.float32)
-    for i in use:
-        cr = C["tieu_chi"][i]
-        x = score_raster(cr, crop, layer_array(cr["layer"]))
-        m = np.isfinite(x)
-        num[m] += x[m] * w[i]
-        den[m] += w[i]
-        del x, m
-    si = np.where(den >= min_frac, num / np.maximum(den, 1e-9), np.nan).astype(np.float32)
-    k = classify(si)
-    img = np.zeros((H, W, 4), np.uint8)
-    for j, p in enumerate(C["phan_hang"]):
-        img[k == j, :3] = hex_rgb(p["mau"])
-    img[..., 3] = np.where(k < 255, 215, 0)
-    Image.fromarray(img, "RGBA").save(render.CACHE / f"land_{key}.png")
-    lat = AOI[3] - (np.arange(H) + .5) * RES
-    cell = (RES * 111.32) ** 2 * np.cos(np.radians(lat))                  # km² mỗi ô theo từng hàng
-    area = [float(((k == j).sum(axis=1) * cell).sum()) for j in range(4)]
-    tot = sum(area) or 1.0
-    meta = {"status": "done", "key": key, "crop": crop, "bounds": list(AOI), "png": f"/tiles/land_{key}.png", "area_km2": [round(a, 1) for a in area],
-            "frac": [round(a / tot, 4) for a in area], "mean_si": float(np.nanmean(si)) if np.isfinite(si).any() else None, "weights_status": wstat,
-            "used": [{"id": i, "name": C["tieu_chi"][i]["name"], "w": round(w[i], 4)} for i in use],
-            "missing_layers": [{"id": i, "name": C["tieu_chi"][i]["name"]} for i in missing], "no_table": [{"id": i, "name": C["tieu_chi"][i]["name"]} for i in no_table],
-            "draft": sorted({i for i in use for c in C["tieu_chi"][i]["classes"] if (c["scores"].get(crop) or {}).get("status") == "nhap"}),
-            "legend": C["phan_hang"]}
-    jf.write_text(json.dumps(meta))
-    return meta
+    with _gen:
+        if jf.exists():                       # người khác vừa tính xong đúng yêu cầu này
+            return json.loads(jf.read_text())
+        k = np.full((H, W), 255, np.uint8)
+        tot, cnt = 0.0, 0
+        for r0 in range(0, H, BLK):           # từng khối hàng: RAM nhỏ, và các phép tính vẫn dùng numpy nguyên khối
+            r1 = min(H, r0 + BLK)
+            num, den = np.zeros((r1 - r0, W), np.float32), np.zeros((r1 - r0, W), np.float32)
+            for i in use:
+                a = layer_array(C["tieu_chi"][i]["layer"])     # mở rồi bỏ ngay sau khối này, để các trang file mmap không dồn lại trong RAM
+                x = score_raster(C["tieu_chi"][i], crop, a[r0:r1]) if a is not None else None
+                del a
+                if x is None:
+                    continue
+                m = np.isfinite(x)
+                num[m] += x[m] * w[i]
+                den[m] += w[i]
+            si = np.where(den >= min_frac, num / np.maximum(den, 1e-9), np.nan).astype(np.float32)
+            k[r0:r1] = classify(si)
+            v = np.isfinite(si)
+            tot += float(si[v].sum(dtype=np.float64))
+            cnt += int(v.sum())
+        pal = np.zeros((256, 3), np.uint8)
+        for j, p in enumerate(C["phan_hang"]):
+            pal[j + 1] = hex_rgb(p["mau"])
+        save_palette_png(render.CACHE / f"land_{key}.png", np.where(k < 255, k + 1, 0).astype(np.uint8)[::STEP, ::STEP], pal)
+        lat = AOI[3] - (np.arange(H) + .5) * RES
+        cell = (RES * 111.32) ** 2 * np.cos(np.radians(lat))                  # km² mỗi ô theo từng hàng
+        area = [float(((k == j).sum(axis=1) * cell).sum()) for j in range(4)]
+        tt = sum(area) or 1.0
+        meta = {"status": "done", "key": key, "crop": crop, "bounds": list(AOI), "png": f"/tiles/land_{key}.png", "area_km2": [round(a, 1) for a in area],
+                "frac": [round(a / tt, 4) for a in area], "mean_si": (tot / cnt) if cnt else None, "weights_status": wstat,
+                "used": [{"id": i, "name": C["tieu_chi"][i]["name"], "w": round(w[i], 4)} for i in use],
+                "missing_layers": [{"id": i, "name": C["tieu_chi"][i]["name"]} for i in missing], "no_table": [{"id": i, "name": C["tieu_chi"][i]["name"]} for i in no_table],
+                "draft": sorted({i for i in use for c in C["tieu_chi"][i]["classes"] if (c["scores"].get(crop) or {}).get("status") == "nhap"}),
+                "legend": C["phan_hang"]}
+        jf.write_text(json.dumps(meta))
+        return meta
 
 
 def point(crop, lng, lat, sel=None):
@@ -207,9 +242,34 @@ def point(crop, lng, lat, sel=None):
     return {"si": None if si is None else round(si, 2), "hang": cls and {"ma": cls["ma"], "ten": cls["ten"]}, "weights_status": wstat, "rows": rows}
 
 
+def paint_layer(cr, lid, a, png):
+    """Vẽ lớp thành PNG bảng màu (lấy mỗi STEP ô) và trả về chú giải."""
+    d = np.asarray(a[::STEP, ::STEP])
+    ok = np.isfinite(d)
+    pal = np.zeros((256, 3), np.uint8)
+    if cr["type"] == "category":
+        cats = cfg().get("lop_nhom", {}).get(lid, [])
+        idx = np.zeros(d.shape, np.uint8)
+        for n, c in enumerate(cats[:255], 1):
+            idx[d == c["code"]] = n
+            pal[n] = hex_rgb(c["color"])
+        legend = {"type": "category", "items": cats}
+    else:
+        s = np.asarray(a[::10, ::10])
+        lo, hi = (np.nanpercentile(s, [2, 98]) if np.isfinite(s).any() else (0.0, 1.0))
+        t = np.clip((np.nan_to_num(d) - lo) / max(hi - lo, 1e-9), 0, 1)
+        idx = (t * 254).astype(np.uint8) + 1                 # 1..255; 0 dành cho ô không có dữ liệu (trong suốt)
+        idx[~ok] = 0
+        xp = np.linspace(0, 1, 255)
+        for ch in range(3):
+            pal[1:, ch] = np.interp(xp, [p[0] for p in RAMP], [hex_rgb(p[1])[ch] for p in RAMP])
+        legend = {"type": "numeric", "min": float(lo), "max": float(hi), "stops": [p[1] for p in RAMP]}
+    save_palette_png(png, idx, pal)
+    return legend
+
+
 def layer_png(lid, crop=None):
     """Ảnh phủ riêng của một lớp + chú giải + bảng điểm (mục lục riêng của từng đặc tính)."""
-    from PIL import Image
     C = cfg()
     cr = C["tieu_chi"].get(lid)
     if not cr:
@@ -219,30 +279,18 @@ def layer_png(lid, crop=None):
     if lid == "swi":
         m = swi_mod.compute(30.0)
         return {**out, "png": m["png"], "bounds": m["bounds"], "legend": m["legend"], "info": f"Cập nhật: {m['last_ict']} (UTC+7), {m['scenes']} cảnh"}
-    a = layer_array(lid)
-    if a is None:
+    if not layer_exists(lid):
         raise HTTPException(404, "Chưa có dữ liệu cho lớp này")
-    ver = layer_version(lid)
-    png = render.CACHE / f"layer_{lid}_{ver}.png"
-    img = np.zeros((H, W, 4), np.uint8)
-    ok = np.isfinite(a)
-    if cr["type"] == "category":
-        cats = C.get("lop_nhom", {}).get(lid, [])
-        for c in cats:
-            img[np.asarray(a) == c["code"], :3] = hex_rgb(c["color"])
-        out["legend"] = {"type": "category", "items": cats}
-    else:
-        s = np.asarray(a[::10, ::10])
-        lo, hi = (np.nanpercentile(s, [2, 98]) if np.isfinite(s).any() else (0, 1))
-        t = np.clip((np.nan_to_num(np.asarray(a)) - lo) / max(hi - lo, 1e-9), 0, 1)
-        xs = [p[0] for p in RAMP]
-        for ch in range(3):
-            img[..., ch] = np.interp(t, xs, [hex_rgb(p[1])[ch] for p in RAMP])
-        out["legend"] = {"type": "numeric", "min": float(lo), "max": float(hi), "stops": [p[1] for p in RAMP]}
-    img[..., 3] = np.where(ok, 205, 0)
-    if not png.exists():
-        Image.fromarray(img, "RGBA").save(png)
-    return {**out, "png": f"/tiles/{png.name}", "bounds": list(AOI)}
+    stem = f"layer_{lid}_{layer_version(lid)}_s{STEP}_c{int(_cfg['m'])}"      # đổi file dữ liệu / đổi cấu hình / đổi STEP thì tự vẽ lại
+    png, js = render.CACHE / f"{stem}.png", render.CACHE / f"{stem}.json"
+    if not (png.exists() and js.exists()):          # trước đây: lần nào bấm cũng tô lại toàn bộ 6 triệu ô rồi mới nhận ra ảnh đã có
+        with _gen:
+            if not (png.exists() and js.exists()):
+                a = layer_array(lid)
+                if a is None:
+                    raise HTTPException(404, "Chưa có dữ liệu cho lớp này")
+                js.write_text(json.dumps(paint_layer(cr, lid, a, png)))
+    return {**out, "legend": json.loads(js.read_text()), "png": f"/tiles/{png.name}", "bounds": list(AOI)}
 
 
 def ids(s):
@@ -256,7 +304,7 @@ def api_config():
     for i, cr in C["tieu_chi"].items():
         crops = [k for k in C["cay"] if any(score_of(g, k) is not None for g in cr["classes"])]
         crit.append({"id": i, "name": cr["name"], "unit": cr["unit"], "type": cr["type"], "note": cr.get("note"), "has_table": bool(cr["classes"]),
-                     "has_data": layer_array(cr["layer"]) is not None, "crops": crops,
+                     "has_data": layer_exists(cr["layer"]), "crops": crops,
                      "groups": [{"label": g["label"], "scores": {k: g["scores"].get(k) for k in C["cay"]}} for g in cr["classes"]]})
     return {"cay": C["cay"], "phan_hang": C["phan_hang"], "phuong_phap": C["phuong_phap"], "tieu_chi": crit}
 

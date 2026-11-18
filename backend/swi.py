@@ -9,6 +9,7 @@ vì các cảnh phủ những vùng khác nhau. Chỉ đọc cache bản đồ, 
 import hashlib
 import json
 import threading
+import time
 from datetime import datetime, timedelta, timezone
 
 import numpy as np
@@ -22,8 +23,14 @@ ICT = timezone(timedelta(hours=7))          # giờ Việt Nam
 _lock = threading.Lock()
 
 
+_sc = {"t": 0.0, "v": None}
+
+
 def scenes():
-    """Các cảnh độ ẩm đất đã xử lý, xếp theo thời gian chụp (giờ UTC+7)."""
+    """Các cảnh độ ẩm đất đã xử lý, xếp theo thời gian chụp (giờ UTC+7). Nhớ 30 giây: hàm này bị gọi nhiều lần trong một yêu cầu
+    (tính SWI, phiên bản lớp, lớp dữ liệu...) và mỗi lần phải đọc JSON của mọi cảnh."""
+    if _sc["v"] is not None and time.time() - _sc["t"] < 30:
+        return _sc["v"]
     out = []
     for j in render.CACHE.glob("*__soil.json"):
         m = hydro.SCENE_T.search(j.name)
@@ -36,7 +43,9 @@ def scenes():
         if meta.get("status") == "done":
             t = datetime.strptime(m.group(1), "%Y%m%dT%H%M%S").replace(tzinfo=timezone.utc).astimezone(ICT)
             out.append((t, j.stem, meta["bounds"]))
-    return sorted(out, key=lambda x: x[0])
+    out = sorted(out, key=lambda x: x[0])
+    _sc.update(t=time.time(), v=out)
+    return out
 
 
 def update(S, K, Tl, sub, day, T):
