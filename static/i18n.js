@@ -25,13 +25,30 @@
   try { var s = localStorage.getItem(KEY); if (s === "vi" || s === "en") lang = s; } catch (e) {}
 
   /* ---------- tra từ điển ---------- */
-  function lookup(t) {
+  function base(t) {
     if (own.call(D, t)) return D[t];
     var n = t.replace(/\s+/g, " ");
     if (n !== t && own.call(D, n)) return D[n];
     for (var i = 0; i < RX.length; i++) if (RX[i][0].test(t)) return t.replace(RX[i][0], RX[i][1]);
-    var m = t.match(/^([^\p{L}\p{N}]*)([\s\S]*?)([^\p{L}\p{N}]*)$/u);
-    if (m && m[2] && m[2] !== t && own.call(D, m[2])) return m[1] + D[m[2]] + m[3];
+    return null;
+  }
+  function lookup(t) {
+    var r = base(t);
+    if (r != null) return r;
+    var m = t.match(/^(\d+[.)]\s+)([\s\S]+)$/);                 // mục lục "1. Vì sao ..."
+    if (m && (r = base(m[2])) != null) return m[1] + r;
+    m = t.match(/^([^\p{L}\p{N}]*)([\s\S]*?)([^\p{L}\p{N}]*)$/u);   // bỏ dấu câu ở đầu/cuối
+    if (m && m[2] && m[2] !== t && (r = base(m[2])) != null) return m[1] + r + m[3];
+    if (t.indexOf(" · ") > 0) {                                  // dòng ghép nhiều ý bằng dấu "·"
+      var parts = t.split(" · "), hit = false;
+      parts = parts.map(function (x) {
+        var y = x.trim(), z = y && (base(y) != null ? base(y) : null);
+        if (z == null) { var c = y.match(/^(\d+[.)]\s+)([\s\S]+)$/); if (c && base(c[2]) != null) z = c[1] + base(c[2]); }
+        if (z != null) { hit = true; return z; }
+        return x;
+      });
+      if (hit) return parts.join(" · ");
+    }
     return null;
   }
   function tr(s) {
