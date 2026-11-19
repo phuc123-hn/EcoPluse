@@ -168,7 +168,7 @@
   #status.busy::after,#wxStatus.busy::after{content:"";position:absolute;left:0;bottom:0;height:2px;width:40%;background:linear-gradient(90deg,transparent,var(--asc),transparent);animation:busy 1.1s ease-in-out infinite}
   @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important}}
 </style>
-</head>
+<script src="/static/i18n-en.js?v=1"></script><script src="/static/i18n.js?v=1"></script></head>
 <body>
 <div id="app">
   <aside id="aside">
@@ -1337,7 +1337,7 @@ $("rvr").onclick = async () => {
     const el = document.getElementById(id);
     if (!el) return;
     const sync = () => {
-      const want = /^Đang/.test(el.textContent.trim()) && !el.classList.contains("err");
+      const want = /^(Đang|Loading|Sending|Connecting|Locating|Searching|Creating|Calculating|Getting|Downloading|Answering|In progress)/.test(el.textContent.trim()) && !el.classList.contains("err");
       if (el.classList.contains("busy") !== want) el.classList.toggle("busy", want);
     };
     new MutationObserver(sync).observe(el, {childList: true, characterData: true, subtree: true, attributes: true, attributeFilter: ["class"]});
